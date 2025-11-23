@@ -1,56 +1,63 @@
 import { NextResponse } from "next/server";
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(req: Request) {
     try {
-        const { messages, businessConfig } = await req.json();
+        const apiKey = process.env.GEMINI_API_KEY;
 
-        // בניית הפרומפט (ההוראות לבוט) על בסיס הגדרות העסק
+        if (!apiKey) {
+            return NextResponse.json({ reply: "שגיאה: חסר מפתח API." });
+        }
+
+        const body = await req.json();
+        const { messages, businessConfig } = body;
+
+        const genAI = new GoogleGenerativeAI(apiKey);
+
+        // ✅ התיקון: שימוש במודל שקיים ברשימה שלך בוודאות
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+        // הכנת היסטוריית השיחה
+        const lastUserMessage = messages[messages.length - 1];
+        const previousMessages = messages.slice(0, -1);
+
+        let history = previousMessages.map((m: any) => ({
+            role: m.role === "user" ? "user" : "model",
+            parts: [{ text: m.content }],
+        }));
+
+        // הסרת הודעת בוט אם היא הראשונה (דרישה טכנית של גוגל)
+        if (history.length > 0 && history[0].role === "model") {
+            history = history.slice(1);
+        }
+
         const systemPrompt = `
+      הנחיות מערכת:
       את/ה העוזר/ת האישי/ת של העסק "${businessConfig.businessName}".
       בעל העסק: ${businessConfig.ownerName}.
       סגנון דיבור: ${businessConfig.tone}.
-      
-      מידע על העסק:
-      ${businessConfig.domainGuidelines}
-      
-      הנחיות:
-      - ענה בעברית בלבד.
-      - היה אדיב, קצר ותכליתי.
-      - מטרתך היא לעזור ללקוח לקבל מידע או לקבוע תור.
+      מידע עסקי: ${businessConfig.domainGuidelines}
+      הנחיות: ענה בעברית בלבד. היה קצר, אדיב ושיווקי.
     `;
 
-        // הכנת הגוף לבקשה של גוגל
-        const requestBody = {
-            contents: [
-                { role: "user", parts: [{ text: systemPrompt }] }, // System instruction trick
-                ...messages.map((m: any) => ({
-                    role: m.role === "user" ? "user" : "model",
-                    parts: [{ text: m.content }],
-                })),
-            ],
-        };
-
-        // שליחה לגוגל
-        const response = await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestBody),
+        // התחלת הצ'אט
+        const chat = model.startChat({
+            history: history,
         });
 
-        const data = await response.json();
-        const reply =
-            data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-            "סליחה, לא הבנתי.";
+        console.log("📨 Sending request to Gemini 2.0 Flash...");
 
-        return NextResponse.json({ reply });
-    } catch (error) {
-        console.error("Gemini API Error:", error);
-        return NextResponse.json(
-            { error: "Failed to fetch response" },
-            { status: 500 }
+        // שליחת ההודעה
+        const result = await chat.sendMessage(
+            `${systemPrompt}\n\nשאלה מהלקוח: ${lastUserMessage.content}`
         );
+        const response = await result.response;
+        const reply = response.text();
+
+        console.log("✅ Success!");
+        return NextResponse.json({ reply });
+    } catch (error: any) {
+        console.error("❌ Google SDK Error:", error.message);
+        return NextResponse.json({ reply: "סליחה, נתקלתי בבעיה טכנית רגעית." });
     }
 }
