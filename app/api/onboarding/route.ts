@@ -5,42 +5,50 @@ import Client from "@/models/Client";
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { businessName, ownerName, phone, tone } = body;
+        // הוספתי את email ו-password לרשימת השדות שאנחנו מקבלים
+        const { businessName, ownerName, phone, email, password, tone, niche } =
+            body;
 
-        // 1. חיבור למסד הנתונים
         await connectDB();
 
-        // 2. יצירת מזהה ייחודי (Slug) מהשם של העסק
-        // למשל: "קליניקה שרה" יהפוך ל-"clinic-sara-123"
-        const slug =
-            businessName.toLowerCase().replace(/ /g, "-") +
-            "-" +
-            Math.floor(Math.random() * 1000);
+        // בדיקה אם המייל כבר קיים במערכת (למניעת כפילויות)
+        const existingUser = await Client.findOne({ email });
+        if (existingUser) {
+            return NextResponse.json(
+                { error: "המייל הזה כבר רשום במערכת" },
+                { status: 400 }
+            );
+        }
 
-        // 3. יצירת הלקוחה החדשה עם הצוות הדיגיטלי (ברירת מחדל)
+        // יצירת מזהה אקראי באנגלית (למשל: a7x92b)
+        const slug = Math.random().toString(36).substring(2, 9);
+
         const newClient = await Client.create({
             slug,
             businessName,
             ownerName,
             phone,
-            domainGuidelines: `קליניקה בבעלות ${ownerName}. סגנון דיבור: ${tone}.`,
+            email, // <--- נשמר ב-DB
+            password, // <--- נשמר ב-DB (הערה: בפרודקשן נצפין את זה)
+            niche,
+            domainGuidelines: `קליניקה בבעלות ${ownerName}. סגנון דיבור: ${tone}. תחום עיסוק: ${niche}.`,
             personas: {
                 receptionist: {
                     name: "דניאלה",
-                    role: "מנהלת קבלה",
-                    prompt: "את דניאלה, מנהלת קבלה אדיבה ויעילה. תפקידך לקבוע תורים ולענות על שאלות בסיסיות.",
+                    role: "קבלה",
+                    prompt: "...",
                     isActive: true,
                 },
                 marketing: {
                     name: "מיכל",
-                    role: "מנהלת שיווק",
-                    prompt: "את מיכל, מומחית שיווק יצירתית. תפקידך לכתוב פוסטים לאינסטגרם ולנסח הודעות מבצע.",
+                    role: "שיווק",
+                    prompt: "...",
                     isActive: true,
                 },
                 analyst: {
                     name: "רועי",
-                    role: "אנליסט עסקי",
-                    prompt: "אתה רועי, רואה חשבון ואנליסט חד. תפקידך לנתח נתונים ולתת המלצות לשיפור הרווחיות.",
+                    role: "אנליסט",
+                    prompt: "...",
                     isActive: true,
                 },
             },

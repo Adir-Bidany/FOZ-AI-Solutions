@@ -14,6 +14,9 @@ const ClientSchema = new Schema({
     businessName: { type: String, required: true },
     ownerName: { type: String, required: true },
     phone: { type: String },
+    email: { type: String, required: true, unique: true }, // הוספתי
+    password: { type: String, required: true }, // הוספתי (בפועל צריך להצפין, לדמו זה בסדר כטקסט)
+    niche: { type: String, required: true, default: "aesthetics" },
 
     // כאן יושב הצוות הדיגיטלי!
     personas: {

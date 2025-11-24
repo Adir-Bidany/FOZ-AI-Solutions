@@ -5,24 +5,38 @@ import { MapPin, Phone, Clock, Check, Star } from "lucide-react";
 import connectDB from "@/lib/db";
 import Client from "@/models/Client";
 
-// פונקציה לשליפת נתונים אמיתיים מה-DB
+// פונקציה לשליפת נתונים אמיתיים מה- DB וגם מצב דמו
 async function getClientData(slug: string) {
+    // --- מצב דמו (כאן הייתה הטעות - הוספתי את tone) ---
+    if (slug === "demo") {
+        return {
+            businessName: "קליניקת הדגמה (FOZ)",
+            ownerName: "צוות FOZ",
+            phone: "050-0000000",
+            address: "מתחם ההייטק, תל אביב",
+            domainGuidelines:
+                "זוהי קליניקת הדגמה. תפקידך להרשים את הלקוחה ביכולות שלך.",
+            tone: "מכירתי ומקצועי", // <--- הנה השורה שהייתה חסרה!
+            heroImage:
+                "https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=2068&auto=format&fit=crop",
+        };
+    }
+
     await connectDB();
 
-    // חיפוש הלקוחה לפי המזהה הייחודי (slug)
-    // lean() הופך את זה לאובייקט רגיל של ג'אווהסקריפט (מהיר יותר)
-    const client = await Client.findOne({ slug }).lean();
+    const decodedSlug = decodeURIComponent(slug);
+    const client = await Client.findOne({ slug: decodedSlug }).lean();
 
     if (!client) return null;
 
+    // גם כאן וודא שיש את כל השדות
     return {
         businessName: client.businessName,
         ownerName: client.ownerName,
         phone: client.phone || "לא צוין",
-        address: client.address || "כתובת הקליניקה", // ברירת מחדל אם אין ב-DB
-        // בניית ההנחיות לבוט מתוך המידע ב-DB
+        address: client.address || "כתובת הקליניקה",
         domainGuidelines: client.domainGuidelines || "עסק בתחום האסתטיקה",
-        tone: "יוקרתי ומקצועי", // אפשר לשמור גם את זה ב-DB בעתיד
+        tone: "יוקרתי ומקצועי", // כאן זה כבר היה, אבל טוב לוודא
         heroImage:
             "https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=2068&auto=format&fit=crop",
     };
