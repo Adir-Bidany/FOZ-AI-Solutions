@@ -1,24 +1,33 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Sparkles } from "lucide-react";
+import { Send } from "lucide-react";
 
-export default function ChatInterface() {
+// הגדרת סוג המידע שהצ'אט מצפה לקבל
+interface ChatProps {
+    businessConfig: {
+        businessName: string;
+        ownerName: string;
+        tone: string;
+        domainGuidelines: string;
+    };
+}
+
+export default function ChatInterface({ businessConfig }: ChatProps) {
     const [messages, setMessages] = useState([
         {
             role: "assistant",
-            content:
-                "היי! אני העוזרת החכמה של הקליניקה. איך אפשר לעזור לך להיראות מדהים היום? ✨",
+            content: `היי! אני העוזרת החכמה של ${businessConfig.businessName}. איך אפשר לעזור לך? ✨`,
         },
     ]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    // גלילה אוטומטית למטה
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollIntoView({ behavior: "smooth" });
@@ -39,13 +48,7 @@ export default function ChatInterface() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     messages: [...messages, userMessage],
-                    businessConfig: {
-                        businessName: "FOZ Clinic",
-                        ownerName: "ד״ר כהן",
-                        tone: "יוקרתי, נעים ומקצועי",
-                        domainGuidelines:
-                            "קליניקה לאסתטיקה רפואית. טיפולי בוטוקס, חומצה היאלרונית ופיסול פנים.",
-                    },
+                    businessConfig: businessConfig, // שימוש בהגדרות שהגיעו מבחוץ
                 }),
             });
 
@@ -58,10 +61,7 @@ export default function ChatInterface() {
             console.error(error);
             setMessages((prev) => [
                 ...prev,
-                {
-                    role: "assistant",
-                    content: "אופס, הייתה תקלה קטנה. נסי שוב עוד רגע.",
-                },
+                { role: "assistant", content: "אופס, תקלה רגעית. נסי שוב." },
             ]);
         } finally {
             setIsLoading(false);
@@ -75,14 +75,19 @@ export default function ChatInterface() {
         >
             {/* כותרת הצ'אט */}
             <div className="p-4 bg-white/80 backdrop-blur-md border-b flex items-center gap-3 sticky top-0 z-10 shrink-0">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg">
-                    <Sparkles size={20} />
+                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-100 shadow-sm">
+                    <Image
+                        src="/favicon.png"
+                        alt="Logo"
+                        fill
+                        className="object-cover"
+                    />
                 </div>
                 <div>
-                    <h3 className="font-bold text-sm text-right">
-                        FOZ Assistant
+                    <h3 className="font-bold text-sm text-right text-gray-900">
+                        {businessConfig.businessName}
                     </h3>
-                    <p className="text-xs text-green-500 flex items-center gap-1">
+                    <p className="text-xs text-green-500 flex items-center gap-1 font-medium">
                         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                         מחוברת כעת
                     </p>
@@ -105,8 +110,8 @@ export default function ChatInterface() {
                                 dir="rtl"
                                 className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-sm text-right leading-relaxed ${
                                     m.role === "user"
-                                        ? "bg-gray-900 text-white rounded-bl-none" // בועה שחורה למשתמש
-                                        : "bg-white border border-gray-100 text-gray-800 rounded-br-none" // בועה לבנה לבוט
+                                        ? "bg-gray-900 text-white rounded-bl-none"
+                                        : "bg-white border border-gray-100 text-gray-800 rounded-br-none"
                                 }`}
                             >
                                 {m.content}
@@ -137,13 +142,13 @@ export default function ChatInterface() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                        placeholder="כתבי כאן הודעה..."
+                        placeholder="כתבי כאן..."
                         className="rounded-full bg-gray-50 border-gray-200 focus-visible:ring-purple-500 text-black text-right"
                     />
                     <Button
                         onClick={handleSend}
                         size="icon"
-                        className="rounded-full bg-gray-900 hover:bg-gray-800 shrink-0 text-white transform rotate-180" // הפכתי את אייקון השליחה שיתאים לעברית
+                        className="rounded-full bg-gray-900 hover:bg-gray-800 shrink-0 text-white transform rotate-180"
                         disabled={isLoading}
                     >
                         <Send size={18} />
