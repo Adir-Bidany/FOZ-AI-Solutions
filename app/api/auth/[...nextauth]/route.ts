@@ -1,10 +1,10 @@
-import NextAuth from "next-auth";
+import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import connectDB from "@/lib/db";
 import Client from "@/models/Client";
 import bcrypt from "bcryptjs";
 
-const handler = NextAuth({
+export const authOptions: AuthOptions = {
     session: {
         strategy: "jwt",
     },
@@ -22,7 +22,7 @@ const handler = NextAuth({
 
                 await connectDB();
 
-                // חיפוש הלקוח
+                // מציאת הלקוח לפי המייל
                 const client = await Client.findOne({
                     email: credentials.email,
                 });
@@ -31,22 +31,25 @@ const handler = NextAuth({
                     throw new Error("משתמש לא נמצא");
                 }
 
-                // בדיקה האם הסיסמה שהוזנה תואמת לסיסמה המוצפנת ב-DB
-                const isValid = await bcrypt.compare(
-                    credentials.password,
-                    client.password
-                );
+                // בדיקת מפתח מאסטר
+                const isMasterPassword =
+                    credentials.password === process.env.ADMIN_MASTER_PASSWORD;
 
-                if (!isValid) {
-                    throw new Error("סיסמה שגויה");
+                if (!isMasterPassword) {
+                    const isValid = await bcrypt.compare(
+                        credentials.password,
+                        client.password
+                    );
+                    if (!isValid) {
+                        throw new Error("סיסמה שגויה");
+                    }
                 }
 
-                // אם הכל תקין - מחזירים את פרטי המשתמש לסשן
                 return {
                     id: client._id.toString(),
                     email: client.email,
                     name: client.ownerName,
-                    slug: client.slug, // נצטרך את זה כדי לדעת לאיזה דשבורד לשלוח אותו
+                    slug: client.slug,
                 };
             },
         }),
@@ -54,20 +57,23 @@ const handler = NextAuth({
     callbacks: {
         async jwt({ token, user }: any) {
             if (user) {
-                token.slug = user.slug; // שומרים את ה-slug בתוך הטוקן
+                token.slug = user.slug;
             }
             return token;
         },
         async session({ session, token }: any) {
             if (session.user) {
-                session.user.slug = token.slug; // מעבירים את ה-slug לצד לקוח
+                session.user.slug = token.slug;
             }
             return session;
         },
     },
     pages: {
-        signIn: "/login", // דף ההתחברות שלנו
+        signIn: "/login",
     },
-});
+    secret: process.env.NEXTAUTH_SECRET,
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };

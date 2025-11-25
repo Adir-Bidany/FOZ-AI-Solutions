@@ -17,7 +17,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import connectDB from "@/lib/db";
 import Client from "@/models/Client";
-import DashboardChat from "@/components/DashboardChat"; // <--- הייבוא של הרכיב החדש
+import DashboardChat from "@/components/DashboardChat";
 
 // פונקציה לחישוב ברכה לפי שעה
 function getGreeting() {
@@ -29,11 +29,21 @@ function getGreeting() {
 }
 
 async function getClientData(slug: string) {
+    // --- הוספת המצב המיוחד עבור הדמו ---
+    if (slug === "demo") {
+        return {
+            businessName: "קליניקת הדגמה",
+            ownerName: "משתמש דמו",
+            slug: "demo",
+            integrations: { simplybook: { isConnected: false } },
+        };
+    }
+    // -----------------------------------
+
     await connectDB();
     const client = await Client.findOne({ slug }).lean();
     if (!client) return null;
 
-    // המרה של האובייקט ל-JSON פשוט כדי למנוע בעיות עם תאריכים ב-Next.js
     return JSON.parse(JSON.stringify(client));
 }
 
@@ -51,7 +61,6 @@ export default async function ClientDashboard({
 
     const greeting = getGreeting();
 
-    // סטטיסטיקות (בינתיים פיקטיביות)
     const stats = [
         {
             label: "הכנסות החודש",
@@ -117,12 +126,17 @@ export default async function ClientDashboard({
                     >
                         <Megaphone size={18} /> שיווק
                     </Button>
-                    <Button
-                        variant="ghost"
-                        className="w-full justify-start gap-2 text-gray-600 hover:bg-gray-50"
-                    >
-                        <Settings size={18} /> הגדרות
-                    </Button>
+
+                    {/* --- הנה השינוי החשוב: הקישור להגדרות --- */}
+                    <Link href={`/dashboard/${client.slug}/settings`}>
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-start gap-2 text-gray-600 hover:bg-gray-50"
+                        >
+                            <Settings size={18} /> הגדרות חיבורים
+                        </Button>
+                    </Link>
+                    {/* ---------------------------------------- */}
                 </nav>
 
                 <div className="p-4 border-t">
@@ -139,7 +153,6 @@ export default async function ClientDashboard({
 
             {/* === תוכן ראשי === */}
             <main className="flex-1 md:mr-64 p-4 lg:p-8">
-                {/* כותרת דינמית */}
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">
@@ -158,7 +171,6 @@ export default async function ClientDashboard({
                     </div>
                 </header>
 
-                {/* כרטיסי סטטיסטיקה */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                     {stats.map((stat, i) => (
                         <Card
@@ -187,9 +199,7 @@ export default async function ClientDashboard({
                     ))}
                 </div>
 
-                {/* === אזור העבודה המרכזי (עם הצ'אט החי) === */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[600px]">
-                    {/* עמודה ראשית: הצ'אט עם הצוות */}
                     <div className="lg:col-span-2 h-full flex flex-col space-y-4">
                         <div className="flex items-center justify-between shrink-0">
                             <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800">
@@ -200,16 +210,12 @@ export default async function ClientDashboard({
                                 חדר המצב (הצוות הדיגיטלי)
                             </h2>
                         </div>
-
-                        {/* הטמעת רכיב הצ'אט החכם */}
                         <div className="flex-1 overflow-hidden rounded-2xl shadow-sm border border-gray-200">
                             <DashboardChat businessConfig={client} />
                         </div>
                     </div>
 
-                    {/* עמודה צדדית: טיפ יומי וקיצורים */}
                     <div className="space-y-6 h-full overflow-y-auto">
-                        {/* ווידג'ט טיפ יומי */}
                         <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
                             <div className="flex items-center gap-2 mb-3 opacity-90">
                                 <Sparkles size={16} />
@@ -231,7 +237,6 @@ export default async function ClientDashboard({
                             </Button>
                         </div>
 
-                        {/* רשימת המודלים (רק לתצוגה יפה) */}
                         <Card className="border-none shadow-sm">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-base">

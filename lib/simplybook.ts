@@ -1,12 +1,7 @@
-const COMPANY_LOGIN = process.env.SIMPLYBOOK_COMPANY!;
-const API_KEY = process.env.SIMPLYBOOK_API_KEY!;
-
 const BASE_URL = `https://user-api.simplybook.me`;
 
-/**
- * 1. קבלת טוקן אבטחה (נדרש לפני כל פעולה)
- */
-async function getToken() {
+// 1. פונקציה לקבלת טוקן (מקבלת מפתחות ספציפיים)
+async function getToken(companyLogin: string, apiKey: string) {
     try {
         const response = await fetch(`${BASE_URL}/login`, {
             method: "POST",
@@ -14,7 +9,7 @@ async function getToken() {
             body: JSON.stringify({
                 jsonrpc: "2.0",
                 method: "getToken",
-                params: [COMPANY_LOGIN, API_KEY],
+                params: [companyLogin, apiKey],
                 id: 1,
             }),
         });
@@ -31,21 +26,18 @@ async function getToken() {
     }
 }
 
-/**
- * 2. בדיקת שעות פנויות
- * סורק שבועיים קדימה ומחזיר את 3 התורים הפנויים הבאים
- */
-export async function getAvailableSlots() {
-    const token = await getToken();
-    if (!token) return "שגיאת התחברות למערכת הזימון.";
+// 2. בדיקת שעות פנויות (דינמית)
+export async function getAvailableSlots(companyLogin: string, apiKey: string) {
+    const token = await getToken(companyLogin, apiKey);
+    if (!token) return "שגיאת התחברות ליומן (בדוק שהמפתחות בהגדרות נכונים).";
 
     try {
-        // א. משיגים את השירות הראשון שקיים במערכת
+        // א. משיגים את השירות הראשון
         const servicesResponse = await fetch(`${BASE_URL}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-Company-Login": COMPANY_LOGIN,
+                "X-Company-Login": companyLogin,
                 "X-Token": token,
             },
             body: JSON.stringify({
@@ -58,11 +50,13 @@ export async function getAvailableSlots() {
 
         const servicesData = await servicesResponse.json();
         const services = Object.values(servicesData.result || {});
-        if (services.length === 0) return "לא הוגדרו טיפולים במערכת.";
+        if (services.length === 0)
+            return "לא הוגדרו טיפולים במערכת SimplyBook.";
 
-        const firstServiceId = (services[0] as any).id; // ה-ID האמיתי
+        const firstServiceId = (services[0] as any).id;
+        const firstServiceName = (services[0] as any).name;
 
-        // ב. בודקים זמינות לשירות הזה
+        // ב. בודקים זמינות
         const today = new Date();
         const twoWeeksLater = new Date();
         twoWeeksLater.setDate(today.getDate() + 14);
@@ -74,7 +68,7 @@ export async function getAvailableSlots() {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-Company-Login": COMPANY_LOGIN,
+                "X-Company-Login": companyLogin,
                 "X-Token": token,
             },
             body: JSON.stringify({
@@ -88,10 +82,10 @@ export async function getAvailableSlots() {
         const data = await response.json();
 
         if (!data.result || Object.keys(data.result).length === 0) {
-            return "לא נמצאו תורים פנויים בשבועיים הקרובים.";
+            return `לא נמצאו תורים פנויים לשבועיים הקרובים לטיפול ${firstServiceName}.`;
         }
 
-        // ג. סינון 3 תורים
+        // ג. סינון
         let foundSlots: string[] = [];
         const sortedDates = Object.keys(data.result).sort();
 
@@ -108,33 +102,34 @@ export async function getAvailableSlots() {
 
         if (foundSlots.length === 0) return "היומן מלא בשבועיים הקרובים.";
 
-        return `התורים הבאים הפנויים הם: ${foundSlots.join(", ")}.`;
+        return `התורים הבאים הפנויים ל${firstServiceName} הם: ${foundSlots.join(
+            ", "
+        )}.`;
     } catch (error) {
         console.error("Get Slots Error:", error);
-        return "תקלה בבדיקת הזמינות.";
+        return "תקלה טכנית בבדיקת הזמינות.";
     }
 }
 
-/**
- * 3. קביעת תור (Booking)
- * מקבלת תאריך, שעה, שם וטלפון ומבצעת רישום ביומן
- */
+// 3. קביעת תור (דינמית)
 export async function bookAppointment(
     date: string,
     time: string,
     clientName: string,
-    clientPhone: string
+    clientPhone: string,
+    companyLogin: string,
+    apiKey: string
 ) {
-    const token = await getToken();
+    const token = await getToken(companyLogin, apiKey);
     if (!token) return "שגיאת התחברות ליומן.";
 
     try {
-        // א. שוב, מוצאים את ה-ID של השירות (כדי לא לנחש)
+        // א. משיגים שירות
         const servicesResponse = await fetch(`${BASE_URL}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-Company-Login": COMPANY_LOGIN,
+                "X-Company-Login": companyLogin,
                 "X-Token": token,
             },
             body: JSON.stringify({
@@ -146,32 +141,32 @@ export async function bookAppointment(
         });
         const servicesData = await servicesResponse.json();
         const services = Object.values(servicesData.result || {});
-        if (services.length === 0) return "שגיאה: אין שירותים זמינים לקביעה.";
+        if (services.length === 0) return "שגיאה: אין שירותים זמינים.";
         const serviceId = (services[0] as any).id;
 
-        // ב. שליחת פקודת ההזמנה (Book)
+        // ב. הזמנה
         const response = await fetch(`${BASE_URL}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-Company-Login": COMPANY_LOGIN,
+                "X-Company-Login": companyLogin,
                 "X-Token": token,
             },
             body: JSON.stringify({
                 jsonrpc: "2.0",
                 method: "book",
                 params: [
-                    serviceId, // ה-ID שמצאנו
-                    1, // מטפל (ברירת מחדל 1)
-                    date, // YYYY-MM-DD
-                    time, // HH:mm
+                    serviceId,
+                    1, // מטפל
+                    date,
+                    time,
                     {
                         name: clientName,
                         phone: clientPhone,
-                        email: "client@foz-system.com", // מייל דמה (חובה ב-API)
+                        email: "client@foz.ai",
                     },
-                    null, // additional fields
-                    null, // count
+                    null,
+                    null,
                 ],
                 id: 1,
             }),
@@ -181,14 +176,13 @@ export async function bookAppointment(
 
         if (data.error) {
             console.error("Booking API Error:", data.error);
-            // הודעת שגיאה ידידותית למשתמש אם התור נתפס הרגע
             if (data.error.message.includes("Time is busy")) {
-                return "השעה הזו בדיוק נתפסה. נסה לבחור שעה אחרת.";
+                return "השעה הזו נתפסה הרגע. נסה שעה אחרת.";
             }
-            return `לא הצלחתי לקבוע את התור. שגיאה: ${data.error.message}`;
+            return `לא הצלחתי לקבוע. שגיאה: ${data.error.message}`;
         }
 
-        return `התור נקבע בהצלחה! אישור הזמנה מס': ${data.result}`;
+        return `התור נקבע בהצלחה! אישור: ${data.result}`;
     } catch (error) {
         console.error("Booking Exception:", error);
         return "תקלה טכנית בקביעת התור.";

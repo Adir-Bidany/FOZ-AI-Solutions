@@ -8,64 +8,21 @@ import {
     Calendar,
     MessageCircle,
     TrendingUp,
-    ShieldCheck,
 } from "lucide-react";
+
+// מחקנו את ה-import של SystemHeader כי הוא כבר ב-layout
 
 export default function Home() {
     return (
-        <main
+        <div
             className="min-h-screen bg-[#FDFCF8] relative overflow-x-hidden selection:bg-purple-100"
             dir="rtl"
         >
+            {/* מחקנו מכאן את <SystemHeader /> כדי למנוע כפילות ושגיאות */}
+
             {/* רקע אווירה */}
             <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-purple-200/30 rounded-full blur-[100px] -z-10 translate-x-1/2 -translate-y-1/2" />
             <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-pink-200/20 rounded-full blur-[120px] -z-10 -translate-x-1/2 translate-y-1/2" />
-
-            {/* === HEADER === */}
-            <div className="container mx-auto px-6 pt-6">
-                <header className="flex justify-between items-center w-full">
-                    {/* לוגו */}
-                    <div className="relative w-32 h-12 lg:w-40 lg:h-16 shrink-0">
-                        <Image
-                            src="/logo.png"
-                            alt="FOZ AI Solutions"
-                            fill
-                            className="object-contain object-right"
-                            priority
-                        />
-                    </div>
-
-                    {/* אזור הכפתורים */}
-                    <div className="flex items-center gap-3">
-                        {/* כפתור אדמין סודי (רק במחשב) */}
-                        <Link
-                            href="/admin"
-                            className="hidden lg:block opacity-20 hover:opacity-100 transition-opacity"
-                        >
-                            <Button variant="ghost" size="sm">
-                                <ShieldCheck size={16} />
-                            </Button>
-                        </Link>
-
-                        {/* כפתור כניסה למנויים */}
-                        <Link href="/login">
-                            <Button
-                                variant="ghost"
-                                className="text-gray-600 hover:text-purple-600 hover:bg-purple-50 font-medium"
-                            >
-                                התחברות למנויים
-                            </Button>
-                        </Link>
-
-                        {/* כפתור הרשמה בולט */}
-                        <Link href="/onboarding">
-                            <Button className="rounded-full bg-gray-900 hover:bg-gray-800 text-white px-6 shadow-md font-bold transition-all hover:shadow-lg hover:-translate-y-0.5">
-                                נסה בחינם 🚀
-                            </Button>
-                        </Link>
-                    </div>
-                </header>
-            </div>
 
             {/* === HERO SECTION === */}
             <section className="container mx-auto px-6 py-10 lg:py-20">
@@ -213,7 +170,6 @@ export default function Home() {
 
             {/* === HOW IT WORKS === */}
             <section className="py-20 bg-gray-900 text-white relative overflow-hidden">
-                {/* אורות רקע */}
                 <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10"></div>
 
                 <div className="container mx-auto px-6 text-center relative z-10">
@@ -221,7 +177,6 @@ export default function Home() {
                         איך זה עובד? פשוט וקל.
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
-                        {/* קו מחבר */}
                         <div className="hidden md:block absolute top-8 left-1/6 right-1/6 h-0.5 bg-gray-700 -z-10"></div>
 
                         {[
@@ -272,6 +227,6 @@ export default function Home() {
             <footer className="py-8 bg-white border-t border-gray-100 text-center text-gray-500 text-sm">
                 <p>© 2024 FOZ AI Solutions. כל הזכויות שמורות.</p>
             </footer>
-        </main>
+        </div>
     );
 }

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Sparkles } from "lucide-react";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface ChatInterfaceProps {
     businessConfig: any;
@@ -22,7 +23,6 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
     ]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    // state חדש למעקב אחרי פוקוס
     const [isFocused, setIsFocused] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -69,15 +69,27 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
         }
     };
 
+    // בחירת הלוגו להציג בראש הצ'אט
+    // אם יש לוגו ללקוח -> מציגים אותו. אם לא -> מציגים את הלוגו של FOZ כברירת מחדל
+    const chatAvatar = businessConfig.logo || "/favicon.png";
+
     return (
         <div className="flex flex-col h-full bg-[#FDFCF8]" dir="rtl">
-            {/* Header */}
+            {/* Header של הצ'אט */}
             <div className="bg-white p-3 flex items-center gap-3 border-b shadow-sm shrink-0 relative z-10">
-                <Avatar className="w-10 h-10 ring-2 ring-purple-100">
-                    <AvatarImage src="https://api.dicebear.com/7.x/bottts/svg?seed=foz&backgroundColor=transparent" />
-                </Avatar>
+                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-100 shadow-sm">
+                    <Image
+                        src={chatAvatar}
+                        alt="Avatar"
+                        fill
+                        className="object-cover"
+                    />
+                </div>
                 <div>
-                    <h3 className="font-bold text-gray-900">FOZ Assistant</h3>
+                    {/* שם העסק בראש הצ'אט */}
+                    <h3 className="font-bold text-gray-900 text-sm">
+                        {businessConfig.businessName}
+                    </h3>
                     <div className="flex items-center gap-1.5">
                         <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -88,10 +100,6 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                         </span>
                     </div>
                 </div>
-                <Sparkles
-                    className="text-purple-500 absolute left-4 top-4 opacity-20"
-                    size={24}
-                />
             </div>
 
             {/* אזור ההודעות */}
@@ -106,10 +114,16 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                                     : "justify-start"
                             } animate-in slide-in-from-bottom-2 duration-300`}
                         >
+                            {/* תמונת הבוט ליד הודעה */}
                             {m.role === "assistant" && (
-                                <Avatar className="w-8 h-8 ml-2 mt-1 ring-1 ring-purple-50 shrink-0">
-                                    <AvatarImage src="https://api.dicebear.com/7.x/bottts/svg?seed=foz&backgroundColor=transparent" />
-                                </Avatar>
+                                <div className="relative w-8 h-8 ml-2 mt-1 rounded-full overflow-hidden border border-purple-100 shrink-0">
+                                    <Image
+                                        src={chatAvatar}
+                                        alt="Bot"
+                                        fill
+                                        className="object-cover"
+                                    />
+                                </div>
                             )}
                             <div
                                 className={`max-w-[80%] p-3.5 rounded-2xl text-sm shadow-sm leading-relaxed ${
@@ -124,9 +138,14 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                     ))}
                     {isLoading && (
                         <div className="flex justify-start animate-in fade-in duration-300">
-                            <Avatar className="w-8 h-8 ml-2 mt-1 ring-1 ring-purple-50 shrink-0">
-                                <AvatarImage src="https://api.dicebear.com/7.x/bottts/svg?seed=foz&backgroundColor=transparent" />
-                            </Avatar>
+                            <div className="relative w-8 h-8 ml-2 mt-1 rounded-full overflow-hidden border border-purple-100 shrink-0">
+                                <Image
+                                    src={chatAvatar}
+                                    alt="Bot"
+                                    fill
+                                    className="object-cover"
+                                />
+                            </div>
                             <div className="bg-white border border-gray-100 p-3 rounded-2xl rounded-bl-none text-xs text-gray-400 flex items-center gap-1 shadow-sm">
                                 <span className="animate-bounce">●</span>
                                 <span className="animate-bounce delay-100">
@@ -142,7 +161,7 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                 </div>
             </ScrollArea>
 
-            {/* אזור הקלדה - כאן השינוי הגדול */}
+            {/* אזור הקלדה */}
             <div className="p-3 bg-white border-t relative z-10">
                 <div className="relative flex items-center">
                     <Input
@@ -151,11 +170,9 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                         onKeyDown={(e) => e.key === "Enter" && handleSend()}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
-                        placeholder="כתבי כאן הודעה..." // הטקסט המהבהב
+                        placeholder="כתבי כאן הודעה..."
                         disabled={isLoading}
-                        className={`pr-4 pl-12 py-6 rounded-full bg-gray-50 border-gray-200 
-              focus-visible:ring-purple-500 focus-visible:ring-2 transition-all duration-300 text-[15px] 
-              placeholder:text-gray-500 placeholder:font-medium
+                        className={`pr-4 pl-12 py-6 rounded-full bg-gray-50 border-gray-200 focus-visible:ring-purple-500 focus-visible:ring-2 transition-all duration-300 text-[15px] placeholder:text-gray-500 placeholder:font-medium 
               ${
                   !isFocused && !input
                       ? "animate-inviting-pulse placeholder:animate-pulse placeholder:text-purple-400"

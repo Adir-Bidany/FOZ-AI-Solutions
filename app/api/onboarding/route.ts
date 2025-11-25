@@ -1,61 +1,20 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db";
-import Client from "@/models/Client";
-import bcrypt from "bcryptjs"; // <--- חדש
+import { createClient } from "@/services/client-service"; // שימוש בשירות החדש
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { businessName, ownerName, phone, email, password, tone, niche } =
-            body;
 
-        await connectDB();
-
-        // בדיקת כפילות
-        const existingUser = await Client.findOne({ email });
-        if (existingUser) {
-            return NextResponse.json(
-                { error: "המייל הזה כבר רשום במערכת" },
-                { status: 400 }
-            );
-        }
-
-        // --- הצפנת הסיסמה (החלק החדש והחשוב!) ---
-        // המערכת הופכת את "123456" למחרוזת ארוכה ובלתי קריאה
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // יצירת slug
-        const slug = Math.random().toString(36).substring(2, 9);
-
-        const newClient = await Client.create({
-            slug,
-            businessName,
-            ownerName,
-            phone,
-            email,
-            password: hashedPassword, // <--- שומרים את המוצפן, לא את המקורי!
-            niche,
-            domainGuidelines: `קליניקה בבעלות ${ownerName}. סגנון דיבור: ${tone}. תחום עיסוק: ${niche}.`,
-            personas: {
-                receptionist: {
-                    name: "דניאלה",
-                    role: "קבלה",
-                    prompt: "...",
-                    isActive: true,
-                },
-                marketing: {
-                    name: "מיכל",
-                    role: "שיווק",
-                    prompt: "...",
-                    isActive: true,
-                },
-                analyst: {
-                    name: "רועי",
-                    role: "אנליסט",
-                    prompt: "...",
-                    isActive: true,
-                },
-            },
+        // אנחנו שולחים את כל המידע לפונקציה החכמה ב-Service
+        // היא כבר תדאג להצפנה, לבדיקת כפילויות ולשמירה ב-DB
+        const newClient = await createClient({
+            businessName: body.businessName,
+            ownerName: body.ownerName,
+            phone: body.phone,
+            email: body.email,
+            password: body.password,
+            tone: body.tone,
+            niche: body.niche,
         });
 
         return NextResponse.json({
@@ -64,10 +23,12 @@ export async function POST(req: Request) {
             slug: newClient.slug,
         });
     } catch (error: any) {
-        console.error("Onboarding Error:", error);
+        console.error("Onboarding Error:", error.message);
+
+        // החזרת שגיאה מסודרת לצד לקוח (למשל "מייל תפוס")
         return NextResponse.json(
-            { error: "Failed to create account" },
-            { status: 500 }
+            { error: error.message || "Failed to create account" },
+            { status: 400 }
         );
     }
 }
