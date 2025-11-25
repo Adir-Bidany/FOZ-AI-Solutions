@@ -5,8 +5,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Sparkles } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Send } from "lucide-react";
 
 interface ChatInterfaceProps {
     businessConfig: any;
@@ -26,6 +25,7 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
     const [isFocused, setIsFocused] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    // גלילה אוטומטית להודעה האחרונה
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollIntoView({ behavior: "smooth" });
@@ -69,15 +69,16 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
         }
     };
 
-    // בחירת הלוגו להציג בראש הצ'אט
-    // אם יש לוגו ללקוח -> מציגים אותו. אם לא -> מציגים את הלוגו של FOZ כברירת מחדל
     const chatAvatar = businessConfig.logo || "/favicon.png";
 
     return (
-        <div className="flex flex-col h-full bg-[#FDFCF8]" dir="rtl">
+        <div
+            className="flex flex-col h-full bg-[#FDFCF8] relative overflow-hidden"
+            dir="rtl"
+        >
             {/* Header של הצ'אט */}
-            <div className="bg-white p-3 flex items-center gap-3 border-b shadow-sm shrink-0 relative z-10">
-                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-100 shadow-sm">
+            <div className="bg-white/90 backdrop-blur-sm p-3 flex items-center gap-3 border-b shadow-sm shrink-0 relative z-20">
+                <div className="relative w-9 h-9 md:w-10 md:h-10 rounded-full overflow-hidden border border-gray-100 shadow-sm">
                     <Image
                         src={chatAvatar}
                         alt="Avatar"
@@ -86,25 +87,24 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                     />
                 </div>
                 <div>
-                    {/* שם העסק בראש הצ'אט */}
-                    <h3 className="font-bold text-gray-900 text-sm">
+                    <h3 className="font-bold text-gray-900 text-sm md:text-base leading-tight">
                         {businessConfig.businessName}
                     </h3>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 mt-0.5">
                         <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                         </span>
-                        <span className="text-xs text-green-600 font-medium">
+                        <span className="text-[10px] md:text-xs text-green-600 font-medium">
                             מחוברת כעת
                         </span>
                     </div>
                 </div>
             </div>
 
-            {/* אזור ההודעות */}
-            <ScrollArea className="flex-1 p-4 bg-[url('https://www.transparenttextures.com/patterns/snow.png')]">
-                <div className="space-y-4 pb-2">
+            {/* אזור ההודעות - הוספתי רקע עדין */}
+            <ScrollArea className="flex-1 p-0 bg-[url('https://www.transparenttextures.com/patterns/snow.png')]">
+                <div className="p-4 space-y-4 pb-2 min-h-full flex flex-col justify-end">
                     {messages.map((m, i) => (
                         <div
                             key={i}
@@ -114,9 +114,8 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                                     : "justify-start"
                             } animate-in slide-in-from-bottom-2 duration-300`}
                         >
-                            {/* תמונת הבוט ליד הודעה */}
                             {m.role === "assistant" && (
-                                <div className="relative w-8 h-8 ml-2 mt-1 rounded-full overflow-hidden border border-purple-100 shrink-0">
+                                <div className="relative w-7 h-7 md:w-8 md:h-8 ml-2 mt-1 rounded-full overflow-hidden border border-purple-100 shrink-0 bg-white">
                                     <Image
                                         src={chatAvatar}
                                         alt="Bot"
@@ -126,7 +125,7 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                                 </div>
                             )}
                             <div
-                                className={`max-w-[80%] p-3.5 rounded-2xl text-sm shadow-sm leading-relaxed ${
+                                className={`max-w-[85%] md:max-w-[80%] p-3 md:p-3.5 rounded-2xl text-sm shadow-sm leading-relaxed ${
                                     m.role === "user"
                                         ? "bg-purple-600 text-white rounded-br-none shadow-purple-200"
                                         : "bg-white border border-gray-100 text-gray-800 rounded-bl-none"
@@ -138,7 +137,7 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                     ))}
                     {isLoading && (
                         <div className="flex justify-start animate-in fade-in duration-300">
-                            <div className="relative w-8 h-8 ml-2 mt-1 rounded-full overflow-hidden border border-purple-100 shrink-0">
+                            <div className="relative w-7 h-7 md:w-8 md:h-8 ml-2 mt-1 rounded-full overflow-hidden border border-purple-100 shrink-0 bg-white">
                                 <Image
                                     src={chatAvatar}
                                     alt="Bot"
@@ -161,8 +160,8 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                 </div>
             </ScrollArea>
 
-            {/* אזור הקלדה */}
-            <div className="p-3 bg-white border-t relative z-10">
+            {/* אזור הקלדה - שיפורים למובייל */}
+            <div className="p-3 bg-white border-t relative z-20 pb-safe">
                 <div className="relative flex items-center">
                     <Input
                         value={input}
@@ -170,12 +169,13 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                         onKeyDown={(e) => e.key === "Enter" && handleSend()}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
-                        placeholder="כתבי כאן הודעה..."
+                        placeholder="כתבי הודעה..."
                         disabled={isLoading}
-                        className={`pr-4 pl-12 py-6 rounded-full bg-gray-50 border-gray-200 focus-visible:ring-purple-500 focus-visible:ring-2 transition-all duration-300 text-[15px] placeholder:text-gray-500 placeholder:font-medium 
+                        // שיניתי את ה-padding ל-py-3 במובייל ו-py-6 בדסקטופ
+                        className={`pr-4 pl-12 py-3 md:py-6 rounded-full bg-gray-50 border-gray-200 focus-visible:ring-purple-500 focus-visible:ring-2 transition-all duration-300 text-[15px] placeholder:text-gray-500 placeholder:font-medium h-auto min-h-[44px] md:min-h-[56px]
               ${
                   !isFocused && !input
-                      ? "animate-inviting-pulse placeholder:animate-pulse placeholder:text-purple-400"
+                      ? "placeholder:text-purple-400/70"
                       : "placeholder:text-gray-400"
               }
             `}
@@ -184,15 +184,17 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                         onClick={handleSend}
                         size="icon"
                         disabled={isLoading || !input.trim()}
-                        className={`absolute left-1.5 h-9 w-9 rounded-full transition-all duration-300 ${
+                        className={`absolute left-1.5 top-1/2 -translate-y-1/2 h-8 w-8 md:h-10 md:w-10 rounded-full transition-all duration-300 ${
                             input.trim()
-                                ? "bg-purple-600 hover:bg-purple-700 scale-100"
+                                ? "bg-purple-600 hover:bg-purple-700 scale-100 shadow-md"
                                 : "bg-gray-200 text-gray-400 scale-90"
                         }`}
                     >
                         <Send
                             size={16}
-                            className={input.trim() ? "ml-0.5" : ""}
+                            className={`md:w-5 md:h-5 ${
+                                input.trim() ? "ml-0.5" : ""
+                            }`}
                         />
                     </Button>
                 </div>

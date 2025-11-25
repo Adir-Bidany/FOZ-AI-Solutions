@@ -9,17 +9,17 @@ import {
     MessageSquare,
     Settings,
     LogOut,
-    Copy,
     Link as LinkIcon,
     Sparkles,
+    Menu, // אייקון לתפריט
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import connectDB from "@/lib/db";
 import Client from "@/models/Client";
 import DashboardChat from "@/components/DashboardChat";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"; // רכיב תפריט צד למובייל
 
-// פונקציה לחישוב ברכה לפי שעה
 function getGreeting() {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) return "בוקר טוב";
@@ -29,7 +29,6 @@ function getGreeting() {
 }
 
 async function getClientData(slug: string) {
-    // --- הוספת המצב המיוחד עבור הדמו ---
     if (slug === "demo") {
         return {
             businessName: "קליניקת הדגמה",
@@ -38,7 +37,6 @@ async function getClientData(slug: string) {
             integrations: { simplybook: { isConnected: false } },
         };
     }
-    // -----------------------------------
 
     await connectDB();
     const client = await Client.findOne({ slug }).lean();
@@ -88,72 +86,99 @@ export default async function ClientDashboard({
         },
     ];
 
+    // רכיב הניווט (לשימוש חוזר גם בסרגל הקבוע וגם בתפריט הנייד)
+    const SidebarContent = () => (
+        <div className="flex flex-col h-full">
+            <div className="p-6 border-b flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-tr from-purple-600 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold uppercase shrink-0">
+                    {client.businessName.charAt(0)}
+                </div>
+                <span className="font-bold text-lg truncate">
+                    {client.businessName}
+                </span>
+            </div>
+
+            <nav className="flex-1 p-4 space-y-2">
+                <Button
+                    variant="secondary"
+                    className="w-full justify-start gap-2 font-medium bg-purple-50 text-purple-900"
+                >
+                    <Sparkles size={18} /> המשרד שלי
+                </Button>
+                <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 text-gray-600 hover:bg-gray-50"
+                >
+                    <Calendar size={18} /> יומן תורים
+                </Button>
+                <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 text-gray-600 hover:bg-gray-50"
+                >
+                    <Users size={18} /> לקוחות
+                </Button>
+                <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 text-gray-600 hover:bg-gray-50"
+                >
+                    <Megaphone size={18} /> שיווק
+                </Button>
+
+                <Link href={`/dashboard/${client.slug}/settings`}>
+                    <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-2 text-gray-600 hover:bg-gray-50"
+                    >
+                        <Settings size={18} /> הגדרות חיבורים
+                    </Button>
+                </Link>
+            </nav>
+
+            <div className="p-4 border-t mt-auto">
+                <Link href="/login">
+                    <Button
+                        variant="outline"
+                        className="w-full gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100"
+                    >
+                        <LogOut size={16} /> התנתקות
+                    </Button>
+                </Link>
+            </div>
+        </div>
+    );
+
     return (
         <div className="min-h-screen bg-gray-50 flex" dir="rtl">
-            {/* === סרגל צד === */}
+            {/* === סרגל צד (דסקטופ) === */}
             <aside className="w-64 bg-white border-l hidden md:flex flex-col fixed h-full right-0 z-10 shadow-sm">
-                <div className="p-6 border-b flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-tr from-purple-600 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold uppercase shrink-0">
-                        {client.businessName.charAt(0)}
-                    </div>
-                    <span className="font-bold text-lg truncate">
-                        {client.businessName}
-                    </span>
-                </div>
-
-                <nav className="flex-1 p-4 space-y-2">
-                    <Button
-                        variant="secondary"
-                        className="w-full justify-start gap-2 font-medium bg-purple-50 text-purple-900"
-                    >
-                        <Sparkles size={18} /> המשרד שלי
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        className="w-full justify-start gap-2 text-gray-600 hover:bg-gray-50"
-                    >
-                        <Calendar size={18} /> יומן תורים
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        className="w-full justify-start gap-2 text-gray-600 hover:bg-gray-50"
-                    >
-                        <Users size={18} /> לקוחות
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        className="w-full justify-start gap-2 text-gray-600 hover:bg-gray-50"
-                    >
-                        <Megaphone size={18} /> שיווק
-                    </Button>
-
-                    {/* --- הנה השינוי החשוב: הקישור להגדרות --- */}
-                    <Link href={`/dashboard/${client.slug}/settings`}>
-                        <Button
-                            variant="ghost"
-                            className="w-full justify-start gap-2 text-gray-600 hover:bg-gray-50"
-                        >
-                            <Settings size={18} /> הגדרות חיבורים
-                        </Button>
-                    </Link>
-                    {/* ---------------------------------------- */}
-                </nav>
-
-                <div className="p-4 border-t">
-                    <Link href="/login">
-                        <Button
-                            variant="outline"
-                            className="w-full gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100"
-                        >
-                            <LogOut size={16} /> התנתקות
-                        </Button>
-                    </Link>
-                </div>
+                <SidebarContent />
             </aside>
 
             {/* === תוכן ראשי === */}
-            <main className="flex-1 md:mr-64 p-4 lg:p-8">
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <main className="flex-1 md:mr-64 p-4 lg:p-8 w-full">
+                {/* Header נייד עם כפתור תפריט */}
+                <div className="md:hidden flex items-center justify-between mb-6">
+                    <h1 className="text-xl font-bold text-gray-900">
+                        {greeting}, {client.ownerName.split(" ")[0]}!
+                    </h1>
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="bg-white"
+                            >
+                                <Menu size={20} />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="right" className="p-0 w-72 sm:w-80">
+                            <SidebarContent />
+                        </SheetContent>
+                    </Sheet>
+                </div>
+
+                {/* Header דסקטופ */}
+                <header className="hidden md:flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">
                             {greeting}, {client.ownerName}! ☀️
@@ -170,6 +195,15 @@ export default async function ClientDashboard({
                         </Link>
                     </div>
                 </header>
+
+                {/* כפתור לאתר חי (נייד בלבד) */}
+                <div className="md:hidden mb-6">
+                    <Link href={`/c/${client.slug}`} target="_blank">
+                        <Button className="w-full gap-2 rounded-xl bg-gray-900 text-white shadow-md">
+                            <LinkIcon size={16} /> המעבר לאתר שלי
+                        </Button>
+                    </Link>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                     {stats.map((stat, i) => (
@@ -199,8 +233,9 @@ export default async function ClientDashboard({
                     ))}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[600px]">
-                    <div className="lg:col-span-2 h-full flex flex-col space-y-4">
+                {/* שינוי גובה: h-auto במובייל, h-[600px] בדסקטופ */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-auto lg:h-[600px]">
+                    <div className="lg:col-span-2 h-[500px] lg:h-full flex flex-col space-y-4">
                         <div className="flex items-center justify-between shrink-0">
                             <h2 className="text-lg font-bold flex items-center gap-2 text-gray-800">
                                 <Sparkles
@@ -210,7 +245,7 @@ export default async function ClientDashboard({
                                 חדר המצב (הצוות הדיגיטלי)
                             </h2>
                         </div>
-                        <div className="flex-1 overflow-hidden rounded-2xl shadow-sm border border-gray-200">
+                        <div className="flex-1 overflow-hidden rounded-2xl shadow-sm border border-gray-200 bg-white h-full">
                             <DashboardChat businessConfig={client} />
                         </div>
                     </div>
