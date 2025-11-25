@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Client from "@/models/Client";
+import bcrypt from "bcryptjs"; // <--- חדש
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        // הוספתי את email ו-password לרשימת השדות שאנחנו מקבלים
         const { businessName, ownerName, phone, email, password, tone, niche } =
             body;
 
         await connectDB();
 
-        // בדיקה אם המייל כבר קיים במערכת (למניעת כפילויות)
+        // בדיקת כפילות
         const existingUser = await Client.findOne({ email });
         if (existingUser) {
             return NextResponse.json(
@@ -20,7 +20,11 @@ export async function POST(req: Request) {
             );
         }
 
-        // יצירת מזהה אקראי באנגלית (למשל: a7x92b)
+        // --- הצפנת הסיסמה (החלק החדש והחשוב!) ---
+        // המערכת הופכת את "123456" למחרוזת ארוכה ובלתי קריאה
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // יצירת slug
         const slug = Math.random().toString(36).substring(2, 9);
 
         const newClient = await Client.create({
@@ -28,8 +32,8 @@ export async function POST(req: Request) {
             businessName,
             ownerName,
             phone,
-            email, // <--- נשמר ב-DB
-            password, // <--- נשמר ב-DB (הערה: בפרודקשן נצפין את זה)
+            email,
+            password: hashedPassword, // <--- שומרים את המוצפן, לא את המקורי!
             niche,
             domainGuidelines: `קליניקה בבעלות ${ownerName}. סגנון דיבור: ${tone}. תחום עיסוק: ${niche}.`,
             personas: {

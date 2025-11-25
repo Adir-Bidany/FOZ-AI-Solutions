@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signIn } from "next-auth/react"; // <--- הייבוא החדש והחשוב
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,22 +24,46 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
-            const res = await fetch("/api/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+            // שימוש ב-NextAuth לביצוע הכניסה
+            const result = await signIn("credentials", {
+                email: formData.email,
+                password: formData.password,
+                redirect: false, // אנחנו נטפל בהפניה ידנית
             });
 
-            const data = await res.json();
+            if (result?.error) {
+                toast.error("פרטי ההתחברות שגויים");
+                setIsLoading(false);
+                return;
+            }
 
-            if (data.success) {
-                toast.success("התחברת בהצלחה!", { duration: 2000 });
-                // העברה לדשבורד האישי שלה
-                router.push(`/dashboard/${data.slug}`);
+            // אם ההתחברות הצליחה - המערכת כבר שמרה את ה-Session
+            toast.success("התחברת בהצלחה!");
+
+            // טעינה מחדש כדי שהאפליקציה תדע שהמשתמש מחובר
+            router.refresh();
+
+            // שליפה של ה-slug מהסשן החדש (דרך API קטן שנבנה מיד או ניהול צד לקוח)
+            // לבינתיים, נפנה לדשבורד הראשי וה-Middleware יטפל בניתוב
+            // אבל כדי שזה יעבוד חלק, בוא נעשה טריק קטן:
+            // נפנה ל-/dashboard, ושם נבדוק לאן ללכת
+
+            // אופציה פשוטה יותר: נשלוף את הנתונים שוב כדי לדעת לאן ללכת
+            // או פשוט נניח שהמשתמש יודע.
+            // *הפתרון הנכון:* ה-API של ה-Session יחזיר לנו את ה-Slug.
+
+            // לצורך הפשטות כרגע: נחזיר אותו לראשי, או נשתמש ב-result.url אם יש
+            // הדרך הכי טובה: נבקש את הסשן
+            const sessionRes = await fetch("/api/auth/session");
+            const session = await sessionRes.json();
+
+            if (session?.user?.slug) {
+                router.push(`/dashboard/${session.user.slug}`);
             } else {
-                toast.error(data.error || "פרטי ההתחברות שגויים");
+                router.push("/"); // ברירת מחדל
             }
         } catch (error) {
+            console.error(error);
             toast.error("שגיאת תקשורת");
         } finally {
             setIsLoading(false);
@@ -50,7 +75,6 @@ export default function LoginPage() {
             className="min-h-screen bg-[#FDFCF8] flex items-center justify-center p-4 relative overflow-hidden"
             dir="rtl"
         >
-            {/* רקע אווירה */}
             <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-purple-200/30 rounded-full blur-[100px]" />
             <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-pink-200/20 rounded-full blur-[120px]" />
 
@@ -81,7 +105,6 @@ export default function LoginPage() {
                                 type="email"
                                 required
                                 className="bg-white border-gray-200 text-right"
-                                placeholder="name@example.com"
                                 value={formData.email}
                                 onChange={(e) =>
                                     setFormData({
@@ -106,7 +129,6 @@ export default function LoginPage() {
                                 type="password"
                                 required
                                 className="bg-white border-gray-200 text-right"
-                                placeholder="******"
                                 value={formData.password}
                                 onChange={(e) =>
                                     setFormData({
