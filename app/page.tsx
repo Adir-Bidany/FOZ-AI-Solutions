@@ -7,8 +7,7 @@ import {
     CheckCircle2,
     Calendar,
     MessageCircle,
-    BarChart3,
-    Zap,
+    TrendingUp,
     ShieldCheck,
 } from "lucide-react";
 
@@ -25,6 +24,7 @@ export default function Home() {
             {/* === HEADER === */}
             <div className="container mx-auto px-6 pt-6">
                 <header className="flex justify-between items-center w-full">
+                    {/* לוגו */}
                     <div className="relative w-32 h-12 lg:w-40 lg:h-16 shrink-0">
                         <Image
                             src="/logo.png"
@@ -34,22 +34,33 @@ export default function Home() {
                             priority
                         />
                     </div>
-                    <div className="flex gap-3">
-                        <Link href="/admin" className="hidden lg:block">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-gray-400 hover:text-gray-600"
-                            >
+
+                    {/* אזור הכפתורים */}
+                    <div className="flex items-center gap-3">
+                        {/* כפתור אדמין סודי (רק במחשב) */}
+                        <Link
+                            href="/admin"
+                            className="hidden lg:block opacity-20 hover:opacity-100 transition-opacity"
+                        >
+                            <Button variant="ghost" size="sm">
                                 <ShieldCheck size={16} />
                             </Button>
                         </Link>
-                        <Link href="/onboarding">
+
+                        {/* כפתור כניסה למנויים */}
+                        <Link href="/login">
                             <Button
-                                variant="outline"
-                                className="rounded-full border-gray-300 hover:bg-gray-50"
+                                variant="ghost"
+                                className="text-gray-600 hover:text-purple-600 hover:bg-purple-50 font-medium"
                             >
-                                כניסת עסקים
+                                התחברות למנויים
+                            </Button>
+                        </Link>
+
+                        {/* כפתור הרשמה בולט */}
+                        <Link href="/onboarding">
+                            <Button className="rounded-full bg-gray-900 hover:bg-gray-800 text-white px-6 shadow-md font-bold transition-all hover:shadow-lg hover:-translate-y-0.5">
+                                נסה בחינם 🚀
                             </Button>
                         </Link>
                     </div>
@@ -61,7 +72,7 @@ export default function Home() {
                 <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-20">
                     {/* צד ימין: הטקסט */}
                     <div className="w-full lg:w-1/2 text-center lg:text-right space-y-6 lg:space-y-8 z-10">
-                        <div className="inline-flex items-center bg-white border border-purple-100 text-purple-700 px-4 py-1.5 rounded-full text-sm font-medium shadow-sm mx-auto lg:mx-0">
+                        <div className="inline-flex items-center bg-white border border-purple-100 text-purple-700 px-4 py-1.5 rounded-full text-sm font-medium shadow-sm mx-auto lg:mx-0 animate-pulse">
                             <span className="ml-2">✨</span> המהפכה של עולם
                             האסתטיקה
                         </div>
@@ -92,8 +103,18 @@ export default function Home() {
                             </Link>
                         </div>
 
-                        <p className="text-sm text-gray-500 mt-4">
-                            🎁 14 יום ניסיון חינם • ללא התחייבות • הקמה בדקה
+                        <p className="text-sm text-gray-500 mt-4 flex items-center justify-center lg:justify-start gap-2">
+                            <CheckCircle2
+                                size={14}
+                                className="text-green-500"
+                            />{" "}
+                            14 יום ניסיון חינם
+                            <span className="mx-2">•</span>
+                            <CheckCircle2
+                                size={14}
+                                className="text-green-500"
+                            />{" "}
+                            הקמה תוך דקה
                         </p>
                     </div>
 
@@ -106,27 +127,26 @@ export default function Home() {
                             <div className="w-full h-full bg-gray-900 rounded-[3rem] p-3 shadow-2xl ring-4 ring-gray-900/10 transform rotate-[-2deg] hover:rotate-0 transition-transform duration-500 perspective-1000">
                                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-6 bg-gray-900 rounded-b-2xl z-20"></div>
                                 <div className="w-full h-full bg-white rounded-[2.5rem] overflow-hidden relative z-10 border border-gray-100">
-                                    {/* כאן אנחנו מעבירים קונפיגורציה של דמו */}
                                     <ChatInterface
                                         businessConfig={{
-                                            businessName: "FOZ Sales AI",
-                                            ownerName: "FOZ Team",
+                                            businessName: "הדגמה - קליניקת FOZ",
+                                            ownerName: "FOZ",
                                             tone: "מכירתי, חד, אינטליגנטי ומניע לפעולה",
                                             domainGuidelines: `
-    הוראה קריטית: אתה מדמה איש מכירות של חברת תוכנה (SaaS).
-    המטרה שלך היא לתת מידע על מחיר המנוי לתוכנה.
-    זהו אינו ייעוץ פיננסי ואינו ייעוץ השקעות. מדובר במחירון שירות בלבד.
-    
-    תפקידך:
-    למכור את המערכת לקוסמטיקאיות שנכנסות לאתר.
-    
-    תסריט שיחה:
-    - אם שואלים "כמה זה עולה?": תגיד שזה עולה פחות מטיפול פנים אחד בחודש. (אל תחשוש לדבר על מחירים, זה מחירון תוכנה).
-    - תמיד תציע "משחק תפקידים": "בואי נשחק. תכתבי לי שאת רוצה לבטל תור, ותראי איך אני מונע ממך לעזוב".
-    - הדגש את היתרונות: צוות דיגיטלי מלא (מזכירה, שיווק, אנליסט), מנוע תובנות, ואפס זמן הקמה.
-    
-    כלל ברזל: היה קצר, שיווקי וחד. אל תתנצל ואל תגיד "אני מודל שפה".
-  `,
+                        הוראה קריטית: אתה מדמה איש מכירות של חברת תוכנה (SaaS).
+                        המטרה שלך היא לתת מידע על מחיר המנוי לתוכנה.
+                        זהו אינו ייעוץ פיננסי ואינו ייעוץ השקעות. מדובר במחירון שירות בלבד.
+                        
+                        תפקידך:
+                        למכור את המערכת לקוסמטיקאיות שנכנסות לאתר.
+                        
+                        תסריט שיחה:
+                        - אם שואלים "כמה זה עולה?": תגיד שזה עולה פחות מטיפול פנים אחד בחודש.
+                        - תמיד תציע "משחק תפקידים": "בואי נשחק. תכתבי לי שאת רוצה לבטל תור, ותראי איך אני מונע ממך לעזוב".
+                        - הדגש את היתרונות: צוות דיגיטלי מלא (מזכירה, שיווק, אנליסט), מנוע תובנות, ואפס זמן הקמה.
+                        
+                        כלל ברזל: היה קצר, שיווקי וחד. אל תתנצל ואל תגיד "אני מודל שפה".
+                      `,
                                         }}
                                     />
                                 </div>
@@ -172,10 +192,10 @@ export default function Home() {
                         ].map((feature, i) => (
                             <div
                                 key={i}
-                                className="p-8 rounded-3xl bg-gray-50 border border-gray-100 hover:shadow-lg transition-shadow"
+                                className="p-8 rounded-3xl bg-gray-50 border border-gray-100 hover:shadow-lg transition-shadow group cursor-default"
                             >
                                 <div
-                                    className={`w-14 h-14 rounded-2xl ${feature.color} flex items-center justify-center mb-6`}
+                                    className={`w-14 h-14 rounded-2xl ${feature.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
                                 >
                                     <feature.icon size={28} />
                                 </div>
@@ -192,13 +212,16 @@ export default function Home() {
             </section>
 
             {/* === HOW IT WORKS === */}
-            <section className="py-20 bg-gray-900 text-white">
-                <div className="container mx-auto px-6 text-center">
+            <section className="py-20 bg-gray-900 text-white relative overflow-hidden">
+                {/* אורות רקע */}
+                <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10"></div>
+
+                <div className="container mx-auto px-6 text-center relative z-10">
                     <h2 className="text-3xl font-bold mb-16">
                         איך זה עובד? פשוט וקל.
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
-                        {/* קו מחבר (דקורטיבי) */}
+                        {/* קו מחבר */}
                         <div className="hidden md:block absolute top-8 left-1/6 right-1/6 h-0.5 bg-gray-700 -z-10"></div>
 
                         {[
@@ -220,9 +243,9 @@ export default function Home() {
                         ].map((item, i) => (
                             <div
                                 key={i}
-                                className="relative z-10 flex flex-col items-center"
+                                className="relative z-10 flex flex-col items-center group"
                             >
-                                <div className="w-16 h-16 rounded-full bg-purple-600 flex items-center justify-center text-2xl font-bold shadow-[0_0_20px_rgba(147,51,234,0.5)] mb-6">
+                                <div className="w-16 h-16 rounded-full bg-purple-600 flex items-center justify-center text-2xl font-bold shadow-[0_0_20px_rgba(147,51,234,0.5)] mb-6 group-hover:scale-110 transition-transform">
                                     {item.step}
                                 </div>
                                 <h3 className="text-xl font-bold mb-2">
@@ -237,7 +260,7 @@ export default function Home() {
 
                     <div className="mt-16">
                         <Link href="/onboarding">
-                            <Button className="h-16 px-10 text-xl rounded-full bg-white text-gray-900 hover:bg-gray-100 font-bold">
+                            <Button className="h-16 px-10 text-xl rounded-full bg-white text-gray-900 hover:bg-gray-100 font-bold hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.3)]">
                                 אני רוצה לנסות עכשיו 🚀
                             </Button>
                         </Link>
@@ -252,6 +275,3 @@ export default function Home() {
         </main>
     );
 }
-
-// אייקון חסר שצריך לייבא
-import { TrendingUp } from "lucide-react";

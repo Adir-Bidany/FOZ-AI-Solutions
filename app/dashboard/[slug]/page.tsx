@@ -126,12 +126,14 @@ export default async function ClientDashboard({
                 </nav>
 
                 <div className="p-4 border-t">
-                    <Button
-                        variant="outline"
-                        className="w-full gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100"
-                    >
-                        <LogOut size={16} /> התנתקות
-                    </Button>
+                    <Link href="/login">
+                        <Button
+                            variant="outline"
+                            className="w-full gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100"
+                        >
+                            <LogOut size={16} /> התנתקות
+                        </Button>
+                    </Link>
                 </div>
             </aside>
 

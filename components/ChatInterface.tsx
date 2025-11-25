@@ -1,38 +1,36 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send } from "lucide-react";
+import { Send, Sparkles } from "lucide-react";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 
-// הגדרת סוג המידע שהצ'אט מצפה לקבל
-interface ChatProps {
-    businessConfig: {
-        businessName: string;
-        ownerName: string;
-        tone: string;
-        domainGuidelines: string;
-    };
+interface ChatInterfaceProps {
+    businessConfig: any;
 }
 
-export default function ChatInterface({ businessConfig }: ChatProps) {
+export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
     const [messages, setMessages] = useState([
         {
             role: "assistant",
-            content: `היי! אני העוזרת החכמה של ${businessConfig.businessName}. איך אפשר לעזור לך? ✨`,
+            content: `היי! אני העוזרת החכמה של ${
+                businessConfig.businessName || "העסק"
+            }. איך אפשר לעזור לך להיראות מדהים היום? ✨`,
         },
     ]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    // state חדש למעקב אחרי פוקוס
+    const [isFocused, setIsFocused] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollIntoView({ behavior: "smooth" });
         }
-    }, [messages, isLoading]);
+    }, [messages]);
 
     const handleSend = async () => {
         if (!input.trim()) return;
@@ -48,7 +46,7 @@ export default function ChatInterface({ businessConfig }: ChatProps) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     messages: [...messages, userMessage],
-                    businessConfig: businessConfig, // שימוש בהגדרות שהגיעו מבחוץ
+                    businessConfig: businessConfig,
                 }),
             });
 
@@ -61,7 +59,10 @@ export default function ChatInterface({ businessConfig }: ChatProps) {
             console.error(error);
             setMessages((prev) => [
                 ...prev,
-                { role: "assistant", content: "אופס, תקלה רגעית. נסי שוב." },
+                {
+                    role: "assistant",
+                    content: "סליחה, יש לי בעיה בתקשורת כרגע.",
+                },
             ]);
         } finally {
             setIsLoading(false);
@@ -69,34 +70,33 @@ export default function ChatInterface({ businessConfig }: ChatProps) {
     };
 
     return (
-        <div
-            className="flex flex-col h-full bg-white text-gray-800 overflow-hidden relative"
-            dir="rtl"
-        >
-            {/* כותרת הצ'אט */}
-            <div className="p-4 bg-white/80 backdrop-blur-md border-b flex items-center gap-3 sticky top-0 z-10 shrink-0">
-                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-100 shadow-sm">
-                    <Image
-                        src="/favicon.png"
-                        alt="Logo"
-                        fill
-                        className="object-cover"
-                    />
-                </div>
+        <div className="flex flex-col h-full bg-[#FDFCF8]" dir="rtl">
+            {/* Header */}
+            <div className="bg-white p-3 flex items-center gap-3 border-b shadow-sm shrink-0 relative z-10">
+                <Avatar className="w-10 h-10 ring-2 ring-purple-100">
+                    <AvatarImage src="https://api.dicebear.com/7.x/bottts/svg?seed=foz&backgroundColor=transparent" />
+                </Avatar>
                 <div>
-                    <h3 className="font-bold text-sm text-right text-gray-900">
-                        {businessConfig.businessName}
-                    </h3>
-                    <p className="text-xs text-green-500 flex items-center gap-1 font-medium">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        מחוברת כעת
-                    </p>
+                    <h3 className="font-bold text-gray-900">FOZ Assistant</h3>
+                    <div className="flex items-center gap-1.5">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <span className="text-xs text-green-600 font-medium">
+                            מחוברת כעת
+                        </span>
+                    </div>
                 </div>
+                <Sparkles
+                    className="text-purple-500 absolute left-4 top-4 opacity-20"
+                    size={24}
+                />
             </div>
 
             {/* אזור ההודעות */}
-            <ScrollArea className="flex-1 p-4 bg-gray-50 h-[400px]">
-                <div className="space-y-4 pb-4">
+            <ScrollArea className="flex-1 p-4 bg-[url('https://www.transparenttextures.com/patterns/snow.png')]">
+                <div className="space-y-4 pb-2">
                     {messages.map((m, i) => (
                         <div
                             key={i}
@@ -104,14 +104,18 @@ export default function ChatInterface({ businessConfig }: ChatProps) {
                                 m.role === "user"
                                     ? "justify-end"
                                     : "justify-start"
-                            }`}
+                            } animate-in slide-in-from-bottom-2 duration-300`}
                         >
+                            {m.role === "assistant" && (
+                                <Avatar className="w-8 h-8 ml-2 mt-1 ring-1 ring-purple-50 shrink-0">
+                                    <AvatarImage src="https://api.dicebear.com/7.x/bottts/svg?seed=foz&backgroundColor=transparent" />
+                                </Avatar>
+                            )}
                             <div
-                                dir="rtl"
-                                className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-sm text-right leading-relaxed ${
+                                className={`max-w-[80%] p-3.5 rounded-2xl text-sm shadow-sm leading-relaxed ${
                                     m.role === "user"
-                                        ? "bg-gray-900 text-white rounded-bl-none"
-                                        : "bg-white border border-gray-100 text-gray-800 rounded-br-none"
+                                        ? "bg-purple-600 text-white rounded-br-none shadow-purple-200"
+                                        : "bg-white border border-gray-100 text-gray-800 rounded-bl-none"
                                 }`}
                             >
                                 {m.content}
@@ -119,8 +123,11 @@ export default function ChatInterface({ businessConfig }: ChatProps) {
                         </div>
                     ))}
                     {isLoading && (
-                        <div className="flex justify-start">
-                            <div className="bg-white border border-gray-100 p-3 rounded-2xl rounded-br-none text-xs text-gray-400 flex items-center gap-1">
+                        <div className="flex justify-start animate-in fade-in duration-300">
+                            <Avatar className="w-8 h-8 ml-2 mt-1 ring-1 ring-purple-50 shrink-0">
+                                <AvatarImage src="https://api.dicebear.com/7.x/bottts/svg?seed=foz&backgroundColor=transparent" />
+                            </Avatar>
+                            <div className="bg-white border border-gray-100 p-3 rounded-2xl rounded-bl-none text-xs text-gray-400 flex items-center gap-1 shadow-sm">
                                 <span className="animate-bounce">●</span>
                                 <span className="animate-bounce delay-100">
                                     ●
@@ -131,27 +138,45 @@ export default function ChatInterface({ businessConfig }: ChatProps) {
                             </div>
                         </div>
                     )}
-                    <div ref={scrollRef} className="h-1" />
+                    <div ref={scrollRef} />
                 </div>
             </ScrollArea>
 
-            {/* אזור ההקלדה */}
-            <div className="p-3 bg-white border-t mt-auto shrink-0">
-                <div className="flex gap-2" dir="rtl">
+            {/* אזור הקלדה - כאן השינוי הגדול */}
+            <div className="p-3 bg-white border-t relative z-10">
+                <div className="relative flex items-center">
                     <Input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                        placeholder="כתבי כאן..."
-                        className="rounded-full bg-gray-50 border-gray-200 focus-visible:ring-purple-500 text-black text-right"
+                        onFocus={() => setIsFocused(true)}
+                        onBlur={() => setIsFocused(false)}
+                        placeholder="כתבי כאן הודעה..." // הטקסט המהבהב
+                        disabled={isLoading}
+                        className={`pr-4 pl-12 py-6 rounded-full bg-gray-50 border-gray-200 
+              focus-visible:ring-purple-500 focus-visible:ring-2 transition-all duration-300 text-[15px] 
+              placeholder:text-gray-500 placeholder:font-medium
+              ${
+                  !isFocused && !input
+                      ? "animate-inviting-pulse placeholder:animate-pulse placeholder:text-purple-400"
+                      : "placeholder:text-gray-400"
+              }
+            `}
                     />
                     <Button
                         onClick={handleSend}
                         size="icon"
-                        className="rounded-full bg-gray-900 hover:bg-gray-800 shrink-0 text-white transform rotate-180"
-                        disabled={isLoading}
+                        disabled={isLoading || !input.trim()}
+                        className={`absolute left-1.5 h-9 w-9 rounded-full transition-all duration-300 ${
+                            input.trim()
+                                ? "bg-purple-600 hover:bg-purple-700 scale-100"
+                                : "bg-gray-200 text-gray-400 scale-90"
+                        }`}
                     >
-                        <Send size={18} />
+                        <Send
+                            size={16}
+                            className={input.trim() ? "ml-0.5" : ""}
+                        />
                     </Button>
                 </div>
             </div>
