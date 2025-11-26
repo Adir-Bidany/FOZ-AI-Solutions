@@ -72,10 +72,7 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
     const chatAvatar = businessConfig.logo || "/favicon.png";
 
     return (
-        <div
-            className="flex flex-col h-full bg-[#FDFCF8] relative overflow-hidden"
-            dir="rtl"
-        >
+        <div className="flex flex-col h-full bg-[#FDFCF8] relative overflow-hidden" dir="rtl">
             {/* Header של הצ'אט */}
             <div className="bg-white/90 backdrop-blur-sm p-3 flex items-center gap-3 border-b shadow-sm shrink-0 relative z-20">
                 <div className="relative w-9 h-9 md:w-10 md:h-10 rounded-full overflow-hidden border border-gray-100 shadow-sm">
@@ -102,7 +99,7 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                 </div>
             </div>
 
-            {/* אזור ההודעות - הוספתי רקע עדין */}
+            {/* אזור ההודעות */}
             <ScrollArea className="flex-1 p-0 bg-[url('https://www.transparenttextures.com/patterns/snow.png')]">
                 <div className="p-4 space-y-4 pb-2 min-h-full flex flex-col justify-end">
                     {messages.map((m, i) => (
@@ -147,12 +144,8 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                             </div>
                             <div className="bg-white border border-gray-100 p-3 rounded-2xl rounded-bl-none text-xs text-gray-400 flex items-center gap-1 shadow-sm">
                                 <span className="animate-bounce">●</span>
-                                <span className="animate-bounce delay-100">
-                                    ●
-                                </span>
-                                <span className="animate-bounce delay-200">
-                                    ●
-                                </span>
+                                <span className="animate-bounce delay-100">●</span>
+                                <span className="animate-bounce delay-200">●</span>
                             </div>
                         </div>
                     )}
@@ -160,7 +153,7 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                 </div>
             </ScrollArea>
 
-            {/* אזור הקלדה - שיפורים למובייל */}
+            {/* אזור הקלדה - כולל הערה משפטית */}
             <div className="p-3 bg-white border-t relative z-20 pb-safe">
                 <div className="relative flex items-center">
                     <Input
@@ -171,14 +164,13 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                         onBlur={() => setIsFocused(false)}
                         placeholder="כתבי הודעה..."
                         disabled={isLoading}
-                        // שיניתי את ה-padding ל-py-3 במובייל ו-py-6 בדסקטופ
                         className={`pr-4 pl-12 py-3 md:py-6 rounded-full bg-gray-50 border-gray-200 focus-visible:ring-purple-500 focus-visible:ring-2 transition-all duration-300 text-[15px] placeholder:text-gray-500 placeholder:font-medium h-auto min-h-[44px] md:min-h-[56px]
-              ${
-                  !isFocused && !input
-                      ? "placeholder:text-purple-400/70"
-                      : "placeholder:text-gray-400"
-              }
-            `}
+                            ${
+                                !isFocused && !input
+                                    ? "placeholder:text-purple-400/70"
+                                    : "placeholder:text-gray-400"
+                            }
+                        `}
                     />
                     <Button
                         onClick={handleSend}
@@ -192,13 +184,25 @@ export default function ChatInterface({ businessConfig }: ChatInterfaceProps) {
                     >
                         <Send
                             size={16}
-                            className={`md:w-5 md:h-5 ${
-                                input.trim() ? "ml-0.5" : ""
-                            }`}
+                            className={`md:w-5 md:h-5 ${input.trim() ? "ml-0.5" : ""}`}
                         />
                     </Button>
+                </div>
+                
+                {/* --- הוספת ההערה המשפטית --- */}
+                <div className="text-center mt-2">
+                    <p className="text-[10px] text-gray-400">
+                        בלחיצה על שליחה, את מסכימה ל
+                        <a href="/legal/terms" target="_blank" className="underline hover:text-gray-600 mx-1">תנאי השימוש</a>
+                        ול
+                        <a href="/legal/privacy" target="_blank" className="underline hover:text-gray-600 mx-1">מדיניות הפרטיות</a>
+                        של המערכת.
+                        <br/>
+                        המידע מעובד על ידי בינה מלאכותית ועשוי להכיל אי-דיוקים.
+                    </p>
                 </div>
             </div>
         </div>
     );
 }
+

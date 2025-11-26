@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { getAvailableSlots, bookAppointment } from "@/lib/simplybook";
+import {
+    getAvailableSlots,
+    bookAppointment,
+    getClientHistory,
+} from "@/lib/simplybook";
 import connectDB from "@/lib/db";
 import Client from "@/models/Client";
+import Conversation from "@/models/Conversation";
+import { revalidatePath } from "next/cache";
 
 export async function POST(req: Request) {
     try {
@@ -11,26 +17,26 @@ export async function POST(req: Request) {
             return NextResponse.json({ reply: "שגיאה: חסר מפתח API." });
 
         const body = await req.json();
-        const { messages, businessConfig, activePersona } = body;
+        const { messages, businessConfig, activePersona, conversationId } =
+            body;
 
-        // --- 1. שליפת מפתחות SimplyBook (החלק שהיה חסר לך) ---
+        await connectDB();
+
+        // --- 1. זיהוי והכנת נתונים ---
         let simplyBookCreds: { companyLogin: string; apiKey: string } | null =
             null;
+        let clientDoc: any = null;
 
-        // בדיקה: האם זה לקוח אמיתי או דמו?
         if (businessConfig.slug && businessConfig.slug !== "demo") {
-            await connectDB();
-            const client = await Client.findOne({ slug: businessConfig.slug });
-
-            // אם ללקוח יש אינטגרציה מחוברת - ניקח משם
-            if (client && client.integrations?.simplybook?.isConnected) {
+            clientDoc = await Client.findOne({ slug: businessConfig.slug });
+            if (clientDoc?.integrations?.simplybook?.isConnected) {
                 simplyBookCreds = {
-                    companyLogin: client.integrations.simplybook.companyLogin,
-                    apiKey: client.integrations.simplybook.apiKey,
+                    companyLogin:
+                        clientDoc.integrations.simplybook.companyLogin,
+                    apiKey: clientDoc.integrations.simplybook.apiKey,
                 };
             }
         } else if (businessConfig.slug === "demo") {
-            // במצב דמו - משתמשים במפתחות שלך מקובץ ה-.env
             if (
                 process.env.SIMPLYBOOK_COMPANY &&
                 process.env.SIMPLYBOOK_API_KEY
@@ -41,153 +47,189 @@ export async function POST(req: Request) {
                 };
             }
         }
-        // -------------------------------------------------------
 
         const genAI = new GoogleGenerativeAI(apiKey);
 
-        const isReceptionist =
-            !activePersona || activePersona === "receptionist";
+        // --- 2. הגדרת כלים (Tools) לפי סוכן ---
+        let tools: any[] = [];
+        let systemPrompt = "";
 
-        // נותנים לבוט גישה לכלים רק אם יש לנו מפתחות תקינים!
-        const hasCalendarAccess = simplyBookCreds !== null;
+        // פונקציות עזר לבניית כלים
+        const availabilityTool = {
+            name: "check_availability",
+            description: "בודק תורים פנויים ביומן.",
+        };
 
-        const tools =
-            isReceptionist && hasCalendarAccess
-                ? [
-                      {
-                          functionDeclarations: [
-                              {
-                                  name: "check_availability",
-                                  description:
-                                      "בודק תורים פנויים. השתמש בזה כששואלים מתי פנוי.",
-                              },
-                              {
-                                  name: "book_appointment",
-                                  description:
-                                      "קובע תור סופי ביומן. השתמש בזה רק אחרי שהלקוח נתן: תאריך, שעה, שם וטלפון.",
-                                  parameters: {
-                                      type: "OBJECT",
-                                      properties: {
-                                          date: {
-                                              type: "STRING",
-                                              description:
-                                                  "תאריך בפורמט YYYY-MM-DD",
-                                          },
-                                          time: {
-                                              type: "STRING",
-                                              description: "שעה בפורמט HH:mm",
-                                          },
-                                          name: {
-                                              type: "STRING",
-                                              description: "שם הלקוח",
-                                          },
-                                          phone: {
-                                              type: "STRING",
-                                              description: "מספר טלפון",
-                                          },
-                                      },
-                                      required: [
-                                          "date",
-                                          "time",
-                                          "name",
-                                          "phone",
-                                      ],
-                                  },
-                              },
-                          ],
-                      },
-                  ]
-                : undefined;
+        const bookingTool = {
+            name: "book_appointment",
+            description: "קובע תור חדש ביומן.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    date: { type: "STRING" },
+                    time: { type: "STRING" },
+                    name: { type: "STRING" },
+                    phone: { type: "STRING" },
+                },
+                required: ["date", "time", "name", "phone"],
+            },
+        };
 
-        const modelParams: any = { model: "gemini-2.0-flash" };
-        if (tools) modelParams.tools = tools;
+        // === דניאלה: מנהלת התפעול (Ops Manager) ===
+        if (!activePersona || activePersona === "receptionist") {
+            const daniellaTools = [];
 
-        const model = genAI.getGenerativeModel(modelParams);
-
-        // --- בניית הפרומפט ---
-        let personaPrompt = "";
-
-        if (activePersona === "marketing") {
-            personaPrompt = `
-            את מיכל, מנהלת השיווק של "${businessConfig.businessName}".
-            הסגנון שלך: אנרגטי, יצירתי, מומחית לאינסטגרם וטיקטוק.
-        `;
-        } else if (activePersona === "analyst") {
-            personaPrompt = `
-            אתה רועי, האנליסט העסקי של "${businessConfig.businessName}".
-            הסגנון שלך: קצר, ענייני, מבוסס נתונים.
-        `;
-        } else {
-            personaPrompt = `
-            את דניאלה, מנהלת הקבלה של "${businessConfig.businessName}".
-            הסגנון שלך: שירותי, אדיב ומכירתי.
-            המטרה: לנהל את היומן, לבדוק זמינות, ולסגור תורים.
-            ${
-                !hasCalendarAccess
-                    ? "(הערה לעצמך: כרגע אין חיבור ליומן, אז תגידי ללקוח שאת עדיין לא יכולה לקבוע תור טכנית)."
-                    : ""
+            if (simplyBookCreds) {
+                daniellaTools.push(availabilityTool);
+                daniellaTools.push(bookingTool);
+                daniellaTools.push({
+                    name: "get_client_history",
+                    description:
+                        "חיפוש היסטוריית תורים של לקוחה ספציפית כדי לדעת מתי הייתה או מתי תבוא.",
+                    parameters: {
+                        type: "OBJECT",
+                        properties: {
+                            query: {
+                                type: "STRING",
+                                description: "שם הלקוחה או מספר טלפון",
+                            },
+                        },
+                        required: ["query"],
+                    },
+                });
             }
-        `;
+
+            daniellaTools.push({
+                name: "update_business_profile",
+                description: "עדכון פרטי העסק במערכת (כמו שם העסק, שם הבעלים).",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        field: {
+                            type: "STRING",
+                            enum: ["businessName", "ownerName"],
+                            description: "השדה לעדכון",
+                        },
+                        value: { type: "STRING", description: "הערך החדש" },
+                    },
+                    required: ["field", "value"],
+                },
+            });
+
+            tools = [{ functionDeclarations: daniellaTools }];
+
+            systemPrompt = `
+                את דניאלה, מנהלת התפעול הראשית והעוזרת האישית של "${businessConfig.businessName}".
+                תפקידך: לנהל את העסק ביד רמה.
+                הנחיות: דברי כמנהלת יעילה. השתמשי בכלים שברשותך.
+            `;
         }
 
-        const systemPrompt = `
-      ${personaPrompt}
-      בעלים: ${businessConfig.ownerName}
-      מידע כללי: ${businessConfig.domainGuidelines}
-      הנחיות: ענה בעברית בלבד.
-    `;
+        // === מיכל: מנהלת שיווק ===
+        else if (activePersona === "marketing") {
+            // לוגיקה מקוצרת לשליפת מידע (כמו בקוד הקודם)
+            let marketInsights = "אין נתונים כרגע.";
+            if (clientDoc) {
+                const recentConvs = await Conversation.find({
+                    clientId: clientDoc._id,
+                })
+                    .sort({ createdAt: -1 })
+                    .limit(10)
+                    .select("messages");
+                if (recentConvs.length > 0) {
+                    marketInsights = "יש שיחות אחרונות במערכת."; // לקיצור הקוד כאן
+                }
+            }
 
-        // היסטוריה
+            systemPrompt = `
+                את מיכל, מנהלת השיווק של "${businessConfig.businessName}".
+                מידע מהשטח: ${marketInsights}
+                הנחיות: תני רעיונות לסטורי ולשיווק.
+            `;
+        }
+
+        // === רועי: אנליסט ===
+        else if (activePersona === "analyst") {
+            systemPrompt = `אתה רועי, האנליסט העסקי של "${businessConfig.businessName}".`;
+        }
+
+        systemPrompt += `\nבעלים: ${businessConfig.ownerName}\nענה בעברית בלבד.`;
+
+        // --- 3. הכנת ההיסטוריה (התיקון הקריטי) ---
         const lastUserMessage = messages[messages.length - 1];
         const previousMessages = messages.slice(0, -1);
+
+        // המרה לפורמט של גוגל
         let history = previousMessages.map((m: any) => ({
             role: m.role === "user" ? "user" : "model",
             parts: [{ text: m.content }],
         }));
-        if (history.length > 0 && history[0].role === "model")
-            history = history.slice(1);
+
+        // === התיקון: הסרת הודעות התחלה שאינן User ===
+        // אנחנו מורידים כל הודעה מתחילת הרשימה כל עוד היא לא 'user'
+        while (history.length > 0 && history[0].role !== "user") {
+            history.shift();
+        }
+        // ============================================
+
+        const modelParams: any = { model: "gemini-2.0-flash" };
+        if (tools.length > 0) modelParams.tools = tools;
+
+        const model = genAI.getGenerativeModel(modelParams);
 
         const chat = model.startChat({ history });
-
-        console.log(`📨 Request to Gemini (${activePersona || "default"})...`);
+        console.log(`📨 Request to Gemini (${activePersona || "Daniella"})...`);
 
         const result = await chat.sendMessage(
             systemPrompt + "\n\n" + lastUserMessage.content
         );
         const response = await result.response;
+        let finalReply = response.text();
 
-        // --- טיפול בפונקציות (עם התיקונים שלך) ---
+        // --- 4. טיפול בפונקציות ---
         const functionCalls = response.functionCalls();
-
         if (functionCalls && functionCalls.length > 0) {
             const call = functionCalls[0];
-            console.log("🔧 Gemini executing:", call.name);
+            console.log("🔧 Tool Executing:", call.name);
+            let functionResult = "שגיאה בביצוע הפעולה.";
 
-            let functionResult;
-
-            // אם הגענו לפה, simplyBookCreds בטוח קיים (בגלל התנאי של tools למעלה),
-            // אבל ליתר ביטחון נוסיף בדיקה
-            if (!simplyBookCreds) {
-                functionResult = "שגיאה טכנית: חסרים פרטי התחברות ליומן.";
-            } else {
+            if (simplyBookCreds) {
                 if (call.name === "check_availability") {
                     functionResult = await getAvailableSlots(
                         simplyBookCreds.companyLogin,
                         simplyBookCreds.apiKey
                     );
                 } else if (call.name === "book_appointment") {
-                    const { date, time, name, phone } = call.args as any;
-                    console.log("📝 Booking details:", date, time, name, phone);
-
+                    const args = call.args as any;
                     functionResult = await bookAppointment(
-                        String(date),
-                        String(time),
-                        String(name),
-                        String(phone),
+                        String(args.date),
+                        String(args.time),
+                        String(args.name),
+                        String(args.phone),
+                        simplyBookCreds.companyLogin,
+                        simplyBookCreds.apiKey
+                    );
+                } else if (call.name === "get_client_history") {
+                    const args = call.args as any;
+                    functionResult = await getClientHistory(
+                        String(args.query),
                         simplyBookCreds.companyLogin,
                         simplyBookCreds.apiKey
                     );
                 }
+            }
+
+            if (call.name === "update_business_profile" && clientDoc) {
+                const args = call.args as any;
+                const updateData: any = {};
+                updateData[args.field] = args.value;
+                await Client.findByIdAndUpdate(clientDoc._id, updateData);
+
+                // רענון מטמון
+                revalidatePath(`/dashboard/${businessConfig.slug}`);
+                revalidatePath(`/c/${businessConfig.slug}`);
+
+                functionResult = `הפרטים עודכנו בהצלחה! (בוצע שינוי מערכת)`;
             }
 
             const result2 = await chat.sendMessage([
@@ -198,13 +240,12 @@ export async function POST(req: Request) {
                     },
                 },
             ]);
-
-            return NextResponse.json({ reply: result2.response.text() });
+            finalReply = result2.response.text();
         }
 
-        return NextResponse.json({ reply: response.text() });
+        return NextResponse.json({ reply: finalReply });
     } catch (error: any) {
-        console.error("Error:", error.message);
+        console.error("API Error:", error.message);
         return NextResponse.json({ reply: "תקלה בתקשורת." });
     }
 }

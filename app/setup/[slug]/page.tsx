@@ -5,13 +5,12 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// import { ScrollArea } from "@/components/ui/scroll-area"; // לא חובה אם משתמשים ב-div רגיל עם overflow
 import {
     Send,
     Sparkles,
     UploadCloud,
     Info,
-    Image as ImageIcon, // אייקון חדש לכפתור לוגו במובייל
+    Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -21,7 +20,48 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog"; // הוספתי דיאלוג למובייל
+} from "@/components/ui/dialog";
+
+// --- רכיב תוכן ההדרכה (כדי שלא נשכפל קוד) ---
+const InstructionsContent = () => (
+    <div className="space-y-6 text-sm leading-relaxed" dir="rtl">
+        <p className="text-gray-600">
+            אנחנו מקימים את ה"מוח" של העוזרת שלך. כדי שהיא תדע למכור עבורך, היא
+            צריכה להבין את העסק.
+        </p>
+        <ul className="space-y-4">
+            <li className="flex gap-3 items-start">
+                <span className="w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                    1
+                </span>
+                <span className="text-gray-700">
+                    ספרי לה על <strong>הטיפולים הכי רווחיים</strong> שלך ומה
+                    המחירים שלהם.
+                </span>
+            </li>
+            <li className="flex gap-3 items-start">
+                <span className="w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                    2
+                </span>
+                <span className="text-gray-700">
+                    הגדירי את <strong>שעות הפעילות</strong> המדויקות שלך.
+                </span>
+            </li>
+            <li className="flex gap-3 items-start">
+                <span className="w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                    3
+                </span>
+                <span className="text-gray-700">
+                    יש חוקים מיוחדים? (למשל: פיקדון לתור, הגעה עם מסכה).
+                </span>
+            </li>
+        </ul>
+        <div className="mt-4 p-3 bg-purple-50 text-purple-800 rounded-lg text-xs border border-purple-100">
+            💡 <strong>טיפ:</strong> דברי איתה חופשי, כמו שאת מדברת לעובדת חדשה.
+            היא מבינה הכל.
+        </div>
+    </div>
+);
 
 export default function SetupPage({
     params,
@@ -206,49 +246,73 @@ export default function SetupPage({
     );
 
     return (
-        <div
-            className="fixed inset-0 bg-gray-50 flex flex-col lg:p-8"
-            dir="rtl"
-        >
-            {/* כאן אנחנו משתמשים ב-fixed inset-0 כדי לתפוס את כל המסך בלי גלילה חיצונית */}
+        <div className="fixed inset-0 bg-gray-50 flex flex-col lg:p-8" dir="rtl">
+            
+            {/* === כפתור צף להנחיות ולוגו (מובייל בלבד) === */}
+            {/* זה החלק החדש שמשלב גם לוגו וגם הוראות */}
+            <div className="lg:hidden fixed left-4 top-20 z-40">
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button 
+                            className="rounded-full w-12 h-12 bg-gradient-to-br from-gray-900 to-gray-800 text-white shadow-xl hover:scale-105 transition-all border-2 border-white/20"
+                            size="icon"
+                        >
+                            <Info size={24} />
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent dir="rtl" className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                                הגדרות העסק
+                            </DialogTitle>
+                        </DialogHeader>
+                        
+                        <div className="space-y-6 py-2">
+                            {/* חלק 1: העלאת לוגו */}
+                            <div className="space-y-2">
+                                <h3 className="font-bold text-gray-700 flex items-center gap-2 text-sm">
+                                    <UploadCloud size={16} className="text-purple-600" /> 
+                                    הלוגו שלך
+                                </h3>
+                                <LogoUploader />
+                            </div>
 
+                            <div className="h-px bg-gray-100" />
+
+                            {/* חלק 2: ההדרכה */}
+                            <div>
+                                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm">
+                                    <Info size={16} className="text-purple-600" /> 
+                                    מה עושים עכשיו?
+                                </h3>
+                                <InstructionsContent />
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            </div>
+
+            {/* === גריד ראשי === */}
             <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 h-full lg:h-[85vh] self-center">
+                
                 {/* === צד ימין: מרכז הבקרה (מוסתר במובייל) === */}
                 <div className="hidden lg:flex lg:col-span-4 flex-col gap-4 h-full overflow-y-auto">
                     <Card className="p-6 bg-white shadow-sm border-purple-100">
                         <h3 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
-                            <UploadCloud
-                                size={18}
-                                className="text-purple-600"
-                            />{" "}
-                            הלוגו שלך
+                            <UploadCloud size={18} className="text-purple-600" /> הלוגו שלך
                         </h3>
                         <LogoUploader />
                     </Card>
 
-                    <Card className="p-6 bg-gradient-to-br from-gray-900 to-gray-800 text-white shadow-lg flex-1">
-                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                            <Info size={20} className="text-purple-400" /> מה
-                            עושים עכשיו?
+                    <Card className="p-6 bg-white shadow-lg flex-1 border border-gray-100">
+                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-800">
+                            <Info size={20} className="text-purple-600" /> מה עושים עכשיו?
                         </h3>
-                        <div className="space-y-6 text-sm text-gray-300 leading-relaxed">
-                            <p>
-                                אנחנו מקימים את ה"מוח" של העוזרת שלך. ספרי לה
-                                הכל.
-                            </p>
-                            <ul className="space-y-3 list-decimal list-inside">
-                                <li>טיפולים רווחיים ומחירים.</li>
-                                <li>שעות פעילות.</li>
-                                <li>חוקים מיוחדים (פיקדון וכו').</li>
-                            </ul>
-                            <div className="mt-8 p-3 bg-white/10 rounded-lg border border-white/10 text-xs">
-                                💡 טיפ: דברי חופשי, היא מבינה הכל.
-                            </div>
-                        </div>
+                        <InstructionsContent />
                     </Card>
                 </div>
 
-                {/* === צד שמאל: הצ'אט (תופס הכל במובייל) === */}
+                {/* === צד שמאל: הצ'אט === */}
                 <div className="col-span-1 lg:col-span-8 bg-white lg:rounded-2xl shadow-sm border border-gray-200 flex flex-col h-full w-full">
                     {/* Header הצ'אט */}
                     <div className="bg-white p-3 md:p-4 border-b flex justify-between items-center shrink-0">
@@ -266,35 +330,8 @@ export default function SetupPage({
                                 </p>
                             </div>
                         </div>
-
-                        {/* כפתור העלאת לוגו למובייל בלבד */}
-                        <div className="lg:hidden">
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="gap-2"
-                                    >
-                                        <ImageIcon size={16} />
-                                        לוגו
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent
-                                    className="sm:max-w-md"
-                                    dir="rtl"
-                                >
-                                    <DialogHeader>
-                                        <DialogTitle>
-                                            העלאת לוגו לעסק
-                                        </DialogTitle>
-                                    </DialogHeader>
-                                    <div className="py-4">
-                                        <LogoUploader />
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                        </div>
+                        
+                        {/* שינוי: מחקתי מכאן את הכפתור הישן שהיה ב-Header */}
                     </div>
 
                     {/* גוף הצ'אט */}
@@ -332,15 +369,13 @@ export default function SetupPage({
                         </div>
                     </div>
 
-                    {/* אזור הקלדה - נצמד למטה */}
+                    {/* אזור הקלדה */}
                     <div className="p-3 md:p-4 bg-white border-t shrink-0 pb-safe">
                         <div className="flex gap-2 md:gap-3 relative">
                             <Input
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) =>
-                                    e.key === "Enter" && handleSend()
-                                }
+                                onKeyDown={(e) => e.key === "Enter" && handleSend()}
                                 placeholder="כתבי כאן..."
                                 className="rounded-full pl-12 h-11 md:h-12 bg-gray-50 border-gray-200 focus-visible:ring-purple-500 text-sm md:text-base"
                                 autoFocus
@@ -361,3 +396,4 @@ export default function SetupPage({
         </div>
     );
 }
+

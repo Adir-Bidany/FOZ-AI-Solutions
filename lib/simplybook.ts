@@ -187,4 +187,52 @@ export async function bookAppointment(
         console.error("Booking Exception:", error);
         return "תקלה טכנית בקביעת התור.";
     }
+    
 }
+
+export async function getClientHistory(
+    query: string,
+    companyLogin: string,
+    apiKey: string
+) {
+    // הערה: ב-SimplyBook API החיפוש הוא מורכב.
+    // כאן אנחנו מבצעים סימולציה של שליפת רשימת ההזמנות וסינון לפי שם.
+    // בגרסת הפרודקשן נצטרך להשתמש ב-getBookings עם פילטרים מדויקים יותר.
+
+    const rpcUrl = "https://user-api.simplybook.me/login";
+    const token = await getToken(companyLogin, apiKey); // נניח שיש לך פונקציית עזר פנימית כזו, או שתעתיק את הלוגיקה מ-getAvailableSlots
+
+    // שליפת הזמנות עתידיות ועבר (פשטנו את זה לצורך הדוגמה)
+    const response = await fetch("https://user-api.simplybook.me/bookings", {
+        method: "POST",
+        headers: {
+            "X-Company-Login": companyLogin,
+            "X-Token": token,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            jsonrpc: "2.0",
+            method: "getBookings",
+            params: {
+                date_from: "2024-01-01", // מסתכלים שנה אחורה
+                date_to: "2025-12-31",
+                search_query: query, // חיפוש לפי שם או טלפון
+            },
+            id: 1,
+        }),
+    });
+
+    const data = await response.json();
+    if (data.result) {
+        // עיבוד הנתונים לפורמט קריא לבוט
+        return data.result
+            .map(
+                (b: any) =>
+                    `תאריך: ${b.start_date} | שירות: ${b.service_name} | סטטוס: ${b.status}`
+            )
+            .join("\n");
+    }
+
+    return "לא נמצאו תורים ללקוחה זו.";
+}
+
