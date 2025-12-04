@@ -28,6 +28,7 @@ export default function Onboarding() {
         password: "",
         niche: "aesthetics",
         tone: "יוקרתי ומקצועי",
+        managerGender: "female", // Default to Golda
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -35,6 +36,7 @@ export default function Onboarding() {
         setIsLoading(true);
 
         try {
+            // 1. Create the account
             const res = await fetch("/api/onboarding", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -43,7 +45,24 @@ export default function Onboarding() {
 
             const data = await res.json();
 
+            // תיקון: איחדתי את הטיפול בשגיאות ומחקתי את ה-else המיותר
             if (res.ok && data.success) {
+                // 2. Update the Manager Persona (Golda/David)
+                try {
+                    await fetch("/api/setup/update-manager", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            slug: data.slug,
+                            managerGender: formData.managerGender,
+                            managerName: formData.managerGender === "female" ? "Golda" : "David"
+                        }),
+                    });
+                } catch (err) {
+                    console.error("Failed to set manager persona", err);
+                    // Continue anyway, defaults are set in DB
+                }
+
                 toast.success("העסק הוקם בהצלחה!", {
                     description: "מיד תעברי לראיון אישי עם מנהלת המערכת.",
                     duration: 3000,
@@ -52,7 +71,9 @@ export default function Onboarding() {
                 setTimeout(() => {
                     router.push(`/setup/${data.slug}`);
                 }, 1500);
+
             } else {
+                // ה-else הזה תופס כל מצב שבו הבקשה נכשלה (או ברשת או בלוגיקה של השרת)
                 toast.error(data.error || "משהו השתבש בהרשמה.");
             }
         } catch (error) {
@@ -70,11 +91,11 @@ export default function Onboarding() {
             className="min-h-screen bg-[#FDFCF8] flex items-center justify-center p-4 relative overflow-hidden"
             dir="rtl"
         >
-            {/* רקע דקורטיבי - הוספתי הגבלות כדי למנוע גלילה אופקית */}
+            {/* רקע דקורטיבי */}
             <div className="absolute top-[-10%] right-[-5%] w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-purple-200/30 rounded-full blur-[80px] md:blur-[100px] pointer-events-none" />
             <div className="absolute bottom-[-10%] left-[-10%] w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-pink-200/20 rounded-full blur-[80px] md:blur-[120px] pointer-events-none" />
 
-            {/* הקונטיינר הראשי - שיפרתי את הרוחב למובייל */}
+            {/* הקונטיינר הראשי */}
             <div className="relative z-10 w-full max-w-[95%] md:max-w-md my-6 md:my-10">
                 <div className="bg-white/80 backdrop-blur-xl border border-white/60 shadow-xl rounded-2xl md:rounded-3xl p-5 md:p-8">
                     {/* לוגו וכותרת */}
@@ -275,6 +296,37 @@ export default function Onboarding() {
                             </div>
                         </div>
 
+                        {/* --- בחירת מנהל דיגיטלי --- */}
+                        <div className="space-y-3 md:space-y-4">
+                            <h3 className="text-xs md:text-sm font-bold text-purple-900">
+                                המנהל הדיגיטלי שלך
+                            </h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div
+                                    onClick={() => setFormData({ ...formData, managerGender: "female" })}
+                                    className={`cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center gap-2 transition-all ${formData.managerGender === "female"
+                                        ? "border-purple-600 bg-purple-50 text-purple-700"
+                                        : "border-gray-100 hover:border-gray-200 text-gray-500"
+                                        }`}
+                                >
+                                    <div className="text-2xl">👩‍💼</div>
+                                    <span className="font-bold text-sm">גולדה</span>
+                                    <span className="text-[10px] text-center opacity-80">קשוחה, מגוננת, רמטכ"לית</span>
+                                </div>
+                                <div
+                                    onClick={() => setFormData({ ...formData, managerGender: "male" })}
+                                    className={`cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center gap-2 transition-all ${formData.managerGender === "male"
+                                        ? "border-blue-600 bg-blue-50 text-blue-700"
+                                        : "border-gray-100 hover:border-gray-200 text-gray-500"
+                                        }`}
+                                >
+                                    <div className="text-2xl">👨‍💼</div>
+                                    <span className="font-bold text-sm">דוד</span>
+                                    <span className="text-[10px] text-center opacity-80">טקטי, תכליתי, מנהל תפעול</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <Button
                             type="submit"
                             className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-xl h-11 md:h-12 text-sm md:text-base shadow-lg hover:shadow-xl transition-all duration-300 mt-4 md:mt-6"
@@ -283,7 +335,7 @@ export default function Onboarding() {
                             {isLoading ? (
                                 <>
                                     <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                                    יוצר משתמש...
+                                    מקימה את העסק...
                                 </>
                             ) : (
                                 "הקם את העסק שלי 🚀"

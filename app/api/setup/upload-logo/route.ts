@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db";
-import Client from "@/models/Client";
+import { connectToDatabase as connectDB } from "@/lib/db";
+import Business from "@/models/Business";
 
 export async function POST(req: Request) {
     try {
@@ -14,15 +14,15 @@ export async function POST(req: Request) {
 
         await connectDB();
 
-        const client = await Client.findOne({ slug });
-        if (!client)
+        const business = await Business.findOne({ slug });
+        if (!business)
             return NextResponse.json(
                 { error: "Client not found" },
                 { status: 404 }
             );
 
-        client.logo = logoBase64;
-        await client.save();
+        business.logo = logoBase64;
+        await business.save();
 
         return NextResponse.json({ success: true });
     } catch (error) {

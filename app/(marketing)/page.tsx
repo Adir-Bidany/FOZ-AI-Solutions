@@ -1,14 +1,10 @@
-import Image from "next/image";
+import HeroSection from "@/components/HeroSection";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import ChatInterface from "@/components/ChatInterface";
 import {
     ArrowLeft,
-    CheckCircle2,
     Calendar,
-    MessageSquare,
     TrendingUp,
-    Sparkles,
     Zap,
     Globe,
     ShieldCheck,
@@ -17,118 +13,23 @@ import {
     Brain,
 } from "lucide-react";
 
-// אין צורך ב-SystemHeader כאן כי הוא ב-Layout
-
 export default function Home() {
     return (
         <div
             className="min-h-screen bg-[#FDFCF8] relative overflow-x-hidden selection:bg-purple-100"
             dir="rtl"
         >
-            {/* רקע אווירה עדין */}
+            {/* הערה: ה-HeroSection החדש הוא כהה ומכסה את החלק העליון.
+               השארתי את אלמנטים הרקע (הבועות הצבעוניות) כי הן מוסיפות אווירה 
+               לחלקים התחתונים של הדף (הלבנים).
+            */}
             <div className="fixed top-0 right-0 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-purple-200/20 rounded-full blur-[120px] -z-10 translate-x-1/2 -translate-y-1/2 pointer-events-none" />
             <div className="fixed bottom-0 left-0 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-blue-200/20 rounded-full blur-[120px] -z-10 -translate-x-1/2 translate-y-1/2 pointer-events-none" />
 
-            {/* === 1. HERO SECTION === */}
-            <section className="container mx-auto px-4 md:px-6 py-12 lg:py-24">
-                <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-                    {/* צד ימין: הטקסט השיווקי החדש */}
-                    <div className="w-full lg:w-1/2 text-center lg:text-right space-y-6 lg:space-y-8 z-10">
-                        <div className="inline-flex items-center bg-white border border-purple-100 text-purple-700 px-4 py-1.5 rounded-full text-sm font-medium shadow-sm mx-auto lg:mx-0 animate-fade-in">
-                            <span className="ml-2">✨</span> המהפכה בניהול העסק
-                        </div>
+            {/* === 1. HERO SECTION (החדש והתלת-ממדי) === */}
+            <HeroSection />
 
-                        <h1 className="text-4xl lg:text-6xl font-extrabold text-gray-900 leading-[1.15] tracking-tight">
-                            הצוות הדיגיטלי שמנהל{" "}
-                            <br className="hidden lg:block" />
-                            לך את העסק –{" "}
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500">
-                                בזמן שאת עובדת.
-                            </span>
-                        </h1>
-
-                        <p className="text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                            תכירי את FOZ: המערכת הראשונה שנותנת לך מזכירה לקביעת
-                            תורים, מנהלת שיווק ואנליסט עסקי – בבוט אחד חכם.
-                            <br />
-                            מתאים לקליניקות, סטודיו, ומקצועות חופשיים.
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
-                            <Link
-                                href="/onboarding"
-                                className="w-full sm:w-auto"
-                            >
-                                <Button className="w-full h-14 px-10 text-lg rounded-full bg-gray-900 hover:bg-gray-800 text-white shadow-xl hover:shadow-2xl transition-all group hover:-translate-y-1">
-                                    אני רוצה להתחיל בחינם
-                                    <ArrowLeft className="mr-2 group-hover:-translate-x-1 transition-transform" />
-                                </Button>
-                            </Link>
-                            <Link href="/pricing" className="w-full sm:w-auto">
-                                <Button
-                                    variant="outline"
-                                    className="w-full h-14 px-10 text-lg rounded-full border-gray-300 hover:bg-gray-50 text-gray-700 transition-all"
-                                >
-                                    כמה זה עולה?
-                                </Button>
-                            </Link>
-                        </div>
-
-                        <div className="flex items-center justify-center lg:justify-start gap-6 text-sm text-gray-500 mt-4">
-                            <div className="flex items-center gap-1.5">
-                                <CheckCircle2
-                                    size={16}
-                                    className="text-green-500"
-                                />
-                                14 יום ניסיון חינם
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <CheckCircle2
-                                    size={16}
-                                    className="text-green-500"
-                                />
-                                ללא התחייבות
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* צד שמאל: הדמו החי (נשאר אותו דבר כי הוא מצוין) */}
-                    <div className="w-full lg:w-1/2 flex justify-center lg:justify-end relative mt-8 lg:mt-0">
-                        <div className="relative w-[280px] h-[580px] lg:w-[320px] lg:h-[650px]">
-                            <div className="absolute -top-6 -right-6 md:-right-10 bg-white px-4 py-3 rounded-2xl shadow-xl text-sm font-bold text-purple-700 rotate-[-6deg] animate-bounce z-30 border border-purple-50 whitespace-nowrap hidden md:block">
-                                👇 נסי אותי! אני מחוברת ליומן...
-                            </div>
-                            <div className="w-full h-full bg-gray-900 rounded-[3rem] p-3 shadow-2xl ring-4 ring-gray-900/10 transform rotate-[-2deg] hover:rotate-0 transition-transform duration-500 perspective-1000 isolate overflow-hidden">
-                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-6 bg-gray-900 rounded-b-2xl z-20"></div>
-                                <div className="w-full h-full bg-white rounded-[2.5rem] overflow-hidden relative z-10 border border-gray-100">
-                                    <ChatInterface
-                                        businessConfig={{
-                                            businessName: "הדגמה - קליניקת FOZ",
-                                            ownerName: "FOZ",
-                                            tone: "מכירתי, חד, אינטליגנטי ומניע לפעולה",
-                                            domainGuidelines: `
-                        הוראה קריטית: אתה מדמה איש מכירות של חברת תוכנה (SaaS).
-                        המטרה שלך היא לתת מידע על מחיר המנוי לתוכנה.
-                        
-                        תפקידך:
-                        למכור את המערכת לבעלי עסקים שנכנסים לאתר.
-                        
-                        תסריט שיחה:
-                        - אם שואלים "כמה זה עולה?": תגיד שזה עולה פחות מטיפול אחד בחודש.
-                        - תמיד תציע "משחק תפקידים": "בואי נשחק. תכתבי לי שאת רוצה לבטל תור, ותראי איך אני מונע ממך לעזוב".
-                        
-                        כלל ברזל: היה קצר, שיווקי וחד.
-                      `,
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* === 2. THE WOW FACTOR (היהלומים) === */}
+            {/* === 2. THE WOW FACTOR (הצוות) === */}
             <section className="py-20 bg-white relative">
                 <div className="container mx-auto px-6">
                     <div className="text-center max-w-3xl mx-auto mb-16">
@@ -192,7 +93,7 @@ export default function Home() {
                         </div>
                     </div>
 
-                    {/* פיצ'רים נוספים (ה-Wow Factor המשני) */}
+                    {/* פיצ'רים נוספים */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
                         <div className="flex items-start gap-4 p-6 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                             <div className="w-12 h-12 bg-gray-900 text-white rounded-xl flex items-center justify-center shrink-0">
@@ -229,7 +130,7 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* === 3. THE FOUNDATION (שאר היתרונות) === */}
+            {/* === 3. THE FOUNDATION (יתרונות טכניים) === */}
             <section className="py-20 bg-gray-50">
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-12">
@@ -290,7 +191,7 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* === 4. CTA (סגירה) === */}
+            {/* === 4. CTA (הנעה לפעולה תחתונה) === */}
             <section className="py-20 bg-gray-900 text-white text-center px-6 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10"></div>
                 <div className="relative z-10 max-w-2xl mx-auto space-y-8">

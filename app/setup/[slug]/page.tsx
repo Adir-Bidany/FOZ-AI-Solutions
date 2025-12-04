@@ -10,7 +10,8 @@ import {
     Sparkles,
     UploadCloud,
     Info,
-    Image as ImageIcon,
+    ArrowLeft,
+    SkipForward,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -22,7 +23,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 
-// --- רכיב תוכן ההדרכה (כדי שלא נשכפל קוד) ---
+// --- רכיב תוכן ההדרכה ---
 const InstructionsContent = () => (
     <div className="space-y-6 text-sm leading-relaxed" dir="rtl">
         <p className="text-gray-600">
@@ -47,19 +48,7 @@ const InstructionsContent = () => (
                     הגדירי את <strong>שעות הפעילות</strong> המדויקות שלך.
                 </span>
             </li>
-            <li className="flex gap-3 items-start">
-                <span className="w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
-                    3
-                </span>
-                <span className="text-gray-700">
-                    יש חוקים מיוחדים? (למשל: פיקדון לתור, הגעה עם מסכה).
-                </span>
-            </li>
         </ul>
-        <div className="mt-4 p-3 bg-purple-50 text-purple-800 rounded-lg text-xs border border-purple-100">
-            💡 <strong>טיפ:</strong> דברי איתה חופשי, כמו שאת מדברת לעובדת חדשה.
-            היא מבינה הכל.
-        </div>
     </div>
 );
 
@@ -74,8 +63,6 @@ export default function SetupPage({
     const [messages, setMessages] = useState<any[]>([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(true);
-
-    // לוגו וסטטוס
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
 
@@ -108,14 +95,11 @@ export default function SetupPage({
     // גלילה
     useEffect(() => {
         if (scrollRef.current) {
-            scrollRef.current.scrollIntoView({
-                behavior: "smooth",
-                block: "end",
-            });
+            scrollRef.current.scrollIntoView({ behavior: "smooth" });
         }
-    }, [messages]);
+    }, [messages, isLoading]);
 
-    // פונקציה להעלאת לוגו
+    // פונקציית העלאת לוגו
     const handleLogoUpload = async (
         event: React.ChangeEvent<HTMLInputElement>
     ) => {
@@ -128,12 +112,10 @@ export default function SetupPage({
         }
 
         setIsUploading(true);
-
         const reader = new FileReader();
         reader.onloadend = async () => {
             const base64 = reader.result as string;
             setLogoPreview(base64);
-
             try {
                 await fetch("/api/setup/upload-logo", {
                     method: "POST",
@@ -151,6 +133,15 @@ export default function SetupPage({
             }
         };
         reader.readAsDataURL(file);
+    };
+
+    // --- הפונקציה החדשה: דילוג על השלב ---
+    const handleSkip = () => {
+        if (!resolvedParams) return;
+        toast.info("מדלגים על הראיון... מעבירים אותך לדשבורד");
+        setTimeout(() => {
+            router.push(`/dashboard/${resolvedParams.slug}`);
+        }, 1500);
     };
 
     const handleSend = async () => {
@@ -177,8 +168,7 @@ export default function SetupPage({
                     ...prev,
                     {
                         role: "assistant",
-                        content:
-                            "תודה רבה! קיבלתי את כל המידע. אני מקים את הדשבורד שלך... 🚀",
+                        content: "תודה רבה! סיימנו. מעבירה אותך לדשבורד...",
                     },
                 ]);
                 setTimeout(() => {
@@ -197,7 +187,6 @@ export default function SetupPage({
         }
     };
 
-    // קומפוננטת העלאת לוגו (לשימוש חוזר גם בדיאלוג וגם בצד ימין)
     const LogoUploader = () => (
         <div className="flex flex-col gap-4">
             <div
@@ -224,9 +213,6 @@ export default function SetupPage({
                         <p className="text-sm text-gray-500 font-medium text-center">
                             לחצי להעלאת לוגו
                         </p>
-                        <p className="text-xs text-gray-400 mt-1 text-center">
-                            מומלץ: PNG שקוף
-                        </p>
                     </>
                 )}
                 <input
@@ -245,149 +231,224 @@ export default function SetupPage({
         </div>
     );
 
+    // --- רכיב בחירת מנהל ---
+    const ManagerPersonaSelector = ({ slug }: { slug: string }) => {
+        const [gender, setGender] = useState<"female" | "male">("female");
+        const [name, setName] = useState("Golda");
+        const [isSaving, setIsSaving] = useState(false);
+
+        // Update name default when gender changes, unless user edited it? 
+        // For simplicity, we'll just reset name to default if gender changes.
+        const handleGenderChange = (newGender: "female" | "male") => {
+            setGender(newGender);
+            setName(newGender === "female" ? "Golda" : "David");
+        };
+
+        const handleSave = async () => {
+            if (!slug) return;
+            setIsSaving(true);
+            try {
+                await fetch("/api/setup/update-manager", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ slug, managerGender: gender, managerName: name }),
+                });
+                toast.success("הגדרות המנהל נשמרו!");
+            } catch (error) {
+                toast.error("שגיאה בשמירה");
+            } finally {
+                setIsSaving(false);
+            }
+        };
+
+        return (
+            <div className="space-y-4">
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => handleGenderChange("female")}
+                        className={`flex-1 p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${gender === "female"
+                                ? "border-purple-600 bg-purple-50 text-purple-700"
+                                : "border-gray-100 hover:border-gray-200 text-gray-500"
+                            }`}
+                    >
+                        <div className="text-2xl">👩‍💼</div>
+                        <span className="font-bold text-sm">גולדה</span>
+                        <span className="text-[10px] opacity-80">קשוחה ומגוננת</span>
+                    </button>
+                    <button
+                        onClick={() => handleGenderChange("male")}
+                        className={`flex-1 p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${gender === "male"
+                                ? "border-blue-600 bg-blue-50 text-blue-700"
+                                : "border-gray-100 hover:border-gray-200 text-gray-500"
+                            }`}
+                    >
+                        <div className="text-2xl">👨‍💼</div>
+                        <span className="font-bold text-sm">דוד</span>
+                        <span className="text-[10px] opacity-80">טקטי ותכליתי</span>
+                    </button>
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-500">שם המנהל/ת:</label>
+                    <div className="flex gap-2">
+                        <Input
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="h-9 text-sm"
+                        />
+                        <Button
+                            size="sm"
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className={gender === "female" ? "bg-purple-600 hover:bg-purple-700" : "bg-blue-600 hover:bg-blue-700"}
+                        >
+                            {isSaving ? "..." : "שמור"}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
-        <div className="fixed inset-0 bg-gray-50 flex flex-col lg:p-8" dir="rtl">
-            
-            {/* === כפתור צף להנחיות ולוגו (מובייל בלבד) === */}
-            {/* זה החלק החדש שמשלב גם לוגו וגם הוראות */}
-            <div className="lg:hidden fixed left-4 top-20 z-40">
+        <div
+            className="fixed inset-0 bg-gray-50 flex flex-col lg:p-8 overflow-hidden"
+            dir="rtl"
+        >
+            {/* כפתור מידע במובייל */}
+            <div className="lg:hidden fixed left-4 top-4 z-50">
                 <Dialog>
                     <DialogTrigger asChild>
-                        <Button 
-                            className="rounded-full w-12 h-12 bg-gradient-to-br from-gray-900 to-gray-800 text-white shadow-xl hover:scale-105 transition-all border-2 border-white/20"
+                        <Button
+                            className="rounded-full w-10 h-10 bg-white text-gray-700 shadow-md border"
                             size="icon"
                         >
-                            <Info size={24} />
+                            <Info size={20} />
                         </Button>
                     </DialogTrigger>
-                    <DialogContent dir="rtl" className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+                    <DialogContent dir="rtl">
                         <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2">
-                                הגדרות העסק
-                            </DialogTitle>
+                            <DialogTitle>הגדרות</DialogTitle>
                         </DialogHeader>
-                        
-                        <div className="space-y-6 py-2">
-                            {/* חלק 1: העלאת לוגו */}
-                            <div className="space-y-2">
-                                <h3 className="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                                    <UploadCloud size={16} className="text-purple-600" /> 
-                                    הלוגו שלך
-                                </h3>
-                                <LogoUploader />
-                            </div>
-
-                            <div className="h-px bg-gray-100" />
-
-                            {/* חלק 2: ההדרכה */}
-                            <div>
-                                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm">
-                                    <Info size={16} className="text-purple-600" /> 
-                                    מה עושים עכשיו?
-                                </h3>
-                                <InstructionsContent />
-                            </div>
-                        </div>
+                        <LogoUploader />
+                        <InstructionsContent />
                     </DialogContent>
                 </Dialog>
             </div>
 
-            {/* === גריד ראשי === */}
             <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 h-full lg:h-[85vh] self-center">
-                
-                {/* === צד ימין: מרכז הבקרה (מוסתר במובייל) === */}
-                <div className="hidden lg:flex lg:col-span-4 flex-col gap-4 h-full overflow-y-auto">
-                    <Card className="p-6 bg-white shadow-sm border-purple-100">
+                {/* צד ימין: לוגו, מנהל והנחיות */}
+                <div className="hidden lg:flex lg:col-span-4 flex-col gap-4 h-full overflow-hidden">
+                    <Card className="p-6 bg-white shadow-sm border-purple-100 shrink-0">
                         <h3 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
-                            <UploadCloud size={18} className="text-purple-600" /> הלוגו שלך
+                            <UploadCloud
+                                size={18}
+                                className="text-purple-600"
+                            />{" "}
+                            הלוגו שלך
                         </h3>
                         <LogoUploader />
                     </Card>
 
-                    <Card className="p-6 bg-white shadow-lg flex-1 border border-gray-100">
+                    {/* --- Manager Persona Selector --- */}
+                    <Card className="p-6 bg-white shadow-sm border-purple-100 shrink-0">
+                        <h3 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                            <Sparkles size={18} className="text-purple-600" />
+                            המנהל הדיגיטלי שלך
+                        </h3>
+                        <ManagerPersonaSelector slug={resolvedParams?.slug || ""} />
+                    </Card>
+
+                    <Card className="p-6 bg-white shadow-lg flex-1 border border-gray-100 overflow-y-auto">
                         <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-800">
-                            <Info size={20} className="text-purple-600" /> מה עושים עכשיו?
+                            <Info size={20} className="text-purple-600" />{" "}
+                            הוראות
                         </h3>
                         <InstructionsContent />
                     </Card>
                 </div>
 
-                {/* === צד שמאל: הצ'אט === */}
-                <div className="col-span-1 lg:col-span-8 bg-white lg:rounded-2xl shadow-sm border border-gray-200 flex flex-col h-full w-full">
-                    {/* Header הצ'אט */}
-                    <div className="bg-white p-3 md:p-4 border-b flex justify-between items-center shrink-0">
+                {/* צד שמאל: הצ'אט */}
+                {/* כאן התיקון הגדול - מבנה Flexbox לגובה מלא */}
+                <div className="col-span-1 lg:col-span-8 bg-white lg:rounded-2xl shadow-xl border border-gray-200 flex flex-col h-full w-full overflow-hidden relative">
+                    {/* Header */}
+                    <div className="bg-white p-4 border-b flex justify-between items-center shrink-0">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600">
                                 <Sparkles size={20} />
                             </div>
                             <div>
-                                <h2 className="font-bold text-gray-800 text-sm md:text-base">
+                                <h2 className="font-bold text-gray-800">
                                     ראיון הקמה
                                 </h2>
-                                <p className="text-xs text-green-500 font-medium flex items-center gap-1">
-                                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>{" "}
-                                    מחוברת
+                                <p className="text-xs text-green-500 font-medium">
+                                    מחוברת • נועה
                                 </p>
                             </div>
                         </div>
-                        
-                        {/* שינוי: מחקתי מכאן את הכפתור הישן שהיה ב-Header */}
+
+                        {/* --- הכפתור החדש: דלג על שלב זה --- */}
+                        <Button
+                            variant="ghost"
+                            onClick={handleSkip}
+                            className="text-gray-500 hover:text-gray-900 hover:bg-gray-100 text-xs md:text-sm gap-2"
+                        >
+                            דלג על שלב זה <SkipForward size={16} />
+                        </Button>
                     </div>
 
-                    {/* גוף הצ'אט */}
-                    <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50/50 custom-scrollbar">
-                        <div className="space-y-4 md:space-y-6 pb-4">
-                            {messages.map((m, i) => (
-                                <div
-                                    key={i}
-                                    className={`flex ${
-                                        m.role === "user"
-                                            ? "justify-end"
-                                            : "justify-start"
+                    {/* Messages Area - גולל רק כאן */}
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50/50 custom-scrollbar space-y-6">
+                        {messages.map((m, i) => (
+                            <div
+                                key={i}
+                                className={`flex ${m.role === "user"
+                                    ? "justify-end"
+                                    : "justify-start"
                                     }`}
-                                >
-                                    <div
-                                        className={`max-w-[85%] md:max-w-[80%] p-3 md:p-4 rounded-2xl text-sm shadow-sm leading-relaxed ${
-                                            m.role === "user"
-                                                ? "bg-gray-900 text-white rounded-br-none"
-                                                : "bg-white border border-gray-200 text-gray-800 rounded-bl-none text-right"
+                            >
+                                <div
+                                    className={`max-w-[85%] p-4 rounded-2xl text-sm md:text-base shadow-sm leading-relaxed ${m.role === "user"
+                                        ? "bg-gray-900 text-white rounded-br-none"
+                                        : "bg-white border border-gray-200 text-gray-800 rounded-bl-none text-right"
                                         }`}
-                                    >
-                                        {m.content}
-                                    </div>
+                                >
+                                    {m.content}
                                 </div>
-                            ))}
-                            {isLoading && (
-                                <div className="flex justify-start">
-                                    <div className="bg-white border border-gray-200 px-4 py-3 rounded-2xl rounded-bl-none text-xs text-gray-400 shadow-sm flex items-center gap-2">
-                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
-                                        מקלידה...
-                                    </div>
+                            </div>
+                        ))}
+                        {isLoading && (
+                            <div className="flex justify-start">
+                                <div className="bg-white border border-gray-200 px-4 py-2 rounded-2xl rounded-bl-none text-xs text-gray-400 shadow-sm flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>{" "}
+                                    מקלידה...
                                 </div>
-                            )}
-                            <div ref={scrollRef} />
-                        </div>
+                            </div>
+                        )}
+                        <div ref={scrollRef} className="h-1" />
                     </div>
 
-                    {/* אזור הקלדה */}
-                    <div className="p-3 md:p-4 bg-white border-t shrink-0 pb-safe">
-                        <div className="flex gap-2 md:gap-3 relative">
+                    {/* Input Area - קבוע למטה */}
+                    <div className="p-4 bg-white border-t shrink-0">
+                        <div className="relative flex items-center">
                             <Input
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                                onKeyDown={(e) =>
+                                    e.key === "Enter" && handleSend()
+                                }
                                 placeholder="כתבי כאן..."
-                                className="rounded-full pl-12 h-11 md:h-12 bg-gray-50 border-gray-200 focus-visible:ring-purple-500 text-sm md:text-base"
+                                className="pr-4 pl-12 h-12 md:h-14 text-base rounded-xl bg-gray-50 border-gray-200 focus-visible:ring-purple-500 focus-visible:ring-offset-0"
                                 autoFocus
                                 disabled={isLoading}
                             />
                             <Button
                                 onClick={handleSend}
                                 size="icon"
-                                className="absolute left-1 top-1 h-9 w-9 md:h-10 md:w-10 rounded-full bg-purple-600 hover:bg-purple-700 shadow-md transition-all"
-                                disabled={isLoading}
+                                className="absolute left-2 w-10 h-10 rounded-lg bg-purple-600 hover:bg-purple-700 shadow-md transition-all"
+                                disabled={isLoading || !input.trim()}
                             >
-                                <Send size={16} />
+                                <Send size={20} />
                             </Button>
                         </div>
                     </div>
@@ -396,4 +457,3 @@ export default function SetupPage({
         </div>
     );
 }
-

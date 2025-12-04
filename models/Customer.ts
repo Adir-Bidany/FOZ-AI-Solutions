@@ -1,41 +1,51 @@
-import mongoose, { Schema, models, model } from "mongoose";
+import mongoose, { Schema, model, models, Document, Types } from "mongoose";
 
-const CustomerSchema = new Schema(
+export interface ICustomer extends Document {
+    businessId: Types.ObjectId;
+    phone: string;
+    name?: string;
+    email?: string;
+
+    // AI Profile (v3.0)
+    ai_profile?: {
+        summary?: string;
+        churn_risk_score?: number;
+        ltv_prediction?: number;
+        marketing_tags?: string[];
+    };
+
+    // Legacy / Other
+    notes?: string;
+    tags?: string[];
+
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+const CustomerSchema = new Schema<ICustomer>(
     {
-        // קישור לקליניקה הספציפית (כדי שלא נערבב לקוחות בין קליניקות)
-        clinicId: {
-            type: Schema.Types.ObjectId,
-            ref: "Client",
-            required: true,
+        businessId: { type: Schema.Types.ObjectId, ref: "Business", required: true },
+        phone: { type: String, required: true },
+        name: { type: String },
+        email: { type: String },
+
+        // AI Profile (v3.0)
+        ai_profile: {
+            summary: { type: String },
+            churn_risk_score: { type: Number, min: 0, max: 100 },
+            ltv_prediction: { type: Number },
+            marketing_tags: [{ type: String }],
         },
 
-        // המזהה הראשי - מספר טלפון
-        phone: { type: String, required: true },
-
-        name: { type: String }, // נלמד תוך כדי שיחה
-
-        // היסטוריית הביקורים (נבנית אוטומטית מ-SimplyBook או מסיכומי שיחה)
-        history: [
-            {
-                date: { type: Date, default: Date.now },
-                service: String,
-                price: Number,
-                summary: String, // "הייתה מרוצה, ביקשה לא ללחוץ חזק"
-                aiNotes: String, // תובנות נסתרות לבוט
-            },
-        ],
-
-        // העדפות אישיות (נצברות עם הזמן)
-        preferences: {
-            type: [String],
-            default: [],
-        }, // ["מעדיפה ערב", "רגישה לחום", "שותה הפוך"]
+        notes: { type: String },
+        tags: [{ type: String }],
     },
     { timestamps: true }
 );
 
-// אינדקס ייחודי: אי אפשר אותה לקוחה פעמיים באותה קליניקה
-CustomerSchema.index({ clinicId: 1, phone: 1 }, { unique: true });
+// Ensure phone is unique per business
+CustomerSchema.index({ businessId: 1, phone: 1 }, { unique: true });
 
-const Customer = models.Customer || model("Customer", CustomerSchema);
+const Customer = models.Customer || model<ICustomer>("Customer", CustomerSchema);
+
 export default Customer;

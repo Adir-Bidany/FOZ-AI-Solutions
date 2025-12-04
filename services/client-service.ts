@@ -1,5 +1,5 @@
-import connectDB from "@/lib/db";
-import Client from "@/models/Client";
+import { connectToDatabase as connectDB } from "@/lib/db";
+import Business from "@/models/Business";
 import bcrypt from "bcryptjs";
 
 // הגדרת סוג הנתונים שאנחנו מצפים לקבל בהרשמה
@@ -18,7 +18,7 @@ export async function createClient(data: CreateClientParams) {
     await connectDB();
 
     // בדיקה אם המייל כבר קיים
-    const existingUser = await Client.findOne({ email: data.email });
+    const existingUser = await Business.findOne({ ownerEmail: data.email });
     if (existingUser) {
         throw new Error("המייל הזה כבר רשום במערכת");
     }
@@ -30,49 +30,37 @@ export async function createClient(data: CreateClientParams) {
     const slug = Math.random().toString(36).substring(2, 9);
 
     // יצירת הלקוח ב-DB
-    const newClient = await Client.create({
+    const newBusiness = await Business.create({
         slug,
         businessName: data.businessName,
         ownerName: data.ownerName,
         phone: data.phone,
-        email: data.email,
+        ownerEmail: data.email,
         password: hashedPassword,
-        niche: data.niche,
-        domainGuidelines: `קליניקה בבעלות ${data.ownerName}. סגנון דיבור: ${data.tone}. תחום עיסוק: ${data.niche}.`,
-        personas: {
-            receptionist: {
-                name: "דניאלה",
-                role: "קבלה",
-                prompt: "...",
-                isActive: true,
-            },
-            marketing: {
-                name: "מיכל",
-                role: "שיווק",
-                prompt: "...",
-                isActive: true,
-            },
-            analyst: {
-                name: "רועי",
-                role: "אנליסט",
-                prompt: "...",
-                isActive: true,
-            },
+        ai_settings: {
+            tone: data.tone,
+            language: "he",
+            onboarding_status: "new"
         },
+        operational_settings: {
+            services: [], // Default empty
+            opening_hours: {}
+        },
+        subscriptionStatus: "trial"
     });
 
     // המרה לאובייקט רגיל כדי למנוע בעיות עם Next.js
-    return JSON.parse(JSON.stringify(newClient));
+    return JSON.parse(JSON.stringify(newBusiness));
 }
 
 // פונקציה 2: שליפת לקוח לפי מזהה (עבור האתר שלו)
 export async function getClientBySlug(slug: string) {
     await connectDB();
-    const client = await Client.findOne({ slug }).lean();
+    const business = await Business.findOne({ slug }).lean();
 
     // אם לא נמצא - מחזירים null
-    if (!client) return null;
+    if (!business) return null;
 
     // המרה לאובייקט רגיל
-    return JSON.parse(JSON.stringify(client));
+    return JSON.parse(JSON.stringify(business));
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db"; // תיקון 1: ייבוא דיפולטיבי (בלי סוגריים מסולסלים) והשם הנכון
-import Client from "@/models/Client";
+import { connectToDatabase as connectDB } from "@/lib/db";
+import Business from "@/models/Business";
 
 export async function DELETE(
     request: Request,
@@ -15,7 +15,7 @@ export async function DELETE(
         const { id } = await params;
 
         // 3. מחיקת הלקוח
-        const deletedClient = await Client.findByIdAndDelete(id);
+        const deletedClient = await Business.findByIdAndDelete(id);
 
         // 4. אם לא נמצא לקוח כזה
         if (!deletedClient) {

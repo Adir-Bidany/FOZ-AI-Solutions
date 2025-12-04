@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db";
-import Client from "@/models/Client";
+import { connectToDatabase as connectDB } from "@/lib/db";
+import Business from "@/models/Business";
 
 export async function GET() {
     try {
         await connectDB();
 
         // שליפת כל הלקוחות, ממוינים מהחדש לישן
-        const clients = await Client.find({}).sort({ createdAt: -1 }).lean();
+        const clients = await Business.find({}).sort({ createdAt: -1 }).lean();
 
         return NextResponse.json({ success: true, clients });
     } catch (error) {

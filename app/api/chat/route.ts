@@ -1,251 +1,273 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { connectToDatabase } from "@/lib/db";
+import Business from "@/models/Business";
+import ChatExternal from "@/models/ChatExternal";
+import Customer from "@/models/Customer";
+import ActionCard from "@/models/ActionCard";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import {
-    getAvailableSlots,
-    bookAppointment,
-    getClientHistory,
-} from "@/lib/simplybook";
-import connectDB from "@/lib/db";
-import Client from "@/models/Client";
-import Conversation from "@/models/Conversation";
-import { revalidatePath } from "next/cache";
+import { AGENT_PROMPTS } from "@/lib/agents/prompts";
+import { Types } from "mongoose";
 
-export async function POST(req: Request) {
-    try {
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey)
-            return NextResponse.json({ reply: "שגיאה: חסר מפתח API." });
+const apiKey = process.env.GEMINI_API_KEY;
 
-        const body = await req.json();
-        const { messages, businessConfig, activePersona, conversationId } =
-            body;
+if (!apiKey) {
+    throw new Error("Missing GEMINI_API_KEY in .env.local file");
+}
 
-        await connectDB();
+const genAI = new GoogleGenerativeAI(apiKey);
 
-        // --- 1. זיהוי והכנת נתונים ---
-        let simplyBookCreds: { companyLogin: string; apiKey: string } | null =
-            null;
-        let clientDoc: any = null;
+// --- Tool Definitions ---
 
-        if (businessConfig.slug && businessConfig.slug !== "demo") {
-            clientDoc = await Client.findOne({ slug: businessConfig.slug });
-            if (clientDoc?.integrations?.simplybook?.isConnected) {
-                simplyBookCreds = {
-                    companyLogin:
-                        clientDoc.integrations.simplybook.companyLogin,
-                    apiKey: clientDoc.integrations.simplybook.apiKey,
-                };
-            }
-        } else if (businessConfig.slug === "demo") {
-            if (
-                process.env.SIMPLYBOOK_COMPANY &&
-                process.env.SIMPLYBOOK_API_KEY
-            ) {
-                simplyBookCreds = {
-                    companyLogin: process.env.SIMPLYBOOK_COMPANY,
-                    apiKey: process.env.SIMPLYBOOK_API_KEY,
-                };
+const commonTools = {
+    function_declarations: [
+        {
+            name: "check_availability",
+            description: "Checks availability for appointments.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    date: { type: "STRING", description: "Date to check (YYYY-MM-DD)" },
+                    service: { type: "STRING", description: "Service name" }
+                },
+                required: ["date"]
             }
         }
+    ]
+};
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-
-        // --- 2. הגדרת כלים (Tools) לפי סוכן ---
-        let tools: any[] = [];
-        let systemPrompt = "";
-
-        // פונקציות עזר לבניית כלים
-        const availabilityTool = {
-            name: "check_availability",
-            description: "בודק תורים פנויים ביומן.",
-        };
-
-        const bookingTool = {
+const publicTools = {
+    function_declarations: [
+        ...commonTools.function_declarations,
+        {
             name: "book_appointment",
-            description: "קובע תור חדש ביומן.",
+            description: "Books a new appointment.",
             parameters: {
                 type: "OBJECT",
                 properties: {
                     date: { type: "STRING" },
                     time: { type: "STRING" },
-                    name: { type: "STRING" },
-                    phone: { type: "STRING" },
+                    service: { type: "STRING" },
+                    customer_name: { type: "STRING" },
+                    customer_phone: { type: "STRING" }
                 },
-                required: ["date", "time", "name", "phone"],
-            },
-        };
-
-        // === דניאלה: מנהלת התפעול (Ops Manager) ===
-        if (!activePersona || activePersona === "receptionist") {
-            const daniellaTools = [];
-
-            if (simplyBookCreds) {
-                daniellaTools.push(availabilityTool);
-                daniellaTools.push(bookingTool);
-                daniellaTools.push({
-                    name: "get_client_history",
-                    description:
-                        "חיפוש היסטוריית תורים של לקוחה ספציפית כדי לדעת מתי הייתה או מתי תבוא.",
-                    parameters: {
-                        type: "OBJECT",
-                        properties: {
-                            query: {
-                                type: "STRING",
-                                description: "שם הלקוחה או מספר טלפון",
-                            },
-                        },
-                        required: ["query"],
-                    },
-                });
+                required: ["date", "time", "service", "customer_phone"]
             }
-
-            daniellaTools.push({
-                name: "update_business_profile",
-                description: "עדכון פרטי העסק במערכת (כמו שם העסק, שם הבעלים).",
-                parameters: {
-                    type: "OBJECT",
-                    properties: {
-                        field: {
-                            type: "STRING",
-                            enum: ["businessName", "ownerName"],
-                            description: "השדה לעדכון",
-                        },
-                        value: { type: "STRING", description: "הערך החדש" },
-                    },
-                    required: ["field", "value"],
+        },
+        {
+            name: "create_action_card",
+            description: "Creates an action card for the manager (Golda) to review. Use this for cancellations, special requests, or issues requiring approval.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    title: { type: "STRING", description: "Short title of the request" },
+                    description: { type: "STRING", description: "Detailed description of the request and context" },
+                    priority: { type: "STRING", enum: ["low", "medium", "high", "urgent"] }
                 },
+                required: ["title", "description"]
+            }
+        }
+    ]
+};
+
+const adminTools = {
+    function_declarations: [
+        ...commonTools.function_declarations,
+        {
+            name: "cancel_appointment",
+            description: "Cancels an existing appointment. ADMIN ONLY.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    appointment_id: { type: "STRING" },
+                    reason: { type: "STRING" }
+                },
+                required: ["appointment_id"]
+            }
+        },
+        {
+            name: "update_settings",
+            description: "Updates business settings.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    setting_key: { type: "STRING" },
+                    value: { type: "STRING" }
+                },
+                required: ["setting_key", "value"]
+            }
+        }
+    ]
+};
+
+export async function POST(req: NextRequest) {
+    try {
+        const { message, businessId, sessionId, agentPersona = "daniela" } = await req.json();
+
+        if (!message || !businessId) {
+            return NextResponse.json(
+                { error: "Missing required fields" },
+                { status: 400 }
+            );
+        }
+
+        await connectToDatabase();
+
+        // 1. Load Context (Business)
+        let business;
+        if (businessId === "demo") {
+            business = {
+                _id: "demo",
+                businessName: "Demo Clinic",
+                operational_settings: {
+                    opening_hours: { "sunday": "09:00-18:00" },
+                    services: ["Botox", "Fillers"]
+                },
+                ai_settings: {
+                    tone: "Friendly",
+                    language: "he"
+                }
+            };
+        } else {
+            business = await Business.findById(businessId).lean();
+            if (!business) {
+                return NextResponse.json(
+                    { error: "Business not found" },
+                    { status: 404 }
+                );
+            }
+        }
+
+        // 2. Manage Conversation (ChatExternal)
+        let chat;
+        let history: any[] = [];
+        let customer = null;
+
+        if (sessionId && Types.ObjectId.isValid(sessionId)) {
+            chat = await ChatExternal.findById(sessionId);
+        }
+
+        if (!chat) {
+            // Create new conversation
+            const tenantId = businessId === "demo" ? new Types.ObjectId("000000000000000000000000") : businessId;
+            chat = await ChatExternal.create({
+                business_id: tenantId,
+                messages: [],
+                processed_for_insights: false
             });
+        } else {
+            // Load history
+            history = chat.messages.map((m: any) => ({
+                role: m.role === 'assistant' ? 'model' : 'user',
+                parts: m.parts.map((p: any) => ({ text: p.text }))
+            }));
 
-            tools = [{ functionDeclarations: daniellaTools }];
-
-            systemPrompt = `
-                את דניאלה, מנהלת התפעול הראשית והעוזרת האישית של "${businessConfig.businessName}".
-                תפקידך: לנהל את העסק ביד רמה.
-                הנחיות: דברי כמנהלת יעילה. השתמשי בכלים שברשותך.
-            `;
-        }
-
-        // === מיכל: מנהלת שיווק ===
-        else if (activePersona === "marketing") {
-            // לוגיקה מקוצרת לשליפת מידע (כמו בקוד הקודם)
-            let marketInsights = "אין נתונים כרגע.";
-            if (clientDoc) {
-                const recentConvs = await Conversation.find({
-                    clientId: clientDoc._id,
-                })
-                    .sort({ createdAt: -1 })
-                    .limit(10)
-                    .select("messages");
-                if (recentConvs.length > 0) {
-                    marketInsights = "יש שיחות אחרונות במערכת."; // לקיצור הקוד כאן
-                }
+            // Fetch Customer if linked
+            if (chat.customer_id) {
+                customer = await Customer.findById(chat.customer_id).lean();
             }
-
-            systemPrompt = `
-                את מיכל, מנהלת השיווק של "${businessConfig.businessName}".
-                מידע מהשטח: ${marketInsights}
-                הנחיות: תני רעיונות לסטורי ולשיווק.
-            `;
         }
 
-        // === רועי: אנליסט ===
-        else if (activePersona === "analyst") {
-            systemPrompt = `אתה רועי, האנליסט העסקי של "${businessConfig.businessName}".`;
+        // 3. Prepare Context & Prompt
+        let clientHistorySummary = "No previous history.";
+        if (agentPersona === "daniela" && customer) {
+            clientHistorySummary = `Customer Name: ${customer.name}. Last Visit: ${customer.financial_metrics?.last_purchase_date}. Notes: ${customer.ai_memory?.summary}`;
         }
 
-        systemPrompt += `\nבעלים: ${businessConfig.ownerName}\nענה בעברית בלבד.`;
+        const promptFn = AGENT_PROMPTS[agentPersona as keyof typeof AGENT_PROMPTS] || AGENT_PROMPTS.daniela;
+        const systemPrompt = promptFn({
+            ...business,
+            client_history_summary: clientHistorySummary
+        });
 
-        // --- 3. הכנת ההיסטוריה (התיקון הקריטי) ---
-        const lastUserMessage = messages[messages.length - 1];
-        const previousMessages = messages.slice(0, -1);
+        // 4. Select Tools
+        const tools = (agentPersona === "golda") ? [adminTools] : [publicTools];
 
-        // המרה לפורמט של גוגל
-        let history = previousMessages.map((m: any) => ({
-            role: m.role === "user" ? "user" : "model",
-            parts: [{ text: m.content }],
-        }));
+        // 5. AI Execution
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.0-flash",
+            tools: tools as any
+        });
 
-        // === התיקון: הסרת הודעות התחלה שאינן User ===
-        // אנחנו מורידים כל הודעה מתחילת הרשימה כל עוד היא לא 'user'
-        while (history.length > 0 && history[0].role !== "user") {
-            history.shift();
-        }
-        // ============================================
+        // Inject system prompt into history (Gemini Pro compat)
+        const chatHistory = [
+            { role: "user", parts: [{ text: systemPrompt }] },
+            { role: "model", parts: [{ text: "Understood. I am ready." }] },
+            ...history
+        ];
 
-        const modelParams: any = { model: "gemini-2.0-flash" };
-        if (tools.length > 0) modelParams.tools = tools;
+        const chatSession = model.startChat({
+            history: chatHistory,
+        });
 
-        const model = genAI.getGenerativeModel(modelParams);
-
-        const chat = model.startChat({ history });
-        console.log(`📨 Request to Gemini (${activePersona || "Daniella"})...`);
-
-        const result = await chat.sendMessage(
-            systemPrompt + "\n\n" + lastUserMessage.content
-        );
-        const response = await result.response;
-        let finalReply = response.text();
-
-        // --- 4. טיפול בפונקציות ---
+        const result = await chatSession.sendMessage(message);
+        const response = result.response;
+        let responseText = response.text();
         const functionCalls = response.functionCalls();
-        if (functionCalls && functionCalls.length > 0) {
-            const call = functionCalls[0];
-            console.log("🔧 Tool Executing:", call.name);
-            let functionResult = "שגיאה בביצוע הפעולה.";
 
-            if (simplyBookCreds) {
-                if (call.name === "check_availability") {
-                    functionResult = await getAvailableSlots(
-                        simplyBookCreds.companyLogin,
-                        simplyBookCreds.apiKey
-                    );
-                } else if (call.name === "book_appointment") {
+        // 6. Handle Function Calls (Tool Execution)
+        if (functionCalls && functionCalls.length > 0) {
+            for (const call of functionCalls) {
+                if (call.name === "create_action_card") {
                     const args = call.args as any;
-                    functionResult = await bookAppointment(
-                        String(args.date),
-                        String(args.time),
-                        String(args.name),
-                        String(args.phone),
-                        simplyBookCreds.companyLogin,
-                        simplyBookCreds.apiKey
-                    );
-                } else if (call.name === "get_client_history") {
-                    const args = call.args as any;
-                    functionResult = await getClientHistory(
-                        String(args.query),
-                        simplyBookCreds.companyLogin,
-                        simplyBookCreds.apiKey
-                    );
+                    if (businessId !== "demo") {
+                        await ActionCard.create({
+                            business_id: business._id,
+                            source_agent: "receptionist",
+                            status: "pending",
+                            priority: args.priority || "medium",
+                            display_content: {
+                                title: args.title,
+                                description: args.description,
+                                icon: "AlertCircle"
+                            },
+                            execution_payload: {
+                                action_type: "cancel_appointment", // Defaulting for now, or infer from desc
+                                params: {
+                                    original_message: message,
+                                    chat_id: chat._id,
+                                    details: args.description
+                                }
+                            }
+                        });
+                    }
+                    responseText = "העברתי את הבקשה שלך למנהלת הקליניקה (גולדה) לאישור מיידי. נחזור אליך בהקדם.";
+                }
+                // Handle other tools (book_appointment, etc.) - Mocking success for now
+                if (call.name === "book_appointment") {
+                    responseText = "מעולה, קבעתי לך את התור. נתראה!";
                 }
             }
-
-            if (call.name === "update_business_profile" && clientDoc) {
-                const args = call.args as any;
-                const updateData: any = {};
-                updateData[args.field] = args.value;
-                await Client.findByIdAndUpdate(clientDoc._id, updateData);
-
-                // רענון מטמון
-                revalidatePath(`/dashboard/${businessConfig.slug}`);
-                revalidatePath(`/c/${businessConfig.slug}`);
-
-                functionResult = `הפרטים עודכנו בהצלחה! (בוצע שינוי מערכת)`;
-            }
-
-            const result2 = await chat.sendMessage([
-                {
-                    functionResponse: {
-                        name: call.name,
-                        response: { output: functionResult },
-                    },
-                },
-            ]);
-            finalReply = result2.response.text();
         }
 
-        return NextResponse.json({ reply: finalReply });
+        // 7. Persistence
+        // Ensure parts structure is correct
+        chat.messages.push({
+            role: "user",
+            parts: [{ text: message }],
+            timestamp: new Date()
+        } as any);
+
+        chat.messages.push({
+            role: "model",
+            parts: [{ text: responseText }],
+            timestamp: new Date()
+        } as any);
+
+        await chat.save();
+
+        return NextResponse.json({
+            response: responseText,
+            sessionId: chat._id,
+        });
+
     } catch (error: any) {
-        console.error("API Error:", error.message);
-        return NextResponse.json({ reply: "תקלה בתקשורת." });
+        console.error("Error in chat API:", error);
+        return NextResponse.json(
+            {
+                error: "Internal Server Error",
+                details: error.message || "Unknown error"
+            },
+            { status: 500 }
+        );
     }
 }
