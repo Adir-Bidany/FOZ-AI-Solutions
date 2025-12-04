@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MessageSquare, Sparkles } from "lucide-react";
-import DashboardChat from "@/components/DashboardChat";
+import AgentRoom from "@/components/dashboard/AgentRoom";
 
 interface ChatDrawerProps {
     client: any; // Using any for now to match existing usage, ideally strictly typed
@@ -33,7 +33,7 @@ export default function ChatDrawer({ client }: ChatDrawerProps) {
                         </div>
                     </div>
                     <div className="flex-1 overflow-hidden relative bg-gray-50">
-                        <DashboardChat businessConfig={client} />
+                        <AgentRoom businessId={client._id} />
                     </div>
                 </div>
             </SheetContent>
