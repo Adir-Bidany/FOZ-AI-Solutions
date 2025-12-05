@@ -32,6 +32,8 @@ export interface IBusiness extends Document {
         about_text?: string;
         features?: string[];
         primary_color?: string;
+        background_style?: string;
+        custom_background_image?: string;
     };
     subscriptionStatus: "active" | "trial" | "expired";
     createdAt: Date;
@@ -83,7 +85,9 @@ const BusinessSchema = new Schema<IBusiness>(
             hero_image_url: { type: String, default: "" },
             about_text: { type: String, default: "" },
             features: { type: [String], default: [] },
-            primary_color: { type: String, default: "" }
+            primary_color: { type: String, default: "" },
+            background_style: { type: String, default: "soft-rose" },
+            custom_background_image: { type: String, default: "" }
         },
 
         subscriptionStatus: {

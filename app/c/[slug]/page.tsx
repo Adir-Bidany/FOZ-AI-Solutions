@@ -5,10 +5,12 @@ import UnifiedChatWidget from "@/components/chat/UnifiedChatWidget";
 import { getClientBySlug } from "@/services/client-service";
 import { Phone, MapPin } from "lucide-react";
 import DanielaHeader from "@/components/DanielaHeader";
+import { BACKGROUND_PRESETS } from "@/lib/background-presets";
 
 
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 async function getClientData(slug: string) {
     if (slug === "demo") {
@@ -65,8 +67,33 @@ export default async function ClientPage({
     const heroImage = landing_page_data?.hero_image_url || clientData.logo;
     const description = landing_page_data?.about_text || heroSubtitle;
 
+    // Background Logic
+    const savedId = landing_page_data?.background_style || 'misty-rose';
+    const customImage = landing_page_data?.custom_background_image;
+
+    // Find preset
+    const preset = BACKGROUND_PRESETS.find(p => p.id === savedId) || BACKGROUND_PRESETS[0];
+
+    // Define Style
+    let pageStyle: React.CSSProperties = {};
+
+    if (savedId === 'custom' && customImage) {
+        pageStyle = {
+            backgroundImage: `url(${customImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+        };
+    } else if (preset) {
+        pageStyle = {
+            background: preset.cssValue,
+            backgroundSize: preset.backgroundSize || 'cover',
+            backgroundRepeat: 'no-repeat'
+        };
+    }
+
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 lg:p-8 bg-gray-50" dir="rtl">
+        <div className="min-h-screen flex items-center justify-center p-4 lg:p-8 transition-all duration-500" style={pageStyle} dir="rtl">
 
             <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
 
@@ -144,6 +171,9 @@ export default async function ClientPage({
                     </div>
                 </div>
 
+            </div>
+            <div className="fixed bottom-0 left-0 bg-black text-white p-2 text-xs opacity-50 z-50">
+                DEBUG: Style ID = {landing_page_data?.background_style || 'undefined'}
             </div>
         </div>
     );
