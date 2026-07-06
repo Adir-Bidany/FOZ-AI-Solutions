@@ -16,11 +16,11 @@ export default function DanielaHeader({ businessName }: DanielaHeaderProps) {
     return (
         <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 rounded-t-[2.5rem] flex items-center gap-4">
             {/* The Animated Avatar (Left Side) */}
-            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-white/30 shrink-0">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-white/30 shrink-0 -scale-x-100">
                 <Player
                     autoplay
                     loop
-                    src="/daniela.json"
+                    src="/Daniela-small.json"
                     style={{ width: "100%", height: "100%" }}
                     renderer="svg"
                 />

@@ -47,7 +47,7 @@ const BusinessSchema = new Schema<IBusiness>(
         businessName: { type: String, required: true },
         ownerName: { type: String, required: true },
         ownerEmail: { type: String, required: true, unique: true },
-        password: { type: String, required: true }, // Encrypted
+        password: { type: String, required: false }, // Encrypted, optional for OAuth users
         phone: { type: String },
         address: { type: String },
         logo: { type: String },

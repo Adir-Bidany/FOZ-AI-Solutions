@@ -60,7 +60,7 @@ export default async function AuthenticatedLayout({
             </div>
 
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-                <Link href={`/dashboard/${client.slug}`}>
+                <Link href={`/dashboard`}>
                     <Button
                         variant="secondary"
                         className="w-full justify-start gap-3 font-medium bg-purple-50 text-purple-900 hover:bg-purple-100 h-12 rounded-xl"

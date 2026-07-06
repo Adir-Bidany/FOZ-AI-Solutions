@@ -1,0 +1,1 @@
+{"name":"run_command","args":{"CommandLine":"git log -p -1 c8c9b69 -- app/setup/page.tsx","Cwd":"c:\\Users\\E7470\\Desktop\\FOZ AI Solutions\\foz-ai-solutions","WaitMsBeforeAsync":5000}}

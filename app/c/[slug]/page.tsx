@@ -1,10 +1,11 @@
-import Image from "next/image";
+
 import { notFound } from "next/navigation";
 import DanielaAvatar from "@/components/DanielaAvatar";
 import UnifiedChatWidget from "@/components/chat/UnifiedChatWidget";
 import { getClientBySlug } from "@/services/client-service";
 import { Phone, MapPin } from "lucide-react";
 import DanielaHeader from "@/components/DanielaHeader";
+import ClientLogo from "@/components/ClientLogo";
 import { BACKGROUND_PRESETS } from "@/lib/background-presets";
 
 
@@ -67,25 +68,36 @@ export default async function ClientPage({
     const heroImage = landing_page_data?.hero_image_url || clientData.logo;
     const description = landing_page_data?.about_text || heroSubtitle;
 
-    // Background Logic
+    // Background & Theme Logic
     const savedId = landing_page_data?.background_style || 'misty-rose';
     const customImage = landing_page_data?.custom_background_image;
-
-    // Find preset
     const preset = BACKGROUND_PRESETS.find(p => p.id === savedId) || BACKGROUND_PRESETS[0];
 
+    // Default Theme Colors (fallback to preset or defaults)
+    let themeTextColor = preset.themeTextColor || '#374151';
+    let themeAccentColor = preset.themeAccentColor || '#be185d';
+
     // Define Style
-    let pageStyle: React.CSSProperties = {};
+    let pageStyle: React.CSSProperties = {
+        color: themeTextColor,
+        transition: 'all 0.5s ease'
+    };
 
     if (savedId === 'custom' && customImage) {
+        // Logic for Custom Image: Force White Text + Dark Overlay
+        themeTextColor = '#ffffff';
         pageStyle = {
-            backgroundImage: `url(${customImage})`,
+            ...pageStyle,
+            color: themeTextColor,
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${customImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed'
         };
     } else if (preset) {
         pageStyle = {
+            ...pageStyle,
             background: preset.cssValue,
             backgroundSize: preset.backgroundSize || 'cover',
             backgroundRepeat: 'no-repeat'
@@ -103,27 +115,15 @@ export default async function ClientPage({
                     <div className="flex flex-row items-center gap-4">
                         {/* Logo / Hero Image */}
                         <div className="relative w-32 h-32 shrink-0">
-                            {heroImage ? (
-                                <Image
-                                    src={heroImage}
-                                    alt="Client Logo"
-                                    fill
-                                    className="object-contain object-right"
-                                    priority
-                                />
-                            ) : (
-                                <div className="flex items-center justify-center w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 text-purple-600 rounded-2xl text-3xl font-bold shadow-sm">
-                                    {clientData.businessName.charAt(0)}
-                                </div>
-                            )}
+                            <ClientLogo src={heroImage} businessName={clientData.businessName} />
                         </div>
 
                         {/* Business Name & Description */}
                         <div className="space-y-2">
-                            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+                            <h1 className="text-4xl md:text-5xl font-bold leading-tight">
                                 {heroTitle}
                             </h1>
-                            <p className="text-lg text-gray-600 leading-relaxed max-w-lg">
+                            <p className="text-lg leading-relaxed max-w-lg opacity-90">
                                 {description}
                             </p>
                         </div>
@@ -136,13 +136,13 @@ export default async function ClientPage({
                     <div className="flex flex-wrap gap-4 pt-4">
                         {phone && (
                             <a href={`tel:${phone}`} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
-                                <Phone size={16} className="text-purple-600" />
+                                <Phone size={16} style={{ color: themeAccentColor }} />
                                 <span className="text-sm font-medium">{phone}</span>
                             </a>
                         )}
                         {address && (
                             <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-gray-700 shadow-sm">
-                                <MapPin size={16} className="text-purple-600" />
+                                <MapPin size={16} style={{ color: themeAccentColor }} />
                                 <span className="text-sm font-medium">{address}</span>
                             </div>
                         )}
@@ -172,9 +172,7 @@ export default async function ClientPage({
                 </div>
 
             </div>
-            <div className="fixed bottom-0 left-0 bg-black text-white p-2 text-xs opacity-50 z-50">
-                DEBUG: Style ID = {landing_page_data?.background_style || 'undefined'}
-            </div>
+
         </div>
     );
 }

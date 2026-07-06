@@ -27,6 +27,24 @@ export default async function DashboardLayout({
     // Serialize client data
     const serializedClient = JSON.parse(JSON.stringify(client));
 
+    // --- SMART DATA LOGIC FOR SIDEBAR ---
+    let safeOwnerName = serializedClient.ownerName || "יקירה";
+    if (["בעלת", "בעלת העסק", "Owner"].includes(safeOwnerName.trim())) {
+        safeOwnerName = "יקירה";
+    }
+    const firstName = safeOwnerName.split(" ")[0];
+
+    // Fix Business Name if it duplicates the owner name
+    let displayBusinessName = serializedClient.businessName || "הקליניקה שלי";
+    if (displayBusinessName.trim() === serializedClient.ownerName.trim()) {
+        displayBusinessName = `הקליניקה של ${firstName}`;
+    }
+
+    // Apply override
+    serializedClient.businessName = displayBusinessName;
+    serializedClient.ownerName = firstName; // Also helpful for UI consistency
+    // --- END LOGIC ---
+
     return (
         <div className="flex h-screen bg-gray-50" dir="rtl">
             <aside className="hidden lg:block w-80 h-full border-l border-gray-200 bg-white shrink-0">

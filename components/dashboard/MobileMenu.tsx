@@ -54,7 +54,7 @@ export default function MobileMenu({ client }: MobileMenuProps) {
                     </SheetHeader>
 
                     <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
-                        <Link href={`/dashboard/${client.slug}`} onClick={() => setOpen(false)}>
+                        <Link href={`/dashboard`} onClick={() => setOpen(false)}>
                             <Button
                                 variant="ghost"
                                 className="w-full justify-start gap-3 font-medium text-gray-600 hover:bg-purple-50 hover:text-purple-900 h-12 rounded-xl"
@@ -63,7 +63,7 @@ export default function MobileMenu({ client }: MobileMenuProps) {
                             </Button>
                         </Link>
 
-                        <Link href={`/dashboard/${client.slug}/calendar`} onClick={() => setOpen(false)}>
+                        <Link href={`/dashboard/calendar`} onClick={() => setOpen(false)}>
                             <Button
                                 variant="ghost"
                                 className="w-full justify-start gap-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 rounded-xl"
@@ -72,7 +72,7 @@ export default function MobileMenu({ client }: MobileMenuProps) {
                             </Button>
                         </Link>
 
-                        <Link href={`/dashboard/${client.slug}/clients`} onClick={() => setOpen(false)}>
+                        <Link href={`/dashboard/clients`} onClick={() => setOpen(false)}>
                             <Button
                                 variant="ghost"
                                 className="w-full justify-start gap-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 rounded-xl"
@@ -81,7 +81,7 @@ export default function MobileMenu({ client }: MobileMenuProps) {
                             </Button>
                         </Link>
 
-                        <Link href={`/dashboard/${client.slug}/marketing`} onClick={() => setOpen(false)}>
+                        <Link href={`/dashboard/marketing`} onClick={() => setOpen(false)}>
                             <Button
                                 variant="ghost"
                                 className="w-full justify-start gap-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 rounded-xl"
@@ -90,7 +90,7 @@ export default function MobileMenu({ client }: MobileMenuProps) {
                             </Button>
                         </Link>
 
-                        <Link href={`/dashboard/${client.slug}/finance`} onClick={() => setOpen(false)}>
+                        <Link href={`/dashboard/finance`} onClick={() => setOpen(false)}>
                             <Button
                                 variant="ghost"
                                 className="w-full justify-start gap-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 rounded-xl"
@@ -100,7 +100,7 @@ export default function MobileMenu({ client }: MobileMenuProps) {
                         </Link>
 
                         <div className="pt-4 mt-4 border-t border-gray-100 space-y-2">
-                            <Link href={`/dashboard/${client.slug}/settings`} onClick={() => setOpen(false)}>
+                            <Link href={`/dashboard/settings`} onClick={() => setOpen(false)}>
                                 <Button
                                     variant="ghost"
                                     className="w-full justify-start gap-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 rounded-xl"

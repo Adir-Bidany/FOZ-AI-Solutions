@@ -37,6 +37,13 @@ export default async function ClientDashboard() {
     // Use Business model instead of Client
     const business = await Business.findOne({ ownerEmail: session.user.email }).lean();
 
+    console.log("DEBUG DATA:", {
+        ownerName: business?.ownerName,
+        businessName: business?.businessName,
+        // @ts-ignore
+        rawBusinessObj: business
+    });
+
     if (!business) {
         return notFound();
     }
@@ -80,13 +87,25 @@ export default async function ClientDashboard() {
         },
     ];
 
+    // --- SMART DATA LOGIC START ---
+    let safeOwnerName = serializedBusiness.ownerName || "יקירה";
+    // Check for generic placeholders (including full string "בעלת העסק")
+    if (["בעלת", "בעלת העסק", "Owner"].includes(safeOwnerName.trim())) {
+        safeOwnerName = "יקירה";
+    }
+    const firstName = safeOwnerName.split(" ")[0];
+
+    // Note: businessName logic is handled in Layout for Sidebar, 
+    // but we can apply it here if needed for other components
+    // --- SMART DATA LOGIC END ---
+
     return (
         <div className="min-h-screen bg-gray-50 flex font-sans text-right" dir="rtl">
             <main className="flex-1 p-4 lg:p-8 w-full transition-all duration-300">
 
                 <DashboardHeader
                     greeting={greeting}
-                    ownerName={serializedBusiness.ownerName.split(" ")[0]}
+                    ownerName={firstName}
                     clientSlug={serializedBusiness.slug}
                     clientData={serializedBusiness}
                 />

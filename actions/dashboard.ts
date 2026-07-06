@@ -4,6 +4,10 @@ import { connectToDatabase } from "@/lib/db";
 import ActionCard from "@/models/ActionCard";
 import { sendWhatsApp, updatePriceList, checkAvailability } from "@/lib/tools";
 import { revalidatePath } from "next/cache";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import Business from "@/models/Business";
+import { AGENT_PROMPTS } from "@/lib/agents/prompts";
+import { GOLDA_PRESET } from "@/lib/constants/personas";
 
 export async function fetchActionCards(businessId: string) {
     await connectToDatabase();
@@ -82,6 +86,92 @@ export async function fetchInternalChat(businessId: string, agentPersona: string
     }
 }
 
+export async function sendInternalMessage(businessId: string, agentPersona: string, message: string) {
+    await connectToDatabase();
+    try {
+        const business = await Business.findById(businessId).lean();
+
+        let chat = await ChatInternal.findOne({
+            business_id: businessId,
+            agent_persona: agentPersona
+        });
+
+        if (!chat) {
+            chat = await ChatInternal.create({
+                business_id: businessId,
+                agent_persona: agentPersona,
+                messages: []
+            });
+        }
+
+        // Add user message to DB first
+        chat.messages.push({
+            role: "user",
+            parts: [{ text: message }],
+            timestamp: new Date()
+        });
+
+        // Initialize Gemini
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) throw new Error("GEMINI_API_KEY is not defined in environment variables");
+        
+        const genAI = new GoogleGenerativeAI(apiKey);
+        
+        // Construct System Instruction based on Business Context & Persona
+        let systemInstruction = `You are an internal AI assistant for a business named "${business?.businessName || 'the business'}".
+The owner's name is ${business?.ownerName || 'the owner'}.\n`;
+
+        // Apply strict role boundaries
+        if (agentPersona === "golda" && AGENT_PROMPTS.golda) {
+            systemInstruction += AGENT_PROMPTS.golda(business);
+        } else if (agentPersona === "michal" && AGENT_PROMPTS.michal) {
+            systemInstruction += AGENT_PROMPTS.michal(business);
+        } else if (agentPersona === "roi" && AGENT_PROMPTS.roi) {
+            systemInstruction += AGENT_PROMPTS.roi(business);
+        }
+
+        // Apply hardcore persona overrides for Golda
+        if (agentPersona === "golda" && GOLDA_PRESET.system_prompt_override) {
+            systemInstruction += "\n\n" + GOLDA_PRESET.system_prompt_override;
+        }
+
+        // Force Hebrew for everyone as requested by user
+        systemInstruction += "\n\nCRITICAL RULE: You MUST ALWAYS reply in Hebrew. Never speak English unless explicitly asked to translate. Keep your responses concise and natural.";
+
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-2.5-flash",
+            systemInstruction: systemInstruction 
+        });
+
+        // Map existing chat history for Gemini (exclude the latest user message we just pushed, as we send it via sendMessage)
+        const history = chat.messages.slice(0, -1).map((m: any) => ({
+            role: m.role === "model" ? "model" : "user",
+            parts: m.parts.map((p: any) => ({ text: p.text }))
+        }));
+
+        const chatSession = model.startChat({
+            history: history
+        });
+
+        // Send the new message to Gemini
+        const result = await chatSession.sendMessage(message);
+        const aiResponseText = result.response.text();
+
+        // Add AI response to DB
+        chat.messages.push({
+            role: "model",
+            parts: [{ text: aiResponseText }],
+            timestamp: new Date()
+        });
+
+        await chat.save();
+        return JSON.parse(JSON.stringify(chat.messages));
+    } catch (error) {
+        console.error("Failed to send internal message via Gemini:", error);
+        throw error;
+    }
+}
+
 export async function dismissActionCard(cardId: string) {
     await connectToDatabase();
     try {
@@ -94,7 +184,7 @@ export async function dismissActionCard(cardId: string) {
     }
 }
 
-import Business from "@/models/Business";
+
 
 export async function updateLandingPage(businessId: string, data: any) {
     await connectToDatabase();

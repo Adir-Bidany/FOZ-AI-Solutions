@@ -106,7 +106,7 @@ export default function AdminDashboard() {
 
             if (result?.ok) {
                 router.refresh();
-                router.push(`/dashboard/${slug}`);
+                router.push(`/dashboard`);
             } else {
                 alert("סיסמה שגויה! הגישה נדחתה.");
             }
@@ -204,7 +204,7 @@ export default function AdminDashboard() {
                             </Card>
                         </Link>
 
-                        <Link href="/setup/demo" target="_blank">
+                        <Link href="/onboarding" target="_blank">
                             <Card className="hover:bg-pink-50 transition-all hover:-translate-y-1 duration-300 cursor-pointer h-full border-t-4 border-t-pink-500 shadow-sm">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-sm flex gap-2">

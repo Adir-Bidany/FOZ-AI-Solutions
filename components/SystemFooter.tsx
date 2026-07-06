@@ -11,7 +11,7 @@ export default function SystemFooter() {
     // כדי לתת תחושה של אפליקציה ("App-like feel").
     // לשיקולך: כרגע השארתי אותו גלוי, אבל אם תרצה להסתיר, תוסיף את התנאי הבא:
     /*
-  if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/setup")) {
+  if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/onboarding")) {
       return null;
   }
   */

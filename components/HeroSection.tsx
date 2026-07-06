@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import UnifiedChatWidget from "@/components/chat/UnifiedChatWidget";
@@ -41,12 +42,14 @@ export default function HeroSection() {
                     </p>
 
                     <div className="flex flex-row gap-4 mt-4">
-                        <Button
-                            size="lg"
-                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 py-6 text-lg shadow-lg shadow-blue-900/50 hover:shadow-blue-900/80 transition-all"
-                        >
-                            התחילי ניסיון חינם
-                        </Button>
+                        <Link href="/onboarding">
+                            <Button
+                                size="lg"
+                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 py-6 text-lg shadow-lg shadow-blue-900/50 hover:shadow-blue-900/80 transition-all"
+                            >
+                                התחילי ניסיון חינם
+                            </Button>
+                        </Link>
                         <Button
                             variant="outline"
                             size="lg"

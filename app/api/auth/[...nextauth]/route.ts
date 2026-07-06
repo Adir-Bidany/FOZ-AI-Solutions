@@ -67,7 +67,51 @@ export const authOptions: AuthOptions = {
         }),
     ],
     callbacks: {
-        async jwt({ token, user }: any) {
+        async signIn({ user, account, profile }: any) {
+            if (account?.provider === "google") {
+                await connectDB();
+                try {
+                    let business = await Business.findOne({ ownerEmail: user.email });
+                    
+                    if (!business) {
+                        // Generate a unique slug based on the user's name or email prefix
+                        let baseSlug = user.name 
+                            ? user.name.toLowerCase().replace(/[^a-z0-9]/g, "-") 
+                            : user.email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "-");
+                        if (!baseSlug) baseSlug = "biz";
+                        
+                        let slug = baseSlug;
+                        let count = 1;
+                        while (await Business.findOne({ slug })) {
+                            slug = `${baseSlug}-${count}`;
+                            count++;
+                        }
+                        
+                        // Create a new business account automatically
+                        business = await Business.create({
+                            slug,
+                            businessName: `${user.name}'s Business`,
+                            ownerName: user.name || "Business Owner",
+                            ownerEmail: user.email,
+                        });
+                    }
+                    
+                    // Inject the MongoDB ID and slug into the user object for the JWT callback
+                    user.id = business._id.toString();
+                    user.slug = business.slug;
+                    
+                    return true;
+                } catch (error) {
+                    console.error("Error linking Google account to DB:", error);
+                    return false; // Reject sign-in
+                }
+            }
+            // Allow CredentialsProvider logins to pass through normally
+            return true;
+        },
+        async jwt({ token, user, account }: any) {
+            // For Google logins, 'user' comes from the signIn callback modification above.
+            // For Credentials, 'user' comes from the authorize() function.
             if (user) {
                 token.slug = user.slug;
                 token.businessId = user.id;
