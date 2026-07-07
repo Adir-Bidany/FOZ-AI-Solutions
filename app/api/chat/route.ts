@@ -261,7 +261,20 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error: any) {
-        console.error("Error in chat API:", error);
+        console.error("RAW ERROR:", error);
+        if (error.response) {
+            console.error("RAW ERROR RESPONSE:", error.response);
+        }
+
+        // Handle Gemini Quota errors gracefully so the UI doesn't crash
+        if (error.message && error.message.includes("429 Too Many Requests")) {
+            return NextResponse.json({
+                response: "אני מצטערת, המערכת שלנו כרגע בעומס פניות 😅. בבקשה נסו שוב בעוד דקה או שתיים!",
+                // Return a fake or existing sessionId so the client doesn't break
+                sessionId: "quota_exceeded_fallback",
+            });
+        }
+
         return NextResponse.json(
             {
                 error: "Internal Server Error",

@@ -43,8 +43,8 @@ export default function LoginPage() {
             const sessionRes = await fetch("/api/auth/session");
             const session = await sessionRes.json();
 
-            if (session?.user?.slug) {
-                router.push(`/dashboard/${session.user.slug}`);
+            if (session?.user?.email) {
+                router.push(`/dashboard`);
             } else {
                 router.push("/");
             }

@@ -53,7 +53,7 @@ export default function HeroSection() {
                         <Button
                             variant="outline"
                             size="lg"
-                            className="border-white/20 text-white hover:bg-white/10 rounded-full px-8 py-6 text-lg gap-2"
+                            className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white rounded-full px-8 py-6 text-lg gap-2 transition-all shadow-sm"
                         >
                             איך זה עובד? <ArrowLeft className="w-4 h-4" />
                         </Button>
