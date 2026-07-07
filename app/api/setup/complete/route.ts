@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/services/client-service";
-import { CollectedItem } from "@/components/setup/OnboardingSummary";
+interface CollectedItem {
+    question: string;
+    answer: string;
+    fieldName: string;
+}
 
 /** 
  * Helper to extract value from collected items by field name or question content (heuristic)
