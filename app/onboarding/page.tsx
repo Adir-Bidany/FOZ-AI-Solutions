@@ -76,7 +76,7 @@ export default function CinematicOnboarding() {
             
             try {
                 // Pre-upload logo to get URL so it's ready for final submit
-                const res = await fetch("/api/setup/upload-logo", {
+                const res = await fetch("/api/onboarding/upload-logo", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ image: base64 }),
