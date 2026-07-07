@@ -3,7 +3,7 @@ import mongoose, { Schema, model, models, Document, Types } from "mongoose";
 // --- Appointment Schema ---
 export interface IAppointment extends Document {
     tenant_id: Types.ObjectId;
-    user_id: Types.ObjectId; // EndUser
+    user_id: Types.ObjectId; // Customer
     service_id?: string; // ID from KnowledgeBase or external system
 
     details: {
@@ -27,7 +27,7 @@ export interface IAppointment extends Document {
 const AppointmentSchema = new Schema<IAppointment>(
     {
         tenant_id: { type: Schema.Types.ObjectId, ref: "Tenant", required: true, index: true },
-        user_id: { type: Schema.Types.ObjectId, ref: "EndUser", required: true },
+        user_id: { type: Schema.Types.ObjectId, ref: "Customer", required: true },
         service_id: { type: String },
 
         details: {
