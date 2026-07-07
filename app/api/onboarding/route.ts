@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/services/client-service"; // שימוש בשירות החדש
 
 export async function POST(req: Request) {
@@ -16,6 +17,10 @@ export async function POST(req: Request) {
             tone: body.tone,
             niche: body.niche,
         });
+
+        // Force clear the Vercel Edge Cache so the dashboard shows the new data instantly
+        revalidatePath("/dashboard", "layout");
+        revalidatePath(`/c/${newClient.slug}`, "page");
 
         return NextResponse.json({
             success: true,

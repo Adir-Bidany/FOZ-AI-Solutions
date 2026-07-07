@@ -74,6 +74,7 @@ export async function connectToDatabase() {
 
     if (!cached.promise) {
         cached.promise = mongoose.connect(MONGODB_URI!).then((mongoose) => {
+            console.log(`[DB INIT] Successfully connected to MongoDB! Database Name: ${mongoose.connection.name}`);
             return mongoose;
         });
     }
