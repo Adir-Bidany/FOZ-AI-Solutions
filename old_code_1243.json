@@ -1,1 +1,0 @@
-{"name":"run_command","args":{"CommandLine":"git log -S \"framer-motion\" --oneline","Cwd":"c:\\Users\\E7470\\Desktop\\FOZ AI Solutions\\foz-ai-solutions","WaitMsBeforeAsync":5000}}
