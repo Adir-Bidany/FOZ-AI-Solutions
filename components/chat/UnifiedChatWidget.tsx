@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { ChatBubble } from "./ChatBubble";
 import { ChatInput } from "./ChatInput";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getInitialGreeting } from "@/actions/chat";
 
 interface Message {
     role: "user" | "assistant" | "model";
@@ -17,6 +18,7 @@ interface UnifiedChatWidgetProps {
     businessConfig?: any;
     initialMessages?: Message[];
     className?: string;
+    agentPersona?: string;
 }
 
 export default function UnifiedChatWidget({
@@ -25,12 +27,41 @@ export default function UnifiedChatWidget({
     businessConfig,
     initialMessages = [],
     className,
+    agentPersona,
 }: UnifiedChatWidgetProps) {
     const [messages, setMessages] = useState<Message[]>(initialMessages);
     const [isLoading, setIsLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const [sessionId, setSessionId] = useState<string | null>(null);
+
+    // Reset state if business context shifts
+    useEffect(() => {
+        setSessionId(null);
+        setMessages(initialMessages);
+    }, [businessConfig?._id]);
+
+    // Listen for global security purge events (cross-route boundaries)
+    useEffect(() => {
+        const handlePurge = () => {
+            console.log("[UnifiedChatWidget] Security purge received. Wiping state.");
+            setSessionId(null);
+            setMessages(initialMessages);
+        };
+        window.addEventListener("security-purge", handlePurge);
+        return () => window.removeEventListener("security-purge", handlePurge);
+    }, [initialMessages]);
+
+    // Fetch dynamic initial greeting if starting empty
+    useEffect(() => {
+        if (messages.length === 0 && agentPersona) {
+            getInitialGreeting(agentPersona).then((greeting) => {
+                if (greeting) {
+                    setMessages([{ role: "assistant", content: greeting }]);
+                }
+            });
+        }
+    }, [agentPersona, messages.length]);
 
     const handleSend = async (content: string) => {
         // Add user message
@@ -39,6 +70,10 @@ export default function UnifiedChatWidget({
         setIsLoading(true);
 
         try {
+            const consumerDataStr = localStorage.getItem("foz_consumer_data");
+            const consumerData = consumerDataStr ? JSON.parse(consumerDataStr) : null;
+            const customerId = consumerData?.id || consumerData?._id || null;
+
             const response = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -46,6 +81,8 @@ export default function UnifiedChatWidget({
                     message: content,
                     businessId: businessConfig?._id,
                     sessionId: sessionId,
+                    agentPersona: agentPersona,
+                    customerId: customerId,
                 }),
             });
 
@@ -59,6 +96,11 @@ export default function UnifiedChatWidget({
                 setMessages((prev) => [...prev, aiMsg]);
                 if (data.sessionId) {
                     setSessionId(data.sessionId);
+                }
+                
+                // NEW: Intercept Auto-Logout
+                if (data._system_action === "force_logout") {
+                    window.dispatchEvent(new Event("consumer-force-logout"));
                 }
             } else if (data.error) {
                 console.error("API Error:", data.error);
@@ -88,8 +130,14 @@ export default function UnifiedChatWidget({
                             🤖
                         </div>
                         <div>
-                            <h3 className="font-bold text-sm">AI Assistant</h3>
-                            <p className="text-xs text-blue-100">Online</p>
+                            <h3 className="font-bold text-sm">בינה מלאכותית היא השותף החדש שלך</h3>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                                <p className="text-xs text-blue-100">מחובר 24/7</p>
+                            </div>
                         </div>
                     </div>
                 </div>

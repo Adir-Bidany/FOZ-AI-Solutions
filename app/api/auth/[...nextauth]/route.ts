@@ -62,6 +62,7 @@ export const authOptions: AuthOptions = {
                     email: business.ownerEmail,
                     name: business.ownerName,
                     slug: business.slug,
+                    role: business.role,
                 };
             },
         }),
@@ -99,6 +100,7 @@ export const authOptions: AuthOptions = {
                     // Inject the MongoDB ID and slug into the user object for the JWT callback
                     user.id = business._id.toString();
                     user.slug = business.slug;
+                    user.role = business.role;
                     
                     return true;
                 } catch (error) {
@@ -115,6 +117,7 @@ export const authOptions: AuthOptions = {
             if (user) {
                 token.slug = user.slug;
                 token.businessId = user.id;
+                token.role = user.role;
             }
             return token;
         },
@@ -122,6 +125,7 @@ export const authOptions: AuthOptions = {
             if (session.user) {
                 session.user.slug = token.slug;
                 session.user.businessId = token.businessId;
+                session.user.role = token.role;
             }
             return session;
         },

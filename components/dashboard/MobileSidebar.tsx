@@ -4,14 +4,24 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface MobileSidebarProps {
-    client: any;
+    client: { businessName: string; slug: string; ownerName: string; logo?: string; } | any;
 }
 
 export default function MobileSidebar({ client }: MobileSidebarProps) {
     const [open, setOpen] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsMounted(true);
+    }, []);
+
+    if (!isMounted) {
+        return <div className="w-10 h-10 lg:hidden" />; 
+    }
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>

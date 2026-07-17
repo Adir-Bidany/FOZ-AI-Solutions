@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/services/client-service"; // שימוש בשירות החדש
+import { createClient } from "@/services/client-service";
+import { connectToDatabase as connectDB } from "@/lib/db";
+import Business from "@/models/Business";
 
 export async function POST(req: Request) {
+    let body: any;
     try {
-        const body = await req.json();
+        body = await req.json();
 
         // אנחנו שולחים את כל המידע לפונקציה החכמה ב-Service
         // היא כבר תדאג להצפנה, לבדיקת כפילויות ולשמירה ב-DB
@@ -16,6 +19,7 @@ export async function POST(req: Request) {
             password: body.password,
             tone: body.tone,
             niche: body.niche,
+            logo_url: body.logo_url,
         });
 
         // Force clear the Vercel Edge Cache so the dashboard shows the new data instantly
@@ -29,6 +33,37 @@ export async function POST(req: Request) {
         });
     } catch (error: any) {
         console.error("Onboarding Error:", error.message);
+
+        // Update existing account if the email is already registered
+        if (error.message && error.message.includes("כבר רשום") && body?.email) {
+            try {
+                await connectDB();
+                const existingBusiness = await Business.findOne({ ownerEmail: body.email });
+                if (existingBusiness) {
+                    // Update the business with the new info from the onboarding attempt
+                    existingBusiness.businessName = body.businessName || existingBusiness.businessName;
+                    existingBusiness.ownerName = body.ownerName || existingBusiness.ownerName;
+                    
+                    if (body.logo_url) {
+                        existingBusiness.logo = body.logo_url;
+                    }
+                    
+                    await existingBusiness.save();
+                    
+                    revalidatePath("/dashboard", "layout");
+                    revalidatePath(`/c/${existingBusiness.slug}`, "page");
+
+                    return NextResponse.json({
+                        success: true,
+                        clientId: existingBusiness._id,
+                        slug: existingBusiness.slug,
+                        message: "Account updated successfully"
+                    });
+                }
+            } catch (updateError) {
+                console.error("Failed to update existing account:", updateError);
+            }
+        }
 
         // החזרת שגיאה מסודרת לצד לקוח (למשל "מייל תפוס")
         return NextResponse.json(

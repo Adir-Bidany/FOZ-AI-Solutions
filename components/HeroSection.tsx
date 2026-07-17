@@ -80,12 +80,11 @@ export default function HeroSection() {
 
                         {/* Unified Chat Widget */}
                         <UnifiedChatWidget
+                            key="paz-demo"
                             mode="public"
                             variant="floating"
-                            businessConfig={{ logo: "/favicon.ico", slug: "demo" }}
-                            initialMessages={[
-                                { role: "assistant", content: "היי! אני דניאלה. 👋\nאיך אני יכולה לעזור לקליניקה שלך לצמוח היום?" }
-                            ]}
+                            businessConfig={{ _id: "demo", slug: "demo", logo: "/favicon.ico" }}
+                            agentPersona="paz"
                             className="h-full w-full shadow-[0_40px_80px_-20px_rgba(59,130,246,0.4),_0_0_50px_-10px_rgba(139,92,246,0.3)]"
                         />
 

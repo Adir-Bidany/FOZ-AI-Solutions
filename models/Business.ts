@@ -9,8 +9,12 @@ export interface IBusiness extends Document {
     phone?: string;
     address?: string;
     logo?: string;
+    role?: "admin" | "user";
     api_keys?: {
-        simplybook?: string;
+        simplybook?: {
+            companyLogin?: string;
+            apiKey?: string;
+        };
         whatsapp?: string;
     };
     ai_settings?: {
@@ -51,10 +55,14 @@ const BusinessSchema = new Schema<IBusiness>(
         phone: { type: String },
         address: { type: String },
         logo: { type: String },
+        role: { type: String, enum: ["admin", "user"], default: "user" },
 
         // --- Config ---
         api_keys: {
-            simplybook: { type: String },
+            simplybook: {
+                companyLogin: { type: String },
+                apiKey: { type: String }
+            },
             whatsapp: { type: String },
         },
 

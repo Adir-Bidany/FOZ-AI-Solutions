@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { fetchInternalChat, sendInternalMessage } from "@/actions/dashboard";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sparkles, TrendingUp, DollarSign, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -20,15 +19,18 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
     // Chat Input State
     const [inputValue, setInputValue] = useState("");
     const [isSending, setIsSending] = useState(false);
-    const scrollRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         loadChat(activeTab);
     }, [activeTab]);
 
     useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollIntoView({ behavior: "smooth" });
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTo({
+                top: scrollContainerRef.current.scrollHeight,
+                behavior: "smooth"
+            });
         }
     }, [messages]);
 
@@ -97,7 +99,10 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
 
             {/* Chat Area */}
             <div className="flex-1 bg-gray-50/50 p-4 overflow-hidden relative flex flex-col">
-                <ScrollArea className="flex-1 pr-4">
+                <div 
+                    ref={scrollContainerRef}
+                    className="flex-1 min-h-0 overflow-y-auto pr-4 custom-scrollbar"
+                >
                     <div className="space-y-4 pb-4">
                         {isLoading ? (
                             <div className="flex items-center justify-center h-40 text-gray-400">
@@ -128,9 +133,8 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                                 </div>
                             ))
                         )}
-                        <div ref={scrollRef} />
                     </div>
-                </ScrollArea>
+                </div>
 
                 {/* Input Area - ALWAYS VISIBLE */}
                 <div className="pt-4 border-t border-gray-100 bg-transparent shrink-0">

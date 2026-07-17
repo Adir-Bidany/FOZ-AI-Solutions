@@ -11,6 +11,7 @@ interface CreateClientParams {
     password: string;
     niche: string;
     tone: string;
+    logo_url?: string;
 }
 
 // פונקציה 1: יצירת לקוח חדש
@@ -37,6 +38,7 @@ export async function createClient(data: CreateClientParams) {
         phone: data.phone,
         ownerEmail: data.email,
         password: hashedPassword,
+        logo: data.logo_url,
         ai_settings: {
             tone: data.tone,
             language: "he",

@@ -42,20 +42,7 @@ export default function SystemHeader() {
                 <div className="flex items-center gap-2 md:gap-4 shrink-0">
                     {!isClientSite && (
                         <>
-                            <Link href="/login">
-                                <Button
-                                    variant="ghost"
-                                    className="text-sm font-medium text-gray-600 hover:text-purple-600 hover:bg-purple-50 px-3 md:px-5"
-                                >
-                                    כניסה לאדמין
-                                </Button>
-                            </Link>
-
-                            <Link href="/onboarding">
-                                <Button className="text-sm font-bold h-9 md:h-10 px-5 md:px-7 bg-gray-900 text-white shadow-md hover:bg-gray-800 transition-all rounded-full">
-                                    הרשמה
-                                </Button>
-                            </Link>
+                            {/* Removed legacy Admin and Register buttons as part of B2B2C evolution */}
                         </>
                     )}
                 </div>

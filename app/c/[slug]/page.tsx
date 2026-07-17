@@ -1,9 +1,9 @@
-
 import { notFound } from "next/navigation";
 import DanielaAvatar from "@/components/DanielaAvatar";
 import UnifiedChatWidget from "@/components/chat/UnifiedChatWidget";
+import BrandingAnchor from "@/components/BrandingAnchor";
 import { getClientBySlug } from "@/services/client-service";
-import { Phone, MapPin } from "lucide-react";
+import { ArrowRight, MapPin, Phone, Instagram, Facebook, Globe, Calendar, Clock, Star, MessageSquare } from "lucide-react";
 import DanielaHeader from "@/components/DanielaHeader";
 import ClientLogo from "@/components/ClientLogo";
 import { BACKGROUND_PRESETS } from "@/lib/background-presets";
@@ -158,7 +158,9 @@ export default async function ClientPage({
 
                         {/* The Chat Body */}
                         <div className="flex-1 relative bg-transparent">
+                            <BrandingAnchor context="consumer" businessData={clientData} />
                             <UnifiedChatWidget
+                                key={clientData._id.toString()}
                                 mode="public"
                                 variant="embedded"
                                 businessConfig={clientData}

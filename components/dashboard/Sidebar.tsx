@@ -11,12 +11,14 @@ import {
     Globe,
 } from "lucide-react";
 import Link from "next/link";
+import ClientLogo from "@/components/ClientLogo";
 
 interface SidebarProps {
     client: {
         businessName: string;
         slug: string;
         ownerName: string;
+        logo?: string;
     };
 }
 
@@ -24,8 +26,8 @@ export default function Sidebar({ client }: SidebarProps) {
     return (
         <div className="flex flex-col h-full bg-white border-l border-gray-100">
             <div className="p-6 border-b flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-tr from-purple-600 to-pink-500 rounded-xl flex items-center justify-center text-white font-bold text-lg uppercase shrink-0 shadow-md">
-                    {client.businessName.charAt(0)}
+                <div className="w-10 h-10 shrink-0">
+                    <ClientLogo src={client.logo || null} businessName={client.businessName} />
                 </div>
                 <span className="font-bold text-lg truncate text-gray-800">
                     {client.businessName}
@@ -51,7 +53,7 @@ export default function Sidebar({ client }: SidebarProps) {
                     </Button>
                 </Link>
 
-                <Link href="/dashboard/clients">
+                <Link href="/dashboard/customers">
                     <Button
                         variant="ghost"
                         className="w-full justify-start gap-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 rounded-xl"

@@ -101,14 +101,16 @@ export default async function ClientDashboard() {
 
     return (
         <div className="min-h-screen bg-gray-50 flex font-sans text-right" dir="rtl">
-            <main className="flex-1 p-4 lg:p-8 w-full transition-all duration-300">
-
-                <DashboardHeader
-                    greeting={greeting}
-                    ownerName={firstName}
-                    clientSlug={serializedBusiness.slug}
-                    clientData={serializedBusiness}
-                />
+            <main className="flex-1 p-4 lg:p-8 w-full transition-all duration-300 flex flex-col">
+                {/* Structural Wrapper Lock: Header Container */}
+                <div className="w-full shrink-0">
+                    <DashboardHeader
+                        greeting={greeting}
+                        ownerName={firstName}
+                        clientSlug={serializedBusiness.slug}
+                        clientData={serializedBusiness}
+                    />
+                </div>
 
                 {/* ZONE A: Action Center */}
                 <div className="mb-8">

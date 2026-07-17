@@ -17,20 +17,19 @@ import {
 import { Loader2, UploadCloud, ChevronRight, Lock, Mail, Star, Users, Briefcase, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { signIn } from "next-auth/react";
-import { GOLDA_PRESET, DAVID_PRESET } from "@/lib/constants/personas";
 
 const PERSONAS = [
     {
         id: "golda",
         name: "גולדה",
-        promptValue: GOLDA_PRESET.tone,
+        promptValue: "Assertive, Protective, Chief of Staff",
         avatar: "/avatars/golda.png",
         description: "רמטכ\"לית העסק. קשוחה, מגוננת, מנהלת יומן בצורה אבסולוטית."
     },
     {
         id: "david",
         name: "דוד",
-        promptValue: DAVID_PRESET.tone,
+        promptValue: "Tactical, Strategic, Operations Manager",
         avatar: "/avatars/david.png",
         description: "מנהל תפעול. טקטי, ממוקד מטרה, קר רוח ותכליתי."
     }
@@ -176,33 +175,48 @@ export default function CinematicOnboarding() {
             <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-purple-900/30 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-900/20 rounded-full blur-[150px] pointer-events-none" />
 
-            {/* The Animating Logo */}
-            <motion.div
-                layout
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{
-                    opacity: 1,
-                    scale: started && !completed ? 0.3 : completed ? 0.8 : 1,
-                    y: started && !completed ? "40vh" : completed ? 0 : 0,
-                    x: started && !completed ? "-40vw" : completed ? 0 : 0,
-                }}
-                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute z-50 flex flex-col items-center justify-center cursor-pointer"
-                onClick={() => { if (!started) setStarted(true); }}
-            >
+            {/* The Static Text */}
+            <AnimatePresence>
                 {!started && (
                     <motion.div
+                        className="absolute z-40 top-1/4 w-full flex justify-center pointer-events-none"
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
                         transition={{ delay: 0.2, duration: 0.8 }}
-                        className="text-center mb-8"
                     >
                         <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
                             המציאות החדשה כבר כאן
                         </h1>
                     </motion.div>
                 )}
-                <div className="relative w-64 h-32 md:w-80 md:h-40">
+            </AnimatePresence>
+
+            {/* The Animating Logo Container */}
+            <motion.div
+                className="absolute z-50 cursor-pointer"
+                initial={{ opacity: 0, scale: 0.8, x: 0, y: 0 }}
+                animate={{
+                    opacity: 1,
+                    scale: started && !completed ? 0.35 : completed ? 0.8 : 1,
+                    x: started && !completed ? "38vw" : 0,
+                    y: started && !completed ? "38vh" : 0,
+                }}
+                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                onClick={() => { if (!started) setStarted(true); }}
+            >
+                {/* The Pulsing Logo Image */}
+                <motion.div
+                    animate={{
+                        opacity: !started && !completed ? [1, 0.1, 1] : 1,
+                    }}
+                    transition={{
+                        opacity: !started && !completed 
+                            ? { repeat: Infinity, duration: 2, ease: "easeInOut" } 
+                            : { duration: 0.5 },
+                    }}
+                    className="relative w-64 h-32 md:w-80 md:h-40"
+                >
                     <Image
                         src="/logo.png"
                         alt="FOZ AI Solutions"
@@ -210,7 +224,7 @@ export default function CinematicOnboarding() {
                         className="object-contain"
                         priority
                     />
-                </div>
+                </motion.div>
             </motion.div>
 
             {/* The Multi-Step Modal */}

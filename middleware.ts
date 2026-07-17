@@ -15,13 +15,18 @@ export async function middleware(req: NextRequest) {
         }
     }
 
-    // 2. הגנה על נתיב ה-Admin (כרגע הוא מוגן בסיסמה ידנית, אז נשאיר אותו פתוח לכולם ברמת המידלוור)
-    // אבל בעתיד נוסיף כאן בדיקה אם המשתמש הוא באמת Admin
+    // 2. Server-Side RBAC Admin Gate
+    if (pathname.startsWith("/admin")) {
+        if (!token || token.role !== "admin") {
+            const url = new URL("/", req.url);
+            return NextResponse.redirect(url);
+        }
+    }
 
     return NextResponse.next();
 }
 
 // הגדרת הנתיבים שעליהם השומר מגן
 export const config = {
-    matcher: ["/dashboard/:path*"],
+    matcher: ["/dashboard/:path*", "/admin/:path*"],
 };

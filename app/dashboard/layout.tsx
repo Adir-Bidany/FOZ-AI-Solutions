@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { connectToDatabase as connectDB } from "@/lib/db";
 import Business from "@/models/Business";
 import Sidebar from "@/components/dashboard/Sidebar";
-import MobileSidebar from "@/components/dashboard/MobileSidebar";
+import BrandingAnchor from "@/components/BrandingAnchor";
 
 export default async function DashboardLayout({
     children,
@@ -46,23 +46,16 @@ export default async function DashboardLayout({
     // --- END LOGIC ---
 
     return (
-        <div className="flex h-screen bg-gray-50" dir="rtl">
-            <aside className="hidden lg:block w-80 h-full border-l border-gray-200 bg-white shrink-0">
-                <Sidebar client={serializedClient} />
-            </aside>
-            <main className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
-                {/* Mobile Header */}
-                <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-50">
-                    <div className="font-bold text-lg text-gray-800">
-                        {serializedClient.businessName}
-                    </div>
-                    <MobileSidebar client={serializedClient} />
-                </div>
-
-                <div className="flex-1">
+        <div className="flex h-screen bg-gray-50 w-full" dir="rtl">
+            <main className="w-full h-full overflow-y-auto custom-scrollbar flex flex-col">
+                <div className="flex-1 w-full relative">
                     {children}
                 </div>
             </main>
+
+            <BrandingAnchor context="dashboard" businessData={serializedClient}>
+                <Sidebar client={serializedClient} />
+            </BrandingAnchor>
         </div>
     );
 }

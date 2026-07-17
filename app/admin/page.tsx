@@ -31,25 +31,13 @@ interface Client {
 
 export default function AdminDashboard() {
     const router = useRouter();
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [password, setPassword] = useState("");
     const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // הוספתי useEffect כדי לטעון נתונים רק אחרי אימות
+    // Fetch data immediately since middleware guarantees admin RBAC
     useEffect(() => {
-        if (isAuthenticated) {
-            fetchClients();
-        }
-    }, [isAuthenticated]);
-
-    const handleLogin = () => {
-        if (password === "admin123") {
-            setIsAuthenticated(true);
-        } else {
-            alert("סיסמה שגויה");
-        }
-    };
+        fetchClients();
+    }, []);
 
     const fetchClients = async () => {
         setIsLoading(true);
@@ -116,39 +104,7 @@ export default function AdminDashboard() {
         }
     };
 
-    if (!isAuthenticated) {
-        return (
-            <div
-                className="min-h-screen flex items-center justify-center bg-gray-50/50"
-                dir="rtl"
-            >
-                <Card className="w-full max-w-sm shadow-lg">
-                    <CardHeader>
-                        <CardTitle className="text-center text-xl font-bold text-gray-800">
-                            כניסת מנהל מערכת
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <Input
-                            type="password"
-                            placeholder="סיסמה"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            onKeyDown={(e) =>
-                                e.key === "Enter" && handleLogin()
-                            }
-                        />
-                        <Button
-                            className="w-full bg-gray-900 hover:bg-black"
-                            onClick={handleLogin}
-                        >
-                            התחבר
-                        </Button>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
+    // Removed legacy password UI
 
     return (
         <div className="min-h-screen bg-gray-50 pt-8" dir="rtl">

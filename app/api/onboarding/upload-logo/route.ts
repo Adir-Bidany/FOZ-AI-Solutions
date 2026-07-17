@@ -1,34 +1,26 @@
 import { NextResponse } from "next/server";
-import { connectToDatabase as connectDB } from "@/lib/db";
-import Business from "@/models/Business";
 
 export async function POST(req: Request) {
     try {
-        const { slug, logoBase64 } = await req.json();
+        const { image } = await req.json();
 
-        if (!logoBase64)
+        if (!image) {
             return NextResponse.json(
-                { error: "No logo provided" },
+                { error: "No image provided" },
                 { status: 400 }
             );
+        }
 
-        await connectDB();
+        // In a production environment, you would upload this base64 string 
+        // to AWS S3, Vercel Blob, Cloudinary, etc., and return the CDN URL.
+        // For local development, we pass the base64 string back to act as the URL.
+        const logoUrl = image;
 
-        const business = await Business.findOne({ slug });
-        if (!business)
-            return NextResponse.json(
-                { error: "Client not found" },
-                { status: 404 }
-            );
-
-        business.logo = logoBase64;
-        await business.save();
-
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, url: logoUrl });
     } catch (error) {
         console.error("Upload Error:", error);
         return NextResponse.json(
-            { error: "Failed to upload" },
+            { error: "Failed to process logo" },
             { status: 500 }
         );
     }

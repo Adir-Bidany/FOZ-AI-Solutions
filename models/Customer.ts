@@ -3,9 +3,18 @@ import mongoose, { Schema, model, models, Document, Types } from "mongoose";
 export interface ICustomer extends Document {
     businessId: Types.ObjectId;
     phone: string;
-    name?: string;
-    email?: string;
-
+    name: string;
+    lastName: string;
+    email: string;
+    passwordHash: string;
+    status: "pending" | "approved";
+    metrics: {
+        totalRevenue: number;
+        totalAppointments: number;
+    };
+    history: {
+        lastTreatments: string[];
+    };
     // AI Profile (v3.0)
     ai_profile?: {
         summary?: string;
@@ -26,8 +35,18 @@ const CustomerSchema = new Schema<ICustomer>(
     {
         businessId: { type: Schema.Types.ObjectId, ref: "Business", required: true },
         phone: { type: String, required: true },
-        name: { type: String },
-        email: { type: String },
+        name: { type: String, required: true },
+        lastName: { type: String, required: true },
+        email: { type: String, required: true },
+        passwordHash: { type: String, required: true },
+        status: { type: String, enum: ["pending", "approved"], default: "pending" },
+        metrics: {
+            totalRevenue: { type: Number, default: 0 },
+            totalAppointments: { type: Number, default: 0 }
+        },
+        history: {
+            lastTreatments: [{ type: String }]
+        },
 
         // AI Profile (v3.0)
         ai_profile: {
