@@ -6,6 +6,10 @@ import { ChatBubble } from "./ChatBubble";
 import { ChatInput } from "./ChatInput";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getInitialGreeting } from "@/actions/chat";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/style.css";
+import { format } from "date-fns";
+import { he } from "date-fns/locale";
 
 interface Message {
     role: "user" | "assistant" | "model";
@@ -34,6 +38,9 @@ export default function UnifiedChatWidget({
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const [sessionId, setSessionId] = useState<string | null>(null);
+    const [widgetType, setWidgetType] = useState<"date_picker" | "service_selector" | "confirmation" | null>(null);
+    const [showCustomNote, setShowCustomNote] = useState(false);
+    const [customNoteText, setCustomNoteText] = useState("");
 
     // Reset state if business context shifts
     useEffect(() => {
@@ -98,9 +105,16 @@ export default function UnifiedChatWidget({
                     setSessionId(data.sessionId);
                 }
                 
-                // NEW: Intercept Auto-Logout
                 if (data._system_action === "force_logout") {
                     window.dispatchEvent(new Event("consumer-force-logout"));
+                } else if (data._system_action === "show_date_picker") {
+                    setWidgetType("date_picker");
+                } else if (data._system_action === "show_services") {
+                    setWidgetType("service_selector");
+                } else if (data._system_action === "show_confirmation") {
+                    setWidgetType("confirmation");
+                } else {
+                    setWidgetType(null);
                 }
             } else if (data.error) {
                 console.error("API Error:", data.error);
@@ -115,8 +129,12 @@ export default function UnifiedChatWidget({
 
     // Auto-scroll to bottom
     useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollIntoView({ behavior: "smooth" });
+        if (scrollRef.current && scrollRef.current.parentElement) {
+            const container = scrollRef.current.parentElement;
+            container.scrollTo({
+                top: container.scrollHeight,
+                behavior: "smooth"
+            });
         }
     }, [messages]);
 
@@ -144,7 +162,7 @@ export default function UnifiedChatWidget({
             )}
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-transparent">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-transparent min-h-0">
                 {messages.map((msg, idx) => (
                     <ChatBubble
                         key={idx}
@@ -161,6 +179,61 @@ export default function UnifiedChatWidget({
                         </div>
                     </div>
                 )}
+                
+                {/* Dynamic Widgets */}
+                {widgetType === "date_picker" && (
+                    <div className="bg-black rounded-2xl shadow-sm border border-gray-100 p-4 animate-in fade-in slide-in-from-bottom-2">
+                        <h4 className="text-sm font-bold text-center mb-2">בחירת תאריך</h4>
+                        <div className="flex justify-center" dir="rtl">
+                            <DayPicker 
+                                mode="single" 
+                                locale={he}
+                                onSelect={(date) => {
+                                    if (date) {
+                                        setWidgetType(null);
+                                        const dateStr = format(date, "yyyy-MM-dd");
+                                        handleSend(`אשמח לבדוק תורים לתאריך ${dateStr}`);
+                                    }
+                                }}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {widgetType === "service_selector" && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 animate-in fade-in slide-in-from-bottom-2">
+                        <h4 className="text-sm font-bold mb-3">איזה טיפול תרצי לבדוק?</h4>
+                        <div className="flex flex-wrap gap-2">
+                            <button onClick={() => { setWidgetType(null); handleSend("טיפול בוטוקס"); }} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors">בוטוקס</button>
+                            <button onClick={() => { setWidgetType(null); handleSend("טיפול חומצה היאלורונית"); }} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors">חומצה היאלורונית</button>
+                            <button onClick={() => { setWidgetType(null); handleSend("ייעוץ"); }} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors">ייעוץ</button>
+                            <button onClick={() => setShowCustomNote(true)} className="px-3 py-1.5 bg-gray-50 text-gray-600 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors">אחר</button>
+                        </div>
+                        {showCustomNote && (
+                            <div className="mt-3 space-y-2">
+                                <textarea 
+                                    className="w-full text-sm p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="אנא פרטי (עד 50 מילים)..."
+                                    rows={2}
+                                    value={customNoteText}
+                                    onChange={(e) => setCustomNoteText(e.target.value)}
+                                />
+                                <button 
+                                    onClick={() => {
+                                        setWidgetType(null);
+                                        setShowCustomNote(false);
+                                        handleSend(`טיפול אחר. הערה: ${customNoteText}`);
+                                        setCustomNoteText("");
+                                    }}
+                                    className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-bold"
+                                >
+                                    שלח והמשך
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+                
                 <div ref={scrollRef} />
             </div>
 

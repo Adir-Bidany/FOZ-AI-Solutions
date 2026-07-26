@@ -1657,9 +1657,9 @@ The following code has been modified to include a line number before every line,
 35:     const firstName = safeOwnerName.split(" ")[0];
 36: 
 37:     // Fix Business Name if it duplicates the owner name
-38:     let displayBusinessName = serializedClient.businessName || "הקליניקה שלי";
+38:     let displayBusinessName = serializedClient.businessName || "העסק שלי";
 39:     if (displayBusinessName.trim() === serializedClient.ownerName.trim()) {
-40:         displayBusinessName = `הקליניקה של ${firstName}`;
+40:         displayBusinessName = `העסק של ${firstName}`;
 41:     }
 42: 
 43:     // Apply override
@@ -3965,7 +3965,7 @@ The following code has been modified to include a line number before every line,
 29:                 "https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=2068&auto=format&fit=crop",
 30:             landing_page_data: {
 31:                 hero_title: "טיפולי פנים ברמה אחרת",
-32:                 hero_subtitle: "הקליניקה המובילה לטיפולי אנטי-אייג'ינג ואסתטיקה מתקדמת.",
+32:                 hero_subtitle: "העסק המובילה לטיפולי אנטי-אייג'ינג ואסתטיקה מתקדמת.",
 33:                 features: ["טכנולוגיה מתקדמת", "חומרים טבעיים", "ליווי אישי", "תוצאות מוכחות"]
 34:             }
 35:         };
@@ -3977,7 +3977,7 @@ The following code has been modified to include a line number before every line,
 41:         businessName: client.businessName,
 42:         ownerName: client.ownerName,
 43:         phone: client.phone || "לא צוין",
-44:         address: client.address || "כתובת הקליניקה",
+44:         address: client.address || "כתובת העסק",
 45:         domainGuidelines: client.domainGuidelines,
 46:         tone: "יוקרתי ומקצועי",
 47:         isDemo: false,

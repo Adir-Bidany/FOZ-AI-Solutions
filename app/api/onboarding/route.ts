@@ -32,10 +32,11 @@ export async function POST(req: Request) {
             slug: newClient.slug,
         });
     } catch (error: any) {
-        console.error("Onboarding Error:", error.message);
+        console.error("🔴 ONBOARDING API ERROR:", error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
 
         // Update existing account if the email is already registered
-        if (error.message && error.message.includes("כבר רשום") && body?.email) {
+        if (errorMessage.includes("כבר רשום") && body?.email) {
             try {
                 await connectDB();
                 const existingBusiness = await Business.findOne({ ownerEmail: body.email });
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
 
         // החזרת שגיאה מסודרת לצד לקוח (למשל "מייל תפוס")
         return NextResponse.json(
-            { error: error.message || "Failed to create account" },
+            { error: errorMessage || "Failed to create account" },
             { status: 400 }
         );
     }

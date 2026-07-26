@@ -29,7 +29,7 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
         if (scrollContainerRef.current) {
             scrollContainerRef.current.scrollTo({
                 top: scrollContainerRef.current.scrollHeight,
-                behavior: "smooth"
+                behavior: "smooth",
             });
         }
     }, [messages]);
@@ -45,12 +45,16 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
         if (!inputValue.trim() || isSending) return;
 
         const TEMP_MSG = { role: "user", parts: [{ text: inputValue }] };
-        setMessages(prev => [...prev, TEMP_MSG]);
+        setMessages((prev) => [...prev, TEMP_MSG]);
         setInputValue("");
         setIsSending(true);
 
         try {
-            const updatedHistory = await sendInternalMessage(businessId, activeTab, TEMP_MSG.parts[0].text);
+            const updatedHistory = await sendInternalMessage(
+                businessId,
+                activeTab,
+                TEMP_MSG.parts[0].text,
+            );
             setMessages(updatedHistory);
         } catch (e) {
             console.error(e);
@@ -61,9 +65,27 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
     };
 
     const agents = {
-        golda: { name: "גולדה", role: "מנהלת קליניקה", color: "text-purple-600", bg: "bg-purple-100", icon: Sparkles },
-        michal: { name: "מיכל", role: "שיווק ומכירות", color: "text-pink-600", bg: "bg-pink-100", icon: TrendingUp },
-        roi: { name: "רועי", role: "פיננסים", color: "text-blue-600", bg: "bg-blue-100", icon: DollarSign },
+        golda: {
+            name: "גולדה",
+            role: "מנהלת עסק",
+            color: "text-purple-600",
+            bg: "bg-purple-100",
+            icon: Sparkles,
+        },
+        michal: {
+            name: "מיכל",
+            role: "שיווק ומכירות",
+            color: "text-pink-600",
+            bg: "bg-pink-100",
+            icon: TrendingUp,
+        },
+        roi: {
+            name: "רועי",
+            role: "פיננסים",
+            color: "text-blue-600",
+            bg: "bg-blue-100",
+            icon: DollarSign,
+        },
     };
 
     const currentAgent = agents[activeTab as keyof typeof agents];
@@ -79,7 +101,12 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                     חדר המצב (Agent Room)
                 </h2>
 
-                <Tabs defaultValue="golda" onValueChange={setActiveTab} className="w-full" dir="rtl">
+                <Tabs
+                    defaultValue="golda"
+                    onValueChange={setActiveTab}
+                    className="w-full"
+                    dir="rtl"
+                >
                     <TabsList className="grid w-full grid-cols-3 bg-gray-50 p-1 rounded-xl">
                         {Object.entries(agents).map(([key, agent]) => (
                             <TabsTrigger
@@ -88,8 +115,13 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                                 className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200"
                             >
                                 <div className="flex items-center gap-2">
-                                    <agent.icon size={16} className={agent.color} />
-                                    <span className="font-medium">{agent.name}</span>
+                                    <agent.icon
+                                        size={16}
+                                        className={agent.color}
+                                    />
+                                    <span className="font-medium">
+                                        {agent.name}
+                                    </span>
                                 </div>
                             </TabsTrigger>
                         ))}
@@ -99,7 +131,7 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
 
             {/* Chat Area */}
             <div className="flex-1 bg-gray-50/50 p-4 overflow-hidden relative flex flex-col">
-                <div 
+                <div
                     ref={scrollContainerRef}
                     className="flex-1 min-h-0 overflow-y-auto pr-4 custom-scrollbar"
                 >
@@ -110,11 +142,18 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                             </div>
                         ) : messages.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-40 text-gray-400 space-y-2 mt-10">
-                                <div className={`w-12 h-12 rounded-full ${currentAgent.bg} flex items-center justify-center`}>
-                                    <currentAgent.icon size={20} className={currentAgent.color} />
+                                <div
+                                    className={`w-12 h-12 rounded-full ${currentAgent.bg} flex items-center justify-center`}
+                                >
+                                    <currentAgent.icon
+                                        size={20}
+                                        className={currentAgent.color}
+                                    />
                                 </div>
                                 <p>עדיין אין הודעות עם {currentAgent.name}.</p>
-                                <p className="text-xs">התחילי שיחה כדי לקבל עזרה וייעוץ.</p>
+                                <p className="text-xs">
+                                    התחילי שיחה כדי לקבל עזרה וייעוץ.
+                                </p>
                             </div>
                         ) : (
                             messages.map((msg, idx) => (
@@ -123,10 +162,11 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                                     className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                                 >
                                     <div
-                                        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm leading-relaxed ${msg.role === "user"
+                                        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm leading-relaxed ${
+                                            msg.role === "user"
                                                 ? "bg-indigo-600 text-white rounded-br-none"
                                                 : "bg-white border border-gray-100 text-gray-800 rounded-bl-none"
-                                            }`}
+                                        }`}
                                     >
                                         {msg.parts[0].text}
                                     </div>

@@ -16,7 +16,9 @@ interface CreateClientParams {
 
 // פונקציה 1: יצירת לקוח חדש
 export async function createClient(data: CreateClientParams) {
+    console.log("🟡 Starting client creation... Connecting to DB...");
     await connectDB();
+    console.log("🟢 DB connected successfully!");
 
     // בדיקה אם המייל כבר קיים
     const existingUser = await Business.findOne({ ownerEmail: data.email });
@@ -31,6 +33,7 @@ export async function createClient(data: CreateClientParams) {
     const slug = Math.random().toString(36).substring(2, 9);
 
     // יצירת הלקוח ב-DB
+    console.log(`🟡 Creating Business document for ${data.email}...`);
     const newBusiness = await Business.create({
         slug,
         businessName: data.businessName,
@@ -52,6 +55,7 @@ export async function createClient(data: CreateClientParams) {
     });
 
     // המרה לאובייקט רגיל כדי למנוע בעיות עם Next.js
+    console.log(`🟢 Business created successfully! ID: ${newBusiness._id}`);
     return JSON.parse(JSON.stringify(newBusiness));
 }
 

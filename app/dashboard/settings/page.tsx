@@ -19,7 +19,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Save, User, Building2, Phone, FileText, Calendar, AlertCircle, CheckCircle2 } from "lucide-react";
+import {
+    Loader2,
+    Save,
+    User,
+    Building2,
+    Phone,
+    FileText,
+    Calendar,
+    AlertCircle,
+    CheckCircle2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
@@ -32,7 +42,6 @@ export default function SettingsPage() {
         description: "",
         persona: "golda",
     });
-
 
     // Fetch data on mount
     useEffect(() => {
@@ -49,7 +58,6 @@ export default function SettingsPage() {
                         description: result.data.description || "",
                         persona: result.data.persona || "golda",
                     });
-
                 }
             } catch (error) {
                 console.error("Failed to load settings:", error);
@@ -81,13 +89,15 @@ export default function SettingsPage() {
         }
     };
 
-
-
     return (
         <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-8" dir="rtl">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900">הגדרות פרופיל</h1>
-                <p className="text-gray-500 mt-1">ניהול פרטי העסק והעדפות אישיות</p>
+                <h1 className="text-3xl font-bold text-gray-900">
+                    הגדרות פרופיל
+                </h1>
+                <p className="text-gray-500 mt-1">
+                    ניהול פרטי העסק והעדפות אישיות
+                </p>
             </div>
 
             <Card className="border-none shadow-sm bg-white rounded-2xl overflow-hidden">
@@ -98,7 +108,9 @@ export default function SettingsPage() {
                         </div>
                         <div>
                             <CardTitle>פרטי העסק</CardTitle>
-                            <CardDescription>המידע שיופיע ללקוחות ולצוות הדיגיטלי</CardDescription>
+                            <CardDescription>
+                                המידע שיופיע ללקוחות ולצוות הדיגיטלי
+                            </CardDescription>
                         </div>
                     </div>
                 </CardHeader>
@@ -108,7 +120,12 @@ export default function SettingsPage() {
                             <Label>שם העסק</Label>
                             <Input
                                 value={formData.businessName}
-                                onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        businessName: e.target.value,
+                                    })
+                                }
                                 className="h-10 rounded-xl"
                             />
                         </div>
@@ -116,7 +133,12 @@ export default function SettingsPage() {
                             <Label>שם בעל/ת העסק</Label>
                             <Input
                                 value={formData.ownerName}
-                                onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        ownerName: e.target.value,
+                                    })
+                                }
                                 className="h-10 rounded-xl"
                             />
                         </div>
@@ -124,15 +146,25 @@ export default function SettingsPage() {
                             <Label>טלפון לעסקים</Label>
                             <Input
                                 value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        phone: e.target.value,
+                                    })
+                                }
                                 className="h-10 rounded-xl"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>כתובת הקליניקה</Label>
+                            <Label>כתובת העסק</Label>
                             <Input
                                 value={formData.address}
-                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        address: e.target.value,
+                                    })
+                                }
                                 className="h-10 rounded-xl"
                             />
                         </div>
@@ -141,7 +173,12 @@ export default function SettingsPage() {
                         <Label>תיאור העסק</Label>
                         <Textarea
                             value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    description: e.target.value,
+                                })
+                            }
                             className="min-h-[100px] rounded-xl resize-none"
                         />
                     </div>
@@ -156,7 +193,9 @@ export default function SettingsPage() {
                         </div>
                         <div>
                             <CardTitle>הגדרות פרסונה (AI Manager)</CardTitle>
-                            <CardDescription>בחרי את סגנון הניהול של המנהל הדיגיטלי שלך</CardDescription>
+                            <CardDescription>
+                                בחרי את סגנון הניהול של המנהל הדיגיטלי שלך
+                            </CardDescription>
                         </div>
                     </div>
                 </CardHeader>
@@ -165,14 +204,20 @@ export default function SettingsPage() {
                         <Label>בחר מנהל</Label>
                         <Select
                             value={formData.persona}
-                            onValueChange={(value) => setFormData({ ...formData, persona: value })}
+                            onValueChange={(value) =>
+                                setFormData({ ...formData, persona: value })
+                            }
                         >
                             <SelectTrigger className="h-10 rounded-xl">
                                 <SelectValue placeholder="בחר פרסונה" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="golda">גולדה (אסרטיבית ומנוסה)</SelectItem>
-                                <SelectItem value="david">דוד (אנליטי ורגוע)</SelectItem>
+                                <SelectItem value="golda">
+                                    גולדה (אסרטיבית ומנוסה)
+                                </SelectItem>
+                                <SelectItem value="david">
+                                    דוד (אנליטי ורגוע)
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                         <p className="text-sm text-gray-500 mt-2">
@@ -182,15 +227,17 @@ export default function SettingsPage() {
                 </CardContent>
             </Card>
 
-
-
             <div className="flex justify-end">
                 <Button
                     onClick={handleSave}
                     disabled={isLoading}
                     className="h-12 px-8 rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-md gap-2"
                 >
-                    {isLoading ? <Loader2 className="animate-spin" /> : <Save size={18} />}
+                    {isLoading ? (
+                        <Loader2 className="animate-spin" />
+                    ) : (
+                        <Save size={18} />
+                    )}
                     שמור שינויים
                 </Button>
             </div>

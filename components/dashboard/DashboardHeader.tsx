@@ -29,21 +29,6 @@ export default function DashboardHeader({
 
     return (
         <>
-            {/* Top Bar with Greeting and Mobile Menu */}
-            <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-xl shadow-md border border-gray-100 sticky top-4 z-20">
-                <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <span className="text-2xl">👋</span> {greeting}, {ownerName}!
-                </h1>
-                <Link href={`/c/${clientSlug}`} target="_blank">
-                    <Button 
-                        className="bg-gray-900 hover:bg-gray-800 text-white shadow-md transition-all gap-2 h-9 rounded-lg px-4"
-                    >
-                        מעבר לאתר
-                        <LinkIcon size={16} />
-                    </Button>
-                </Link>
-            </div>
-
             {/* Stats & Actions Bar */}
             <div className="mb-8 bg-gray-900 rounded-xl p-4 flex items-center justify-between shadow-md text-white">
                 <div className="flex items-center gap-3">

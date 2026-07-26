@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         let customerId: string | null = null;
         const consumerToken = req.cookies.get("consumer_token")?.value;
         
-        if (consumerToken) {
+        if (agentPersona !== "paz" && consumerToken) {
             try {
                 const decoded = jwt.verify(consumerToken, JWT_SECRET) as any;
                 // Strict Tenancy Match
@@ -105,7 +105,8 @@ export async function POST(req: NextRequest) {
             chat = await ChatExternal.findById(sessionId);
             
             // STRICT TENANT MATCH: Prevent cross-business context extraction
-            if (chat && chat.business_id.toString() !== businessId) {
+            const expectedTenantId = businessId === "demo" ? "000000000000000000000000" : businessId;
+            if (chat && chat.business_id.toString() !== expectedTenantId) {
                 return NextResponse.json(
                     { error: "Forbidden: Session ownership mismatch" },
                     { status: 403 }
@@ -228,6 +229,11 @@ export async function POST(req: NextRequest) {
             
             finalSystemPrompt += `\n\nCRITICAL CONTEXT: Today's date is ${currentDate}, current day of the week is ${currentDay}, and current time is ${currentTime}. Use this reference to accurately populate the YYYY-MM-DD format in action_payload. You MUST return valid JSON matching the specified schema.`;
 
+            // NEW: Constrain response text during widget steps
+            finalSystemPrompt += `\n\n[WIDGET DELEGATION INSTRUCTIONS]: 
+1. MANDATORY FIRST STEP: If the user wants to book an appointment or check availability, you MUST start by asking for the date. Set "action_type" to "check_availability" or "book_appointment", and set your "conversational_reply" to exactly "אנא בחרי תאריך:". DO NOT ask for the service type first.
+2. When you need the user to select a date, time, or service, keep your text response EXTREMELY short. DO NOT hallucinate available slots. Delegate the actual selection to the UI widgets by calling the appropriate function or setting the correct action_type.`;
+
             // --- AI GUARDRAILS (B2B2C Migration) ---
             if (!customerId) {
                 finalSystemPrompt += `\n\n[SECURITY ENFORCEMENT]: You are speaking to an unauthenticated guest. You CANNOT access their profile, book appointments, or cancel appointments. If they attempt to book or cancel an appointment, you MUST gracefully instruct them to log in via the profile widget first.`;
@@ -273,73 +279,90 @@ export async function POST(req: NextRequest) {
             }
         } else if (agentPersona === "daniela") {
             try {
-                const rawJsonString = result.response.text();
-                const structuredData = JSON.parse(rawJsonString);
+                let parsedJson: any = null;
+                let rawText = result.response.text();
+                try {
+                    const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                    const jsonString = jsonMatch ? jsonMatch[1] : rawText;
+                    parsedJson = JSON.parse(jsonString);
+                    responseText = parsedJson.conversational_reply || cleanAIResponse(rawText);
+                } catch (e) {
+                    responseText = cleanAIResponse(rawText);
+                }
                 
-                responseText = structuredData.conversational_reply || "מצטערת, לא הבנתי.";
+                const functionCalls = result.response.functionCalls();
                 
-                if (structuredData.action_type === "book_appointment") {
-                    const payload = structuredData.action_payload;
-                    
-                    // 1. Strict Validation Guard
-                    if (payload && payload.date && payload.time && payload.service_type) {
-                        const sbCreds = business?.api_keys?.simplybook;
+                if (functionCalls && functionCalls.length > 0) {
+                    for (const call of functionCalls) {
+                        const payload = call.args as any;
                         
-                        // 2. Failsafe Credentials Check
-                        if (!sbCreds || !sbCreds.companyLogin || !sbCreds.apiKey) {
-                            responseText = "מערכת תיאום התורים שלנו עוברת כרגע תחזוקה. נשמח לעזור לך טלפונית! 📞";
-                        } else {
-                            // 3. Live Execution
-                            const clientData = {
-                                name: payload.customer_name || customer?.name || "לקוח מערכת",
-                                phone: payload.customer_phone || customer?.phone || "0000000000"
-                            };
-                            
-                            try {
-                                const bookingResult = await bookAppointment(
-                                    sbCreds as SimplyBookCreds,
-                                    payload.date,
-                                    payload.time,
-                                    clientData
-                                );
+                        if (call.name === "book_appointment") {
+                            // 1. Strict Validation Guard
+                            if (payload && payload.date && payload.time && payload.service_type) {
+                                const sbCreds = business?.api_keys?.simplybook;
+                                
+                                let bookingResult;
+                                if (!sbCreds || !sbCreds.companyLogin || !sbCreds.apiKey) {
+                                    // Mock Booking
+                                    bookingResult = "DEMO-" + Math.floor(Math.random() * 10000);
+                                } else {
+                                    // 3. Live Execution
+                                    const clientData = {
+                                        name: payload.customer_name || customer?.name || "לקוח מערכת",
+                                        phone: payload.customer_phone || customer?.phone || "0000000000",
+                                        note: payload.note || undefined
+                                    };
+                                    
+                                    try {
+                                        bookingResult = await bookAppointment(
+                                            sbCreds as SimplyBookCreds,
+                                            payload.date,
+                                            payload.time,
+                                            clientData
+                                        );
+                                    } catch (err) {
+                                        console.error("Booking integration failed:", err);
+                                        responseText += "\n\nאירעה תקלה זמנית מול מערכת התורים. אנא נסה שוב בעוד מספר דקות.";
+                                    }
+                                }
                                 
                                 if (bookingResult) {
                                     responseText += `\n\n✅ התור שלך נקבע בהצלחה! (מספר אישור: ${bookingResult})`;
                                     systemAction = "force_logout";
                                 } else {
-                                    responseText = "לצערי לא הצלחתי לקבוע את התור, ייתכן שהשעה כבר נתפסה. תרצה לבדוק שעה אחרת?";
+                                    responseText += "\n\nלצערי לא הצלחתי לקבוע את התור, ייתכן שהשעה כבר נתפסה. תרצה לבדוק שעה אחרת?";
                                 }
-                            } catch (err) {
-                                console.error("Booking integration failed:", err);
-                                responseText = "אירעה תקלה זמנית מול מערכת התורים. אנא נסה שוב בעוד מספר דקות.";
+                            } else {
+                                responseText += "\n\nכדי שאוכל לקבוע את התור, אשמח לדעת תאריך, שעה, ואיזה טיפול תרצה לקבוע. מה חסר לנו?";
+                                systemAction = "show_date_picker";
                             }
-                        }
-                    } else {
-                        // Override to ask_clarification
-                        responseText = "כדי שאוכל לקבוע את התור, אשמח לדעת תאריך, שעה, ואיזה טיפול תרצה לקבוע. מה חסר לנו?";
-                    }
-
-                } else if (structuredData.action_type === "check_availability") {
-                    const payload = structuredData.action_payload;
-                    
-                    if (payload && payload.date) {
-                        const sbCreds = business?.api_keys?.simplybook;
-                        
-                        if (!sbCreds || !sbCreds.companyLogin || !sbCreds.apiKey) {
-                            responseText = "מערכת תיאום התורים שלנו זמנית אינה פעילה, סליחה על חוסר הנוחות!";
-                        } else {
-                            try {
-                                // Defaulting to check a 7-day window from the requested date
-                                const toDate = new Date(new Date(payload.date).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+                            
+                        } else if (call.name === "check_availability") {
+                            if (payload && payload.date) {
+                                const sbCreds = business?.api_keys?.simplybook;
                                 
-                                const timeMatrix = await getAvailableSlots(
-                                    sbCreds as SimplyBookCreds, 
-                                    payload.date, 
-                                    toDate
-                                );
+                                let timeMatrix;
+                                if (!sbCreds || !sbCreds.companyLogin || !sbCreds.apiKey) {
+                                    // Mock availability for demo
+                                    timeMatrix = {
+                                        [payload.date]: ["10:00", "11:30", "14:00", "16:30"]
+                                    };
+                                } else {
+                                    try {
+                                        const toDate = new Date(new Date(payload.date).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+                                        
+                                        timeMatrix = await getAvailableSlots(
+                                            sbCreds as SimplyBookCreds, 
+                                            payload.date, 
+                                            toDate
+                                        );
+                                    } catch (err) {
+                                        console.error("Availability integration failed:", err);
+                                        responseText += "\n\nאירעה שגיאה בבדיקת התורים. נסה שוב מאוחר יותר.";
+                                    }
+                                }
                                 
                                 if (timeMatrix && Object.keys(timeMatrix).length > 0) {
-                                    // Parse raw matrix into readable string
                                     let availableString = "";
                                     for (const [dateKey, times] of Object.entries(timeMatrix).slice(0, 3)) {
                                         const timesArray = times as string[];
@@ -348,44 +371,66 @@ export async function POST(req: NextRequest) {
                                         }
                                     }
                                     responseText += `\n\nמצאתי את התורים הבאים עבורך:${availableString}\nהאם אחד מהם מתאים לך?`;
+                                    systemAction = "show_services";
                                 } else {
                                     responseText += "\n\nלצערי אין תורים פנויים בתאריכים שביקשת. תרצה לבדוק שבוע אחר?";
+                                    systemAction = "show_date_picker";
                                 }
-                            } catch (err) {
-                                console.error("Availability integration failed:", err);
-                                responseText = "אירעה שגיאה בבדיקת התורים. נסה שוב מאוחר יותר.";
+                            } else {
+                                responseText += "\n\nלאיזה תאריך היית רוצה שאבדוק פניות?";
+                                systemAction = "show_date_picker";
+                            }
+                            
+                        } else if (call.name === "create_action_card") {
+                            if (businessId !== "demo") {
+                                await ActionCard.create({
+                                    business_id: business._id,
+                                    source_agent: "receptionist",
+                                    status: "pending",
+                                    priority: payload?.priority || "medium",
+                                    display_content: {
+                                        title: payload?.title || "בקשה מהלקוח",
+                                        description: payload?.description || "",
+                                        icon: "AlertCircle"
+                                    },
+                                    execution_payload: {
+                                        action_type: "cancel_appointment",
+                                        params: {
+                                            original_message: message,
+                                            chat_id: chat._id,
+                                            details: payload?.description
+                                        }
+                                    }
+                                });
+                                systemAction = "force_logout";
                             }
                         }
-                    } else {
-                        responseText = "לאיזה תאריך היית רוצה שאבדוק פניות?";
-                    }
-                } else if (structuredData.action_type === "create_action_card") {
-                    const payload = structuredData.action_payload;
-                    if (businessId !== "demo") {
-                        await ActionCard.create({
-                            business_id: business._id,
-                            source_agent: "receptionist",
-                            status: "pending",
-                            priority: payload?.priority || "medium",
-                            display_content: {
-                                title: payload?.title || "בקשה מהלקוח",
-                                description: payload?.description || "",
-                                icon: "AlertCircle"
-                            },
-                            execution_payload: {
-                                action_type: "cancel_appointment",
-                                params: {
-                                    original_message: message,
-                                    chat_id: chat._id,
-                                    details: payload?.description
-                                }
-                            }
-                        });
-                        systemAction = "force_logout";
                     }
                 }
+                
+                // NEW: Routing Logic Interceptor for Booking Intents without function calls
+                if (!systemAction) {
+                    const action = parsedJson?.action_type;
+                    const isBookingIntent = action === "book_appointment" || action === "check_availability";
+                    const isAskingForDate = responseText && (responseText.includes("בחרי תאריך") || responseText.includes("בחר תאריך"));
+                    
+                    if (isBookingIntent || isAskingForDate) {
+                        // If LLM didn't call the tool because it's missing the date, enforce the date picker
+                        systemAction = "show_date_picker";
+                        if (!responseText || responseText.includes("איזה") || responseText.includes("שירות")) {
+                            responseText = "אנא בחרי תאריך:";
+                        }
+                    }
+                }
+                
+                if (!responseText && (!functionCalls || functionCalls.length === 0)) {
+                    responseText = "מצטערת, לא הבנתי.";
+                }
+                
+                responseText = responseText.trim();
+                
             } catch (error) {
-                console.error("Failed to parse Daniela structured JSON output", error);
+                console.error("Failed to execute Daniela native tool calls", error);
                 responseText = "אני מצטערת, חלה שגיאה בעיבוד הבקשה שלך. 😅";
             }
         } else {

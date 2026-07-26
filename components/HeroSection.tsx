@@ -14,49 +14,32 @@ export default function HeroSection() {
             className="relative w-full min-h-[90vh] flex items-center bg-[#0B0E14] overflow-hidden text-white"
             dir="rtl"
         >
-            {/* Backgrounds */}
-            <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px]" />
-            <div className="absolute bottom-[10%] left-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[100px]" />
-
             <div className="container mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
                 {/* Right Side: Text */}
                 <div className="flex flex-col gap-6 text-right order-2 lg:order-1">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 w-fit">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-sm font-medium text-gray-300">
-                            ה-AI החדש כבר כאן
-                        </span>
-                    </div>
-
                     <h1 className="text-5xl md:text-7xl font-bold leading-tight tracking-tight">
-                        לנהל את הקליניקה <br />
+                        להפוך את העסק לאוטונומי <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-                            על טייס אוטומטי מלא.
+                            על טייס אוטומטי מלא
                         </span>
                     </h1>
 
                     <p className="text-lg text-gray-400 max-w-xl leading-relaxed">
-                        תכירי את דניאלה, פקידת הקבלה הדיגיטלית שלך. היא עונה ללקוחות,
-                        קובעת תורים וממלאת לך את היומן, בזמן שאת עושה את מה שאת
-                        אוהבת.
+                        צוות סוכני AI (גולדה, דניאלה, מיכל ורועי) שמנהלים לך את
+                        השירות, היומן, השיווק והכספים - 24/7. ענה על מספר שאלות
+                        וקבל אתר, דשבורד וסוכנים מוכנים ב-5 דקות.
                     </p>
 
                     <div className="flex flex-row gap-4 mt-4">
                         <Link href="/onboarding">
                             <Button
+                                variant="outline"
                                 size="lg"
-                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 py-6 text-lg shadow-lg shadow-blue-900/50 hover:shadow-blue-900/80 transition-all"
+                                className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white rounded-full px-8 py-6 text-lg gap-2 transition-all shadow-sm"
                             >
-                                התחילי ניסיון חינם
+                                הקם עסק אוטונומי ב-5 דק' 🚀
                             </Button>
                         </Link>
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white rounded-full px-8 py-6 text-lg gap-2 transition-all shadow-sm"
-                        >
-                            איך זה עובד? <ArrowLeft className="w-4 h-4" />
-                        </Button>
                     </div>
                 </div>
 
@@ -67,10 +50,11 @@ export default function HeroSection() {
               relative w-full max-w-md h-[500px] flex flex-col
               transition-all duration-700 ease-out
               [transform-style:preserve-3d] group
-              ${!isFocused
-                                ? "rotate-y-[-12deg] rotate-x-[8deg] scale-[1.03]"
-                                : "rotate-y-[-4deg] rotate-x-[2deg] scale-100"
-                            }
+              ${
+                  !isFocused
+                      ? "rotate-y-[-12deg] rotate-x-[8deg] scale-[1.03]"
+                      : "rotate-y-[-4deg] rotate-x-[2deg] scale-100"
+              }
             `}
                         onMouseEnter={() => setIsFocused(true)}
                         onMouseLeave={() => setIsFocused(false)}
@@ -83,7 +67,11 @@ export default function HeroSection() {
                             key="paz-demo"
                             mode="public"
                             variant="floating"
-                            businessConfig={{ _id: "demo", slug: "demo", logo: "/favicon.ico" }}
+                            businessConfig={{
+                                _id: "demo",
+                                slug: "demo",
+                                logo: "/favicon.ico",
+                            }}
                             agentPersona="paz"
                             className="h-full w-full shadow-[0_40px_80px_-20px_rgba(59,130,246,0.4),_0_0_50px_-10px_rgba(139,92,246,0.3)]"
                         />
@@ -97,4 +85,3 @@ export default function HeroSection() {
         </section>
     );
 }
-
