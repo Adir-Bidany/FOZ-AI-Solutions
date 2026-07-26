@@ -24,53 +24,37 @@ export default function Home() {
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                            הכירו את צוות ההנהלה החדש שלכם
+                            הכירו את צוות ה-AI שמזניק את העסק שלכם
                         </h2>
                         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-                            ארבעה סוכני AI שעובדים בסנכרון מלא והופכים את העסק שלכם לאוטונומי לחלוטין
+                            שני סוכני AI עוצמתיים שעובדים בסנכרון מלא והופכים את העסק שלכם לאוטונומי, יעיל ורווחי יותר
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                         {[
                             {
                                 emoji: "👑",
                                 name: "גולדה",
-                                role: "הסוכנת הראשית (CEO)",
-                                desc: "המנהלת הבלעדית. מסנכרנת את כל הסוכנים, מנהלת את בסיס המידע ומבצעת כל הנחיה ניהולית בשפה חופשית.",
+                                role: "מנהלת העסק וסמנכ\"לית צמיחה (CEO & BI)",
+                                desc: "הסוכנת הפנימית שלך. מנהלת את הלו\"ז והמשימות, מנסחת תוכן שיווקי ופוסטים בקליק, ומנתחת דוחות כספיים, תקציבים וסיכוני נטישה — הכל בשיחה טבעית.",
                                 color: "from-amber-500/20 to-yellow-500/5",
                                 borderColor: "border-amber-500/20"
                             },
                             {
                                 emoji: "🎧",
-                                name: "דניאלה",
-                                role: "שירות, תפעול ותורים",
-                                desc: "עונה ללקוחות 24/7, קובעת ומבטלת תורים, ומזהה את היסטוריית הטיפולים האישית של כל לקוח.",
+                                name: "פז (דניאלה)",
+                                role: "נציגת שירות, מכירות ותורים (Customer Concierge)",
+                                desc: "הפנים האוטונומיות של העסק שלך ברשת. עונה ללקוחות 24/7 באתר, מציגה שירותים, קובעת תורים ביומן, ומזהה את ההיסטוריה והצרכים של כל לקוח.",
                                 color: "from-blue-500/20 to-cyan-500/5",
                                 borderColor: "border-blue-500/20"
-                            },
-                            {
-                                emoji: "📢",
-                                name: "מיכל",
-                                role: "שיווק וצמיחה אקטיבית",
-                                desc: "מציעה קמפיינים ורעיונות לגידול במכירות, ומפרסמת פוסטים ברשתות החברתיות בלחיצת כפתור אחת.",
-                                color: "from-pink-500/20 to-rose-500/5",
-                                borderColor: "border-pink-500/20"
-                            },
-                            {
-                                emoji: "📊",
-                                name: "רועי",
-                                role: "סוכן פיננסי ו-BI",
-                                desc: "מנתח רווחיות בזמן אמת, מנטר את ביצועי העסק ומציע אקטיבית המלצות להתייעלות וחיסכון.",
-                                color: "from-emerald-500/20 to-green-500/5",
-                                borderColor: "border-emerald-500/20"
                             }
                         ].map((agent, idx) => (
                             <div key={idx} className={`p-8 rounded-3xl bg-gradient-to-b ${agent.color} border ${agent.borderColor} bg-white/5 backdrop-blur-sm hover:scale-105 transition-transform`}>
                                 <div className="text-4xl mb-4">{agent.emoji}</div>
-                                <h3 className="text-xl font-bold text-white mb-1">{agent.name}</h3>
+                                <h3 className="text-2xl font-bold text-white mb-1">{agent.name}</h3>
                                 <div className="text-sm text-purple-400 mb-3 font-medium">{agent.role}</div>
-                                <p className="text-gray-400 text-sm leading-relaxed">{agent.desc}</p>
+                                <p className="text-gray-400 text-base leading-relaxed">{agent.desc}</p>
                             </div>
                         ))}
                     </div>
@@ -94,17 +78,17 @@ export default function Home() {
                             {
                                 step: "1",
                                 title: "השאלון (2 דק')",
-                                desc: "עונים על מספר שאלות בסיסיות על העסק והשירותים"
+                                desc: "עונים על מספר שאלות בסיסיות על העסק, השירותים והטון המבוקש"
                             },
                             {
                                 step: "2",
                                 title: "הבנייה האוטומטית (שניות)",
-                                desc: "ה-AI מפיק עבורך אתר אינטרנט מעוצב, דשבורד ניהול מלא ואימון ל-4 הסוכנים"
+                                desc: "ה-AI מפיק עבורך אתר אינטרנט מעוצב, דשבורד ניהול מלא ואימון ייעודי לסוכנים"
                             },
                             {
                                 step: "3",
                                 title: "עבודה אוטונומית",
-                                desc: "דניאלה מקבלת תורים, מיכל מציעה פוסטים וגולדה מנהלת את העסק"
+                                desc: "פז מקבלת פניות ותורים באתר, וגולדה מנהלת עבורך את השיווק, התקציב והמשימות בדשבורד"
                             }
                         ].map((item, idx) => (
                             <div key={idx} className="relative flex flex-col items-center text-center p-6">
@@ -134,33 +118,33 @@ export default function Home() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10 max-w-6xl mx-auto">
                         {[
                             {
-                                title: "דשבורד CRM & LTV",
-                                desc: "מעקב מדויק אחר הכנסות מצטברות לפי לקוח, ניהול מאגר וניטור שיחות AI",
+                                title: "דשבורד ניהול ו-CRM חכם",
+                                desc: "מעקב אחר לקוחות, ניטור שיחות AI וניתוח מדדים עסקיים מרכזיים",
                                 icon: LineChart,
                             },
                             {
                                 title: "אישור לקוחות חכם (Gated Access)",
-                                desc: "לקוח שנרשם יורשה לבצע פעולות מול דניאלה רק לאחר אישור ידני מבעל העסק",
+                                desc: "שליטה מלאה בגישת לקוחות ואישור תורים מול נציגת ה-AI",
                                 icon: Lock,
                             },
                             {
-                                title: "זמינות ומענה 24/7",
-                                desc: "דניאלה עונה ללקוחות גם ב-2 בלילה, חוסכת שיחות מציקות ומספקת מידע מדויק",
+                                title: "מענה ומכירות 24/7",
+                                desc: "פז עונה לפניות בכל שעה באתר, מציגה שירותים וחוסכת זמן יקר",
                                 icon: Clock,
                             },
                             {
-                                title: "פרסום פוסטים בקליק",
-                                desc: "מיכל מנסחת תוכן שיווקי ומעלים אותו לרשתות החברתיות באישור בלבד",
+                                title: "יצירת תוכן שיווקי בקליק",
+                                desc: "גולדה מנסחת פוסטים ורעיונות לקמפיינים הממתינים לאישורך בדשבורד",
                                 icon: Share2,
                             },
                             {
-                                title: "זיכרון ארגוני מותאם",
-                                desc: "המערכת זוכרת היסטוריית טיפולים, העדפות ומחירים לכל לקוח באופן אישי",
+                                title: "זיכרון ארגוני ואורכב שיחות",
+                                desc: "המערכת שומרת את היסטוריית השיחות, וגולדה מסוגלת לשלוף מידע משיחות עבר",
                                 icon: Brain,
                             },
                             {
                                 title: "אבטחה ופרטיות בסטנדרט גבוה",
-                                desc: "המידע העסקי והפיננסי מוגן ברמה הגבוהה ביותר",
+                                desc: "הגנה מלאה על המידע העסקי והפיננסי של העסק",
                                 icon: ShieldCheck,
                             },
                         ].map((item, i) => (
@@ -197,7 +181,7 @@ export default function Home() {
                     </p>
                     <Link href="/onboarding" className="inline-block mt-4">
                         <Button className="h-16 px-12 text-xl rounded-full bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 transition-all font-bold shadow-[0_0_30px_rgba(37,99,235,0.3)] border border-blue-500">
-                           הירשמו עכשיו ובעוד 5 דק' תקבלו אתר אינטרנט, דשבורד ניהול ו-4 סוכני AI
+                           הירשמו עכשיו ובעוד 5 דק' תקבלו אתר אינטרנט, דשבורד ניהול וסוכני AI
                         </Button>
                     </Link>
                 </div>
