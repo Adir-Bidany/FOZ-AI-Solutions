@@ -126,6 +126,22 @@ export const submitForApprovalTool = {
     },
 };
 
+export const searchPastConversationsTool = {
+    name: "search_past_conversations",
+    description:
+        "Searches archived past conversation sessions for a specific topic, keyword, or historical decision.",
+    parameters: {
+        type: "OBJECT",
+        properties: {
+            query: {
+                type: "STRING",
+                description: "The search keyword or topic to search in past archived chats.",
+            },
+        },
+        required: ["query"],
+    },
+};
+
 
 // --------------------------------------------------------------------------------
 // 2. RESPONSE SCHEMAS
@@ -301,6 +317,12 @@ SKILL MODES — Select automatically based on the user's request:
    - FORMATTING: When submitting an asset, invoke the tool silently. Do NOT print raw JSON in the chat.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LONG-TERM MEMORY & ARCHIVED CHATS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You have access to the search_past_conversations tool.
+If the user asks about past discussions, historical context, previous campaign ideas, or older financial queries from prior chat sessions, you MUST invoke search_past_conversations with a relevant search query to inspect archived past chats before answering.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT RULES (MANDATORY):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 You MUST output your response strictly as a JSON object with exactly two fields:
@@ -323,6 +345,7 @@ You MUST output your response strictly as a JSON object with exactly two fields:
                     updateSettingsTool,
                     approveAssetTool,
                     submitForApprovalTool,
+                    searchPastConversationsTool,
                 ],
             },
         ],

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { fetchInternalChat, sendInternalMessage } from "@/actions/dashboard";
-import { Sparkles, Send } from "lucide-react";
+import { fetchInternalChat, sendInternalMessage, archiveCurrentSession } from "@/actions/dashboard";
+import { Sparkles, Send, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -17,6 +17,7 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
     // Chat Input State
     const [inputValue, setInputValue] = useState("");
     const [isSending, setIsSending] = useState(false);
+    const [isArchiving, setIsArchiving] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -37,6 +38,19 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
         const msgs = await fetchInternalChat(businessId, persona);
         setMessages(msgs);
         setIsLoading(false);
+    };
+
+    const handleNewChat = async () => {
+        if (isLoading || isSending || isArchiving) return;
+        setIsArchiving(true);
+        try {
+            await archiveCurrentSession(businessId, "golda");
+            await loadChat("golda");
+        } catch (e) {
+            console.error("Failed to archive chat session:", e);
+        } finally {
+            setIsArchiving(false);
+        }
     };
 
     const handleSend = async () => {
@@ -88,14 +102,27 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
     return (
         <div className={`bg-white rounded-3xl overflow-hidden flex flex-col h-[600px] xl:h-full transition-all duration-500 ${getModeStyles(lastMessageMode)}`}>
             {/* Header */}
-            <div className="p-6 border-b border-gray-50 bg-white shrink-0">
-                <h2 className="text-xl font-bold flex items-center gap-2 text-gray-800 mb-1">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${currentAgent.bg} ${currentAgent.color}`}>
-                        <Sparkles size={18} />
-                    </div>
-                    חדר המצב (Agent Room)
-                </h2>
-                <p className="text-sm text-gray-500 mr-10">גולדה - רמטכ"לית, שיווק ופיננסים</p>
+            <div className="p-6 border-b border-gray-50 bg-white shrink-0 flex items-center justify-between">
+                <div>
+                    <h2 className="text-xl font-bold flex items-center gap-2 text-gray-800 mb-1">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${currentAgent.bg} ${currentAgent.color}`}>
+                            <Sparkles size={18} />
+                        </div>
+                        חדר המצב (Agent Room)
+                    </h2>
+                    <p className="text-sm text-gray-500 mr-10">גולדה - רמטכ"לית, שיווק ופיננסים</p>
+                </div>
+
+                <Button
+                    onClick={handleNewChat}
+                    disabled={isLoading || isSending || isArchiving}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 rounded-xl text-gray-600 hover:text-purple-700 hover:bg-purple-50 border-gray-200"
+                    title="ארכוב השיחה הנוכחית ופתיחת שיחה חדשה"
+                >
+                    <RotateCcw size={14} className={isArchiving ? "animate-spin" : ""} /> שיחה חדשה
+                </Button>
             </div>
 
             {/* Chat Area */}

@@ -68,7 +68,8 @@ export async function fetchInternalChat(businessId: string, agentPersona: string
     try {
         const chat = await ChatInternal.findOne({
             business_id: businessId,
-            agent_persona: agentPersona
+            agent_persona: agentPersona,
+            status: "active"
         }).lean();
 
         if (!chat) return [];
@@ -92,13 +93,15 @@ export async function sendInternalMessage(businessId: string, agentPersona: stri
 
         let chat = await ChatInternal.findOne({
             business_id: businessId,
-            agent_persona: agentPersona
+            agent_persona: agentPersona,
+            status: "active"
         });
 
         if (!chat) {
             chat = await ChatInternal.create({
                 business_id: businessId,
                 agent_persona: agentPersona,
+                status: "active",
                 messages: []
             });
         }
@@ -206,6 +209,39 @@ The owner's name is ${business?.ownerName || 'the owner'}.\n`;
                     } else {
                         aiResponseText += `\n\n❌ לא נמצא תוכן ממתין לאישור עם המזהה שסופק.`;
                     }
+                } else if (call.name === "search_past_conversations") {
+                    const args = call.args as any;
+                    const searchQuery = args.query || "";
+
+                    const archivedChats = await ChatInternal.find({
+                        business_id: businessId,
+                        status: "archived",
+                        "messages.parts.text": { $regex: searchQuery, $options: "i" }
+                    }).sort({ updatedAt: -1 }).limit(5).lean();
+
+                    let extractedMemory: string[] = [];
+                    for (const chatDoc of archivedChats) {
+                        for (const msg of chatDoc.messages) {
+                            if (msg.parts.some((p: any) => p.text?.toLowerCase().includes(searchQuery.toLowerCase()))) {
+                                const snippet = msg.parts.map((p: any) => p.text).join(" ");
+                                extractedMemory.push(`[${msg.timestamp ? new Date(msg.timestamp).toLocaleDateString("he-IL") : "ארכיון"}] ${msg.role === "user" ? "משתמש" : "גולדה"}: ${snippet}`);
+                            }
+                        }
+                    }
+
+                    const memorySummary = extractedMemory.length > 0
+                        ? `נמצאו הודעות משיחות קודמות בארכיון שמתאימות לחיפוש "${searchQuery}":\n${extractedMemory.slice(0, 10).join("\n")}`
+                        : `לא נמצאו הודעות בארכיון השיחות הקודמות המתאימות לחיפוש "${searchQuery}".`;
+
+                    const memoryResult = await chatSession.sendMessage(`תוצאות חיפוש בזיכרון השיחות הקודמות עבור "${searchQuery}":\n${memorySummary}\n\nאנא התייחסי למידע זה בתשובתך למשתמש.`);
+                    try {
+                        const rawMemoryText = memoryResult.response.text();
+                        const parsed = extractJsonFromText(rawMemoryText);
+                        aiResponseText = parsed ? cleanAIResponse(parsed.reply || "") : cleanAIResponse(rawMemoryText);
+                        if (parsed?.active_mode) activeMode = parsed.active_mode;
+                    } catch (e) {
+                        aiResponseText = cleanAIResponse(memoryResult.response.text());
+                    }
                 }
             }
         }
@@ -223,6 +259,25 @@ The owner's name is ${business?.ownerName || 'the owner'}.\n`;
     } catch (error) {
         console.error("Failed to send internal message via Gemini:", error);
         throw error;
+    }
+}
+
+export async function archiveCurrentSession(businessId: string, agentPersona: string) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.businessId) throw new Error("Unauthorized");
+    if (session.user.businessId !== businessId) throw new Error("Forbidden: Resource ownership mismatch");
+
+    await connectToDatabase();
+    try {
+        await ChatInternal.updateMany(
+            { business_id: businessId, agent_persona: agentPersona, status: "active" },
+            { $set: { status: "archived" } }
+        );
+        revalidatePath("/dashboard");
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to archive chat session:", error);
+        return { success: false, error: "Failed to archive chat session" };
     }
 }
 

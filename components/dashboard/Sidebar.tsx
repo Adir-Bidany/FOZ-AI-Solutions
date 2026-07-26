@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
     Calendar,
@@ -12,9 +14,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import ClientLogo from "@/components/ClientLogo";
+import { signOut } from "next-auth/react";
+import { archiveCurrentSession } from "@/actions/dashboard";
 
 interface SidebarProps {
     client: {
+        _id?: string;
         businessName: string;
         slug: string;
         ownerName: string;
@@ -23,6 +28,17 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ client }: SidebarProps) {
+    const handleLogout = async () => {
+        if (client?._id) {
+            try {
+                await archiveCurrentSession(client._id, "golda");
+            } catch (e) {
+                console.error("Failed to archive chat session on logout:", e);
+            }
+        }
+        await signOut({ callbackUrl: "/login" });
+    };
+
     return (
         <div className="flex flex-col h-full bg-white border-l border-gray-100">
             <div className="p-6 border-b flex items-center gap-3">
@@ -67,7 +83,7 @@ export default function Sidebar({ client }: SidebarProps) {
                         variant="ghost"
                         className="w-full justify-start gap-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 rounded-xl"
                     >
-                        <Megaphone size={20} /> מיכל (שיווק)
+                        <Megaphone size={20} /> שיווק ותוכן
                     </Button>
                 </Link>
 
@@ -76,7 +92,7 @@ export default function Sidebar({ client }: SidebarProps) {
                         variant="ghost"
                         className="w-full justify-start gap-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 rounded-xl"
                     >
-                        <BarChart3 size={20} /> רועי (פיננסים)
+                        <BarChart3 size={20} /> ניתוח פיננסי
                     </Button>
                 </Link>
 
@@ -111,14 +127,13 @@ export default function Sidebar({ client }: SidebarProps) {
             </nav>
 
             <div className="p-4 border-t bg-gray-50/50">
-                <Link href="/login">
-                    <Button
-                        variant="outline"
-                        className="w-full gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100 bg-white h-10 rounded-xl"
-                    >
-                        <LogOut size={16} /> התנתקות
-                    </Button>
-                </Link>
+                <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    className="w-full gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100 bg-white h-10 rounded-xl"
+                >
+                    <LogOut size={16} /> התנתקות
+                </Button>
             </div>
         </div>
     );

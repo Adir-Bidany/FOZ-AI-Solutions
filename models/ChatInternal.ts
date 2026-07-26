@@ -10,6 +10,7 @@ export interface IChatInternal extends Document {
     business_id: Types.ObjectId;
     agent_persona: "golda" | "michal" | "roi";
     messages: IMessage[];
+    status: "active" | "archived";
     createdAt: Date;
     updatedAt: Date;
 }
@@ -22,6 +23,12 @@ const ChatInternalSchema = new Schema<IChatInternal>(
             enum: ["golda", "michal", "roi"],
             required: true
         },
+        status: {
+            type: String,
+            enum: ["active", "archived"],
+            default: "active",
+            index: true
+        },
         messages: [
             {
                 role: { type: String, enum: ["user", "model"], required: true },
@@ -33,8 +40,8 @@ const ChatInternalSchema = new Schema<IChatInternal>(
     { timestamps: true }
 );
 
-// Index to quickly find the chat for a specific agent in a business
-ChatInternalSchema.index({ business_id: 1, agent_persona: 1 });
+// Index to quickly find the active chat for a specific agent in a business
+ChatInternalSchema.index({ business_id: 1, agent_persona: 1, status: 1 });
 
 const ChatInternal = models.ChatInternal || model<IChatInternal>("ChatInternal", ChatInternalSchema);
 
