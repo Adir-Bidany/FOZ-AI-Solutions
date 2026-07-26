@@ -26,7 +26,7 @@ export default async function DashboardLayout({
         redirect("/onboarding");
     }
 
-    // Serialize client data
+    // Safely serialize BSON ObjectIds and Dates for Client Component boundary handoff
     const serializedClient = JSON.parse(JSON.stringify(client));
 
     // --- SMART DATA LOGIC FOR SIDEBAR ---

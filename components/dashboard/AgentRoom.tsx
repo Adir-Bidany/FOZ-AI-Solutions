@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { fetchInternalChat, sendInternalMessage } from "@/actions/dashboard";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Sparkles, TrendingUp, DollarSign, Send } from "lucide-react";
+import { Sparkles, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -12,7 +11,6 @@ interface AgentRoomProps {
 }
 
 export default function AgentRoom({ businessId }: AgentRoomProps) {
-    const [activeTab, setActiveTab] = useState("golda");
     const [messages, setMessages] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -22,8 +20,8 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        loadChat(activeTab);
-    }, [activeTab]);
+        loadChat("golda");
+    }, []);
 
     useEffect(() => {
         if (scrollContainerRef.current) {
@@ -52,7 +50,7 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
         try {
             const updatedHistory = await sendInternalMessage(
                 businessId,
-                activeTab,
+                "golda",
                 TEMP_MSG.parts[0].text,
             );
             setMessages(updatedHistory);
@@ -64,69 +62,40 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
         }
     };
 
-    const agents = {
-        golda: {
-            name: "גולדה",
-            role: "מנהלת עסק",
-            color: "text-purple-600",
-            bg: "bg-purple-100",
-            icon: Sparkles,
-        },
-        michal: {
-            name: "מיכל",
-            role: "שיווק ומכירות",
-            color: "text-pink-600",
-            bg: "bg-pink-100",
-            icon: TrendingUp,
-        },
-        roi: {
-            name: "רועי",
-            role: "פיננסים",
-            color: "text-blue-600",
-            bg: "bg-blue-100",
-            icon: DollarSign,
-        },
+    const currentAgent = {
+        name: "גולדה",
+        role: "מנהלת עסק",
+        color: "text-purple-600",
+        bg: "bg-purple-100",
+        icon: Sparkles,
     };
 
-    const currentAgent = agents[activeTab as keyof typeof agents];
+    const lastMessageMode = messages.length > 0 && messages[messages.length - 1].role === "model" 
+        ? messages[messages.length - 1].parts[0]?.mode 
+        : "core";
+
+    const getModeStyles = (mode: string | undefined) => {
+        switch (mode) {
+            case "marketing":
+                return "border-2 border-fuchsia-500 shadow-[0_0_20px_rgba(217,70,239,0.6)]";
+            case "analytics":
+                return "border-2 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.6)]";
+            default:
+                return "border-2 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.5)]";
+        }
+    };
 
     return (
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[600px] xl:h-full">
-            {/* Header & Tabs */}
+        <div className={`bg-white rounded-3xl overflow-hidden flex flex-col h-[600px] xl:h-full transition-all duration-500 ${getModeStyles(lastMessageMode)}`}>
+            {/* Header */}
             <div className="p-6 border-b border-gray-50 bg-white shrink-0">
-                <h2 className="text-xl font-bold flex items-center gap-2 text-gray-800 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-gray-800 mb-1">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${currentAgent.bg} ${currentAgent.color}`}>
                         <Sparkles size={18} />
                     </div>
                     חדר המצב (Agent Room)
                 </h2>
-
-                <Tabs
-                    defaultValue="golda"
-                    onValueChange={setActiveTab}
-                    className="w-full"
-                    dir="rtl"
-                >
-                    <TabsList className="grid w-full grid-cols-3 bg-gray-50 p-1 rounded-xl">
-                        {Object.entries(agents).map(([key, agent]) => (
-                            <TabsTrigger
-                                key={key}
-                                value={key}
-                                className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg transition-all duration-200"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <agent.icon
-                                        size={16}
-                                        className={agent.color}
-                                    />
-                                    <span className="font-medium">
-                                        {agent.name}
-                                    </span>
-                                </div>
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
-                </Tabs>
+                <p className="text-sm text-gray-500 mr-10">גולדה - רמטכ"לית, שיווק ופיננסים</p>
             </div>
 
             {/* Chat Area */}

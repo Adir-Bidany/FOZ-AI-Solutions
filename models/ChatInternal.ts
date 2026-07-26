@@ -2,7 +2,7 @@ import mongoose, { Schema, model, models, Document, Types } from "mongoose";
 
 export interface IMessage {
     role: "user" | "model";
-    parts: { text: string }[];
+    parts: { text: string, mode?: string }[];
     timestamp: Date;
 }
 
@@ -25,7 +25,7 @@ const ChatInternalSchema = new Schema<IChatInternal>(
         messages: [
             {
                 role: { type: String, enum: ["user", "model"], required: true },
-                parts: [{ text: { type: String } }],
+                parts: [{ text: { type: String }, mode: { type: String } }],
                 timestamp: { type: Date, default: Date.now },
             },
         ],

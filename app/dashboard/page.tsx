@@ -100,59 +100,57 @@ export default async function ClientDashboard() {
     // --- SMART DATA LOGIC END ---
 
     return (
-        <div className="min-h-screen bg-gray-50 flex font-sans text-right" dir="rtl">
-            <main className="flex-1 p-4 lg:p-8 w-full transition-all duration-300 flex flex-col">
-                {/* Structural Wrapper Lock: Header Container */}
-                <div className="w-full shrink-0">
-                    <DashboardHeader
-                        greeting={greeting}
-                        ownerName={firstName}
-                        clientSlug={serializedBusiness.slug}
-                        clientData={serializedBusiness}
-                    />
-                </div>
+        <div className="p-4 lg:p-8 w-full font-sans">
+            {/* Structural Wrapper Lock: Header Container */}
+            <div className="w-full shrink-0">
+                <DashboardHeader
+                    greeting={greeting}
+                    ownerName={firstName}
+                    clientSlug={serializedBusiness.slug}
+                    clientData={serializedBusiness}
+                />
+            </div>
 
-                {/* ZONE A: Action Center */}
-                <div className="mb-8">
-                    <ActionCardGrid cards={actionCards} />
-                </div>
+            {/* ZONE A: Action Center */}
+            <div className="mb-8">
+                <ActionCardGrid cards={actionCards} />
+            </div>
 
-                {/* סטטיסטיקות */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-10">
-                    {stats.map((stat, i) => (
-                        <Card
-                            key={i}
-                            className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-white rounded-2xl overflow-hidden group"
-                        >
-                            <CardContent className="p-6 flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500 mb-1">
-                                        {stat.label}
-                                    </p>
-                                    <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">
-                                        {stat.value}
-                                    </h3>
-                                    <span className="text-xs font-medium text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full mt-3 inline-block border border-gray-100 group-hover:border-gray-200 transition-colors">
-                                        {stat.change}
-                                    </span>
-                                </div>
-                                <div
-                                    className={`w-14 h-14 rounded-2xl flex items-center justify-center ${stat.bg} ${stat.color} shadow-sm group-hover:scale-110 transition-transform duration-300`}
-                                >
-                                    <stat.icon size={28} />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+            {/* סטטיסטיקות */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-10">
+                {stats.map((stat, i) => (
+                    <Card
+                        key={i}
+                        className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-white rounded-2xl overflow-hidden group"
+                    >
+                        <CardContent className="p-6 flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-gray-500 mb-1">
+                                    {stat.label}
+                                </p>
+                                <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">
+                                    {stat.value}
+                                </h3>
+                                <span className="text-xs font-medium text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full mt-3 inline-block border border-gray-100 group-hover:border-gray-200 transition-colors">
+                                    {stat.change}
+                                </span>
+                            </div>
+                            <div
+                                className={`w-14 h-14 rounded-2xl flex items-center justify-center ${stat.bg} ${stat.color} shadow-sm group-hover:scale-110 transition-transform duration-300`}
+                            >
+                                <stat.icon size={28} />
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
 
-                {/* ZONE B: Agent Room */}
-                <div className="w-full h-auto xl:h-[650px] flex flex-col space-y-4">
-                    <AgentRoom businessId={business._id.toString()} />
-                </div>
+            {/* ZONE B: Agent Room */}
+            <div className="w-full h-auto xl:h-[650px] flex flex-col space-y-4">
+                <AgentRoom businessId={business._id.toString()} />
+            </div>
 
-                <AnalyticsSection />
-            </main>
+            <AnalyticsSection />
         </div>
     );
 }

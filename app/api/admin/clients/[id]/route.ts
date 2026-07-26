@@ -1,15 +1,22 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase as connectDB } from "@/lib/db";
 import Business from "@/models/Business";
+import { getToken } from "next-auth/jwt";
 
 export async function DELETE(
     request: Request,
     // בגרסאות חדשות של Next.js 15, ה-params מגיע כ-Promise שצריך להמתין לו
     { params }: { params: Promise<{ id: string }> }
 ) {
+    // Admin RBAC: Only authenticated admins may delete clients
+    const token = await getToken({ req: request as any, secret: process.env.NEXTAUTH_SECRET });
+    if (!token || token.role !== "admin") {
+        return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     try {
         // 1. חיבור לדאטה בייס
-        await connectDB(); // תיקון 2: שימוש בשם הפונקציה הנכון
+        await connectDB();
 
         // 2. שליפת המזהה (המתנה ל-Promise)
         const { id } = await params;

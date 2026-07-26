@@ -6,10 +6,11 @@ import ActionCard from "@/models/ActionCard";
 import { AGENT_REGISTRY } from "@/lib/agents/registry";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
 async function generateAgentResponse(agentName: string, systemPrompt: string, context: string, tools?: any[]): Promise<any> {
-    const modelOptions: any = { model: "gemini-2.0-flash" };
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error("GEMINI_API_KEY is not defined");
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const modelOptions: any = { model: "gemini-2.5-flash" };
     if (tools) modelOptions.tools = tools;
 
     const model = genAI.getGenerativeModel(modelOptions);
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
         }
 
         await connectToDatabase();
-        const businesses = await Business.find({});
+        const businesses = await Business.find({}).lean();
 
         const summaryTool = {
             function_declarations: [{
@@ -58,7 +59,7 @@ export async function GET(req: NextRequest) {
             const logs = await MasterChatLog.find({
                 businessId: business._id,
                 createdAt: { $gte: today }
-            });
+            }).lean();
 
             if (logs.length > 0) {
                 const data = logs.map(l => l.transcript).join("\n\n---\n\n");

@@ -1,8 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase as connectDB } from "@/lib/db";
 import Business from "@/models/Business";
+import { getToken } from "next-auth/jwt";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    // Admin RBAC: Only authenticated admins may access this endpoint
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    if (!token || token.role !== "admin") {
+        return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     try {
         await connectDB();
 
