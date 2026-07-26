@@ -48,7 +48,7 @@ export default async function DashboardLayout({
     // --- END LOGIC ---
 
     return (
-        <div className="flex h-screen bg-gray-50 w-full" dir="rtl">
+        <div className="flex h-screen bg-[#0B0E14] text-white w-full" dir="rtl">
             <main className="w-full h-full overflow-y-auto custom-scrollbar flex flex-col">
                 <div className="flex-1 w-full relative">{children}</div>
             </main>
