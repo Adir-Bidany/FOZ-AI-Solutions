@@ -17,7 +17,7 @@ export default function SystemHeader() {
 
     return (
         // הוספתי overflow-hidden כדי למנוע גלישה במקרים קיצוניים
-        <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 h-20 md:h-28 shadow-sm transition-all overflow-hidden">
+        <header className="sticky top-0 z-50 bg-[#0B0E14]/65 backdrop-blur-md border-b border-white/5 h-20 md:h-28 transition-all overflow-hidden">
             <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between">
                 {/* --- צד ימין: הלוגו --- */}
                 <Link

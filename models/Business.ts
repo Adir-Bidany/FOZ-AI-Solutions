@@ -61,7 +61,9 @@ const BusinessSchema = new Schema<IBusiness>(
         api_keys: {
             simplybook: {
                 companyLogin: { type: String },
-                apiKey: { type: String }
+                apiKey: { type: String },
+                userLogin: { type: String },
+                userPassword: { type: String }
             },
             whatsapp: { type: String },
         },

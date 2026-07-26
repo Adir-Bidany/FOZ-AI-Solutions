@@ -21,9 +21,20 @@ export default function SimplyBookConnect() {
     const [keys, setKeys] = useState({
         companyLogin: "",
         apiKey: "",
+        userLogin: "",
+        userPassword: "",
     });
 
     const handleIntegrationSave = async () => {
+        if (!keys.companyLogin.trim() || !keys.apiKey.trim() || !keys.userLogin.trim() || !keys.userPassword.trim()) {
+            toast.error("נא למלא את כל השדות");
+            return;
+        }
+        if (keys.apiKey.includes(" ") || keys.apiKey.includes("{")) {
+            toast.error("המפתח שהוזן אינו תקין. נא לוודא שהעתקת רק את מחרוזת המפתח ללא רווחים או תווים נוספים.");
+            return;
+        }
+
         setIsLoading(true);
         try {
             const res = await fetch("/api/settings/integrations", {
@@ -70,7 +81,7 @@ export default function SimplyBookConnect() {
                     <div>
                         <strong>איפה מוצאים את הפרטים?</strong>
                         <br />
-                        באתר SimplyBook, לכי ל: Custom Features -{">"} API -
+                        באתר SimplyBook: Custom Features -{">"} API -
                         {">"} Settings.
                     </div>
                 </div>
@@ -93,6 +104,9 @@ export default function SimplyBookConnect() {
 
                 <div className="space-y-2">
                     <Label>מפתח API (API Key)</Label>
+                    <p className="text-xs text-red-500 font-semibold pb-1">
+                        ⚠️ שימו לב: חובה להעתיק את ה-API Key הרגיל, ולא את ה-Secret Key!
+                    </p>
                     <Input
                         type="password"
                         placeholder="הדביקי כאן את המפתח"
@@ -100,6 +114,33 @@ export default function SimplyBookConnect() {
                         autoComplete="new-password"
                         onChange={(e) =>
                             setKeys({ ...keys, apiKey: e.target.value })
+                        }
+                        className="h-10 rounded-xl"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label>שם משתמש / אדמין (User Login)</Label>
+                    <Input
+                        placeholder="לדוגמה: admin"
+                        value={keys.userLogin}
+                        autoComplete="off"
+                        onChange={(e) =>
+                            setKeys({ ...keys, userLogin: e.target.value })
+                        }
+                        className="h-10 rounded-xl"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label>סיסמה / מפתח משתמש (User Password)</Label>
+                    <Input
+                        type="password"
+                        placeholder="הזינו את סיסמת המשתמש או מפתח המשתמש"
+                        value={keys.userPassword}
+                        autoComplete="new-password"
+                        onChange={(e) =>
+                            setKeys({ ...keys, userPassword: e.target.value })
                         }
                         className="h-10 rounded-xl"
                     />

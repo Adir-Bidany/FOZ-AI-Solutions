@@ -45,6 +45,8 @@ export interface IBusiness extends Document {
         simplybook?: {
             companyLogin: string;
             apiKey: string;
+            userLogin?: string;
+            userPassword?: string;
             isConnected: boolean;
         };
     };

@@ -28,16 +28,8 @@ export async function GET(req: Request) {
             );
         }
 
-        // Parse api_keys if it's a string (legacy) or object
-        let apiKeys = business.api_keys || {};
-        if (typeof apiKeys.simplybook === 'string' && apiKeys.simplybook.startsWith('{')) {
-            try {
-                const parsed = JSON.parse(apiKeys.simplybook);
-                apiKeys = { ...apiKeys, simplybook: parsed };
-            } catch (e) {
-                // keep as string if parse fails
-            }
-        }
+        // Map api_keys natively as object
+        const apiKeys = business.api_keys || {};
 
         return NextResponse.json({
             success: true,
@@ -60,8 +52,8 @@ export async function GET(req: Request) {
 
                 // Integrations
                 apiKeys: {
-                    companyLogin: typeof apiKeys.simplybook === 'object' ? apiKeys.simplybook.companyLogin : (apiKeys.simplybook || ""),
-                    apiKey: typeof apiKeys.simplybook === 'object' ? apiKeys.simplybook.apiKey : ""
+                    companyLogin: apiKeys.simplybook?.companyLogin || "",
+                    apiKey: apiKeys.simplybook?.apiKey || ""
                 }
             }
         });

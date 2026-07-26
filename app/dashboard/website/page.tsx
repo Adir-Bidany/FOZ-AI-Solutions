@@ -4,9 +4,23 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Save, Loader2, Globe, UploadCloud, Layout, Check, Image as ImageIcon } from "lucide-react";
+import {
+    Save,
+    Loader2,
+    Globe,
+    UploadCloud,
+    Layout,
+    Check,
+    Image as ImageIcon,
+} from "lucide-react";
 import { BACKGROUND_PRESETS } from "@/lib/background-presets";
 import { useSession } from "next-auth/react";
 
@@ -23,7 +37,7 @@ export default function WebsiteEditorPage() {
         features: "",
         primary_color: "",
         background_style: "soft-rose",
-        custom_background_image: ""
+        custom_background_image: "",
     });
 
     // Load initial data
@@ -40,10 +54,12 @@ export default function WebsiteEditorPage() {
                         hero_image_url: result.data.hero_image_url || "",
                         features: Array.isArray(result.data.features)
                             ? result.data.features.join("\n")
-                            : (result.data.features || ""),
+                            : result.data.features || "",
                         primary_color: result.data.primary_color || "",
-                        background_style: result.data.background_style || "soft-rose",
-                        custom_background_image: result.data.custom_background_image || ""
+                        background_style:
+                            result.data.background_style || "soft-rose",
+                        custom_background_image:
+                            result.data.custom_background_image || "",
                     });
                 }
             } catch (error) {
@@ -57,16 +73,21 @@ export default function WebsiteEditorPage() {
         }
     }, [session]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (
+        e: React.ChangeEvent<HTMLInputElement>,
+    ) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (file.size > 4 * 1024 * 1024) { // 4MB limit
+        if (file.size > 4 * 1024 * 1024) {
+            // 4MB limit
             toast.error("התמונה גדולה מדי. אנא בחרי תמונה עד 4MB.");
             return;
         }
@@ -77,7 +98,7 @@ export default function WebsiteEditorPage() {
             const base64 = reader.result as string;
 
             // Optimistic update
-            setFormData(prev => ({ ...prev, hero_image_url: base64 }));
+            setFormData((prev) => ({ ...prev, hero_image_url: base64 }));
 
             try {
                 const res = await fetch("/api/business/upload-image", {
@@ -85,7 +106,7 @@ export default function WebsiteEditorPage() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         image: base64,
-                        targetField: "hero_image"
+                        targetField: "hero_image",
                     }),
                 });
 
@@ -106,11 +127,14 @@ export default function WebsiteEditorPage() {
         reader.readAsDataURL(file);
     };
 
-    const handleBackgroundUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleBackgroundUpload = async (
+        e: React.ChangeEvent<HTMLInputElement>,
+    ) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (file.size > 4 * 1024 * 1024) { // 4MB limit
+        if (file.size > 4 * 1024 * 1024) {
+            // 4MB limit
             toast.error("התמונה גדולה מדי. אנא בחרי תמונה עד 4MB.");
             return;
         }
@@ -121,10 +145,10 @@ export default function WebsiteEditorPage() {
             const base64 = reader.result as string;
 
             // Optimistic update
-            setFormData(prev => ({
+            setFormData((prev) => ({
                 ...prev,
                 custom_background_image: base64,
-                background_style: 'custom'
+                background_style: "custom",
             }));
 
             try {
@@ -133,7 +157,7 @@ export default function WebsiteEditorPage() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         image: base64,
-                        targetField: "custom_background_image"
+                        targetField: "custom_background_image",
                     }),
                 });
 
@@ -160,9 +184,12 @@ export default function WebsiteEditorPage() {
             // Convert features string back to array
             const dataToSave = {
                 ...formData,
-                features: formData.features.split("\n").map(f => f.trim()).filter(f => f !== ""),
+                features: formData.features
+                    .split("\n")
+                    .map((f) => f.trim())
+                    .filter((f) => f !== ""),
                 background_style: formData.background_style,
-                custom_background_image: formData.custom_background_image
+                custom_background_image: formData.custom_background_image,
             };
 
             const res = await fetch("/api/business/website", {
@@ -192,13 +219,23 @@ export default function WebsiteEditorPage() {
         <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8" dir="rtl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">עריכת עמוד נחיתה</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                        עריכת עמוד נחיתה
+                    </h1>
                     <p className="text-gray-500 mt-2">
                         כאן תוכלי לערוך את התוכן שמופיע באתר האישי שלך.
                     </p>
                 </div>
-                <Button onClick={handleSave} disabled={isLoading} className="gap-2">
-                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                <Button
+                    onClick={handleSave}
+                    disabled={isLoading}
+                    className="gap-2"
+                >
+                    {isLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                        <Save className="w-4 h-4" />
+                    )}
                     שמור שינויים
                 </Button>
             </div>
@@ -233,7 +270,7 @@ export default function WebsiteEditorPage() {
                                 name="hero_subtitle"
                                 value={formData.hero_subtitle}
                                 onChange={handleChange}
-                                placeholder="למשל: הקליניקה המובילה ברעננה לטיפולי אנטי-אייג'ינג..."
+                                placeholder="למשל: העסק המובילה ברעננה לטיפולי אנטי-אייג'ינג..."
                                 rows={3}
                             />
                         </div>
@@ -241,9 +278,14 @@ export default function WebsiteEditorPage() {
                         <div className="space-y-2">
                             <Label htmlFor="hero_image_url">תמונה ראשית</Label>
 
-                            <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors relative overflow-hidden group min-h-[200px]"
-                                onClick={() => document.getElementById("hero_image_input")?.click()}>
-
+                            <div
+                                className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors relative overflow-hidden group min-h-[200px]"
+                                onClick={() =>
+                                    document
+                                        .getElementById("hero_image_input")
+                                        ?.click()
+                                }
+                            >
                                 {formData.hero_image_url ? (
                                     <div className="relative w-full h-48">
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -282,7 +324,8 @@ export default function WebsiteEditorPage() {
 
                             {isUploading && (
                                 <p className="text-xs text-purple-600 text-center animate-pulse flex items-center justify-center gap-2">
-                                    <Loader2 className="w-3 h-3 animate-spin" /> מעלה תמונה...
+                                    <Loader2 className="w-3 h-3 animate-spin" />{" "}
+                                    מעלה תמונה...
                                 </p>
                             )}
                         </div>
@@ -293,18 +336,23 @@ export default function WebsiteEditorPage() {
                     <CardHeader>
                         <CardTitle>יתרונות ושירותים</CardTitle>
                         <CardDescription>
-                            רשימת היתרונות שמופיעה מתחת לכותרת. כל שורה תופיע כיתרון נפרד עם וי.
+                            רשימת היתרונות שמופיעה מתחת לכותרת. כל שורה תופיע
+                            כיתרון נפרד עם וי.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
-                            <Label htmlFor="features">רשימת יתרונות (כל יתרון בשורה חדשה)</Label>
+                            <Label htmlFor="features">
+                                רשימת יתרונות (כל יתרון בשורה חדשה)
+                            </Label>
                             <Textarea
                                 id="features"
                                 name="features"
                                 value={formData.features}
                                 onChange={handleChange}
-                                placeholder={"חומרים טבעיים בלבד\nחניה חינם בשפע\nזמינות גבוהה"}
+                                placeholder={
+                                    "חומרים טבעיים בלבד\nחניה חינם בשפע\nזמינות גבוהה"
+                                }
                                 rows={6}
                             />
                         </div>
@@ -327,12 +375,18 @@ export default function WebsiteEditorPage() {
                         {BACKGROUND_PRESETS.map((preset) => (
                             <div
                                 key={preset.id}
-                                onClick={() => setFormData(prev => ({ ...prev, background_style: preset.id }))}
+                                onClick={() =>
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        background_style: preset.id,
+                                    }))
+                                }
                                 className={`
                                     cursor-pointer rounded-xl border-2 p-1 transition-all relative group
-                                    ${formData.background_style === preset.id
-                                        ? "border-purple-600 ring-2 ring-purple-100"
-                                        : "border-transparent hover:border-gray-200"
+                                    ${
+                                        formData.background_style === preset.id
+                                            ? "border-purple-600 ring-2 ring-purple-100"
+                                            : "border-transparent hover:border-gray-200"
                                     }
                                 `}
                             >
@@ -357,9 +411,13 @@ export default function WebsiteEditorPage() {
                         <div
                             className={`
                                 border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-colors relative overflow-hidden group min-h-[120px]
-                                ${formData.background_style === 'custom' ? 'border-purple-600 bg-purple-50/50' : 'border-gray-200 hover:bg-gray-50'}
+                                ${formData.background_style === "custom" ? "border-purple-600 bg-purple-50/50" : "border-gray-200 hover:bg-gray-50"}
                             `}
-                            onClick={() => document.getElementById("bg_image_input")?.click()}
+                            onClick={() =>
+                                document
+                                    .getElementById("bg_image_input")
+                                    ?.click()
+                            }
                         >
                             {formData.custom_background_image ? (
                                 <div className="relative w-full h-32">
@@ -378,15 +436,18 @@ export default function WebsiteEditorPage() {
                                     <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-2">
                                         <ImageIcon size={20} />
                                     </div>
-                                    <span className="text-sm font-medium">העלאת תמונה אישית</span>
+                                    <span className="text-sm font-medium">
+                                        העלאת תמונה אישית
+                                    </span>
                                 </div>
                             )}
 
-                            {formData.background_style === 'custom' && formData.custom_background_image && (
-                                <div className="absolute top-2 right-2 w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white shadow-sm z-10">
-                                    <Check size={14} />
-                                </div>
-                            )}
+                            {formData.background_style === "custom" &&
+                                formData.custom_background_image && (
+                                    <div className="absolute top-2 right-2 w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white shadow-sm z-10">
+                                        <Check size={14} />
+                                    </div>
+                                )}
 
                             <input
                                 id="bg_image_input"
@@ -401,6 +462,5 @@ export default function WebsiteEditorPage() {
                 </CardContent>
             </Card>
         </div>
-
     );
 }

@@ -48,9 +48,12 @@ export function createGeminiInstance(options: {
 
     if (options.responseSchema) {
         config.generationConfig = {
-            responseMimeType: "application/json",
             responseSchema: options.responseSchema
         };
+        // Google AI forbids combining tools with responseMimeType: 'application/json'
+        if (!options.tools || options.tools.length === 0) {
+            config.generationConfig.responseMimeType = "application/json";
+        }
     }
 
     return genAI.getGenerativeModel(config);

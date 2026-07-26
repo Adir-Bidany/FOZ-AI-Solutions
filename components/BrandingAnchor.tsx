@@ -150,11 +150,11 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
     }
 
     return (
-        <div className="fixed bottom-6 left-6 z-50 flex items-end justify-start" dir="rtl">
+        <div className="fixed bottom-6 right-6 z-50 flex items-end justify-start" dir="rtl">
             {/* The Floating Action Button (Anchor) */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`relative w-16 h-16 rounded-full overflow-hidden shadow-2xl transition-transform hover:scale-105 border-4 ${ringClass} bg-white flex items-center justify-center cursor-pointer`}
+                className={`relative w-16 h-16 rounded-full overflow-hidden shadow-2xl transition-transform hover:scale-105 border-4 ${ringClass} ring-4 ring-[#FCE7F3] bg-white flex items-center justify-center cursor-pointer ${!isOpen ? "animate-pulse" : ""}`}
             >
                 {isFozLogo ? (
                     <Image src="/logo.png" alt="FOZ AI" width={40} height={40} className="object-contain" />
@@ -165,7 +165,7 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
 
             {/* Platform Context: Sliding Drawer */}
             {context === "platform" && isOpen && (
-                <div className="absolute bottom-20 left-0 w-80 bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-gray-100 animate-in slide-in-from-bottom-10 fade-in duration-300">
+                <div className="absolute bottom-20 right-0 w-80 bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-gray-100 animate-in slide-in-from-bottom-10 fade-in duration-300">
                     <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 text-gray-500 hover:text-black">
                         <X size={20} />
                     </button>
@@ -252,7 +252,7 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
 
             {/* Consumer Context: Login/CRM Drawer */}
             {context === "consumer" && isOpen && (
-                <div className="absolute bottom-20 left-0 w-80 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-gray-100 p-6 animate-in slide-in-from-bottom-10 fade-in duration-300">
+                <div className="absolute bottom-20 right-0 w-80 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-gray-100 p-6 animate-in slide-in-from-bottom-10 fade-in duration-300">
                     <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-black">
                         <X size={20} />
                     </button>

@@ -3,60 +3,64 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import Business from "@/models/Business";
 import { connectToDatabase } from "@/lib/db";
 import { redirect } from "next/navigation";
-import SimplyBookConnect from "@/components/dashboard/SimplyBookConnect";
-import { Calendar as CalendarIcon, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import WeeklyCalendar from "@/components/dashboard/WeeklyCalendar";
+import CalendarHeaderActions from "@/components/dashboard/CalendarHeaderActions";
+import { getBookings } from "@/lib/simplybook";
+import { format, addDays, startOfWeek } from "date-fns";
 
-export default async function CalendarPage() {
+export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) redirect("/login");
 
     await connectToDatabase();
     const business = await Business.findOne({ ownerEmail: session.user.email }).lean();
 
-    // Check connection status
-    const simplyBookLogin = business?.integrations?.simplybook?.companyLogin;
+    // Fix: Proper schema lookup
+    const sbCreds = business?.api_keys?.simplybook;
+    const isDemo = business?.slug === "demo";
 
-    // If not connected, show the connection form
-    if (!simplyBookLogin) {
-        return (
-            <div className="p-8 h-full flex flex-col items-center justify-center">
-                <div className="max-w-2xl w-full">
-                    <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">חיבור יומן</h1>
-                        <p className="text-gray-500">נראה שעדיין לא חיברת את יומן SimplyBook שלך.</p>
-                    </div>
-                    <SimplyBookConnect />
-                </div>
-            </div>
-        );
+    const resolvedSearchParams = await searchParams;
+    const dateParam = resolvedSearchParams?.date;
+    const currentDate = dateParam ? new Date(dateParam) : new Date();
+    const startDate = startOfWeek(currentDate, { weekStartsOn: 0 });
+    const fromDateStr = format(startDate, "yyyy-MM-dd");
+    const toDateStr = format(addDays(startDate, 6), "yyyy-MM-dd");
+
+    let liveEvents = null;
+    let hasError = false;
+
+    if (sbCreds?.companyLogin && sbCreds?.userLogin && sbCreds?.userPassword) {
+        liveEvents = await getBookings(sbCreds as any, fromDateStr, toDateStr);
+        if (liveEvents === null) hasError = true;
+        console.log("SimplyBook Raw Bookings:", liveEvents);
+    } else if (isDemo) {
+        // Mock events for demo pitch
+        liveEvents = Array.from({ length: 12 }).map((_, i) => ({
+            id: `mock-${i}`,
+            title: ["דנה ישראלי", "יוסי לוי", "מיכל כהן", "אבי אברהם", "שירה גולן", "רון כץ", "טלי רון", "גיל שחר", "עדי כהן", "רונן דוד", "נועה יוסף", "דניאל מור"][i],
+            date: format(addDays(startDate, Math.floor(Math.random() * 7)), "yyyy-MM-dd"),
+            startTime: `${9 + (i % 8)}:00:00`,
+            endTime: `${10 + (i % 8)}:00:00`,
+            service: ["ייעוץ עסקי", "פגישת הכרות", "אימון אישי", "טיפול פנים", "עיסוי", "תספורת"][i % 6],
+            phone: "050-0000000"
+        }));
     }
-
-    // If connected, show the Calendar View
-    const calendarUrl = `https://${simplyBookLogin}.simplybook.me/v2/#admin/schedule/view`;
 
     return (
         <div className="h-full flex flex-col p-6 w-full">
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">יומן תורים</h1>
-                    <p className="text-gray-500 mt-1">מחובר לחשבון: {simplyBookLogin}</p>
+                    <p className="text-gray-500 mt-1">
+                        {sbCreds?.companyLogin ? `מחובר לחשבון: ${sbCreds.companyLogin}` : "לא מחובר ליומן"}
+                    </p>
                 </div>
-                <a href={calendarUrl} target="_blank" rel="noopener noreferrer">
-                    <Button variant="outline" className="gap-2">
-                        <ExternalLink size={16} />
-                        פתח בחלון חדש
-                    </Button>
-                </a>
+                {sbCreds?.companyLogin && (
+                    <CalendarHeaderActions />
+                )}
             </div>
 
-            <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
-                <iframe
-                    src={calendarUrl}
-                    className="w-full h-full border-none"
-                    title="SimplyBook Admin"
-                />
-            </div>
+            <WeeklyCalendar events={liveEvents} hasError={hasError} />
         </div>
     );
 }

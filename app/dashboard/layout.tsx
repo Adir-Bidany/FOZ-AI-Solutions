@@ -18,7 +18,9 @@ export default async function DashboardLayout({
     }
 
     await connectDB();
-    const client = await Business.findOne({ ownerEmail: session.user.email }).lean();
+    const client = await Business.findOne({
+        ownerEmail: session.user.email,
+    }).lean();
 
     if (!client) {
         redirect("/onboarding");
@@ -35,9 +37,9 @@ export default async function DashboardLayout({
     const firstName = safeOwnerName.split(" ")[0];
 
     // Fix Business Name if it duplicates the owner name
-    let displayBusinessName = serializedClient.businessName || "הקליניקה שלי";
+    let displayBusinessName = serializedClient.businessName || "העסק שלי";
     if (displayBusinessName.trim() === serializedClient.ownerName.trim()) {
-        displayBusinessName = `הקליניקה של ${firstName}`;
+        displayBusinessName = `העסק של ${firstName}`;
     }
 
     // Apply override
@@ -48,9 +50,7 @@ export default async function DashboardLayout({
     return (
         <div className="flex h-screen bg-gray-50 w-full" dir="rtl">
             <main className="w-full h-full overflow-y-auto custom-scrollbar flex flex-col">
-                <div className="flex-1 w-full relative">
-                    {children}
-                </div>
+                <div className="flex-1 w-full relative">{children}</div>
             </main>
 
             <BrandingAnchor context="dashboard" businessData={serializedClient}>
