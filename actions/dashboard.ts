@@ -320,3 +320,43 @@ export async function updateLandingPage(businessId: string, data: any) {
         return { success: false, error: "Failed to update landing page" };
     }
 }
+
+export async function fetchPendingAssets(businessId: string) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.businessId) throw new Error("Unauthorized");
+    if (session.user.businessId !== businessId) throw new Error("Forbidden: Resource ownership mismatch");
+
+    await connectToDatabase();
+    try {
+        const assets = await PendingAsset.find({
+            businessId: businessId,
+            status: "pending"
+        }).sort({ createdAt: -1 }).lean();
+
+        return JSON.parse(JSON.stringify(assets));
+    } catch (error) {
+        console.error("Failed to fetch pending assets:", error);
+        return [];
+    }
+}
+
+export async function deletePendingAsset(assetId: string) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.businessId) throw new Error("Unauthorized");
+
+    await connectToDatabase();
+    try {
+        const asset = await PendingAsset.findById(assetId);
+        if (!asset) throw new Error("Pending asset not found");
+        if (asset.businessId.toString() !== session.user.businessId) {
+            throw new Error("Forbidden: Resource ownership mismatch");
+        }
+
+        await PendingAsset.findByIdAndDelete(assetId);
+        revalidatePath("/dashboard/marketing");
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete pending asset:", error);
+        return { success: false, error: "Failed to delete pending asset" };
+    }
+}
