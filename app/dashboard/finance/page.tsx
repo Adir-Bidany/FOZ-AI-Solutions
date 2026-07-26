@@ -18,7 +18,7 @@ export default async function FinancePage() {
     if (!business) return redirect("/onboarding");
 
     // Fetch Insights from DB
-    const rawInsights = await AgentInsight.find({ businessId: business._id, agentName: "Roi", status: { $in: ["approved", "pending"] } })
+    const rawInsights = await AgentInsight.find({ businessId: business._id, agentName: "Golda", type: { $in: ["financial_report", "budget_analysis", "pricing_insight"] }, status: { $in: ["approved", "pending"] } })
         .sort({ createdAt: -1 })
         .lean();
     
@@ -33,13 +33,13 @@ export default async function FinancePage() {
                     📈
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">רועי - ניהול פיננסי</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">גולדה - ניתוח פיננסי</h1>
                     <p className="text-gray-500">תובנות כלכליות ודוחות עסקיים במקום אחד</p>
                 </div>
                 <div className="md:mr-auto mt-4 md:mt-0">
                     <Link href="/dashboard">
                         <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md w-full md:w-auto transition-colors">
-                            <MessageSquare size={18} /> התייעץ עם רועי
+                            <MessageSquare size={18} /> בקשי ניתוח פיננסי מגולדה
                         </Button>
                     </Link>
                 </div>
@@ -59,7 +59,7 @@ export default async function FinancePage() {
                         </div>
                         <h3 className="text-2xl font-bold text-gray-800 mb-2">מרכז התובנות הפיננסיות ריק</h3>
                         <p className="text-base mt-2 max-w-md text-gray-500 leading-relaxed">
-                            דוחות תקציב, ניתוחי רווחיות, ואסטרטגיות שרועי מפיק עבורך יופיעו כאן לאחר אישור הנהלה.
+                            דוחות תקציב, ניתוחי רווחיות, ואסטרטגיות שגולדה מפיקה עבורך יופיעו כאן לאחר אישור.
                         </p>
                         <Link href="/dashboard" className="mt-8">
                             <Button variant="outline" className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-xl px-6">
@@ -77,7 +77,7 @@ export default async function FinancePage() {
                                 content={insight.content}
                                 type={insight.type}
                                 date={insight.createdAt}
-                                agentName="Roi"
+                                agentName="Golda"
                                 status={insight.status}
                             />
                         ))}

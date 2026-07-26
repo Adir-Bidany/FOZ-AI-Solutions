@@ -13,7 +13,7 @@ export async function GET(req: Request) {
         }
 
         await connectToDatabase();
-        const business = await Business.findOne({ ownerEmail: session.user.email });
+        const business = await Business.findOne({ ownerEmail: session.user.email }).lean();
         if (!business) {
             return NextResponse.json({ error: "Client not found" }, { status: 404 });
         }

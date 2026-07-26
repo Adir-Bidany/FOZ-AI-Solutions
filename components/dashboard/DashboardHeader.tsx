@@ -20,9 +20,9 @@ export default function DashboardHeader({
     clientSlug,
     clientData,
 }: DashboardHeaderProps) {
-    // Poll every 5 seconds
+    // Poll every 60 seconds to reduce database load
     const { data, error } = useSWR("/api/dashboard/stats", fetcher, {
-        refreshInterval: 5000,
+        refreshInterval: 60000,
     });
 
     const dailyCount = data?.dailyCount ?? 0;

@@ -21,7 +21,7 @@ export async function createClient(data: CreateClientParams) {
     console.log("🟢 DB connected successfully!");
 
     // בדיקה אם המייל כבר קיים
-    const existingUser = await Business.findOne({ ownerEmail: data.email });
+    const existingUser = await Business.findOne({ ownerEmail: data.email }).lean();
     if (existingUser) {
         throw new Error("המייל הזה כבר רשום במערכת");
     }

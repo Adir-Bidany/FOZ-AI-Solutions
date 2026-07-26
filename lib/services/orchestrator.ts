@@ -3,15 +3,14 @@ import ChatExternal from "@/models/ChatExternal";
 import Business from "@/models/Business";
 import ActionCard from "@/models/ActionCard";
 import MasterChatLog from "@/models/MasterChatLog";
-import MichalDataStore from "@/models/MichalDataStore";
-import RoiDataStore from "@/models/RoiDataStore";
 import { AGENT_REGISTRY } from "@/lib/agents/registry";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
 async function generateAgentResponse(agentName: string, systemPrompt: string, context: string, tools?: any[]): Promise<any> {
-    const modelOptions: any = { model: "gemini-2.0-flash" };
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error("GEMINI_API_KEY is not defined");
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const modelOptions: any = { model: "gemini-2.5-flash" };
     if (tools) modelOptions.tools = tools;
 
     const model = genAI.getGenerativeModel(modelOptions);
@@ -35,10 +34,10 @@ export async function processSessionSummary(sessionId: string) {
     await connectToDatabase();
     console.log(`[Orchestrator] Processing session: ${sessionId}`);
 
-    const conversation = await ChatExternal.findById(sessionId).populate("business_id");
+    const conversation = await ChatExternal.findById(sessionId).populate("business_id").lean();
     if (!conversation) throw new Error("Conversation not found");
 
-    const business = await Business.findById(conversation.business_id);
+    const business = await Business.findById(conversation.business_id).lean();
     if (!business) throw new Error("Business not found");
 
     const transcript = conversation.messages.map((m: any) => `${m.role}: ${m.parts[0].text}`).join("\n");
@@ -89,58 +88,7 @@ export async function processSessionSummary(sessionId: string) {
         return; // Stop here, no distribution
     }
 
-    // 4. Distribution (Silent Extraction)
-    console.log(`[Orchestrator] Non-urgent. Distributing to specialists.`);
-
-    // Michal Extraction
-    const michalTool = {
-        function_declarations: [{
-            name: "save_marketing_raw_data",
-            description: "Saves raw marketing context from the chat.",
-            parameters: {
-                type: "OBJECT",
-                properties: {
-                    extractedContext: { type: "STRING", description: "Marketing signals extracted." }
-                },
-                required: ["extractedContext"]
-            }
-        }]
-    };
-    const michalContext = `Extract marketing signals using save_marketing_raw_data: \n${transcript}`;
-    const michalResult = await generateAgentResponse("Michal", AGENT_REGISTRY.michal.systemPrompt(business), michalContext, [michalTool]);
-
-    if (michalResult?.args?.extractedContext) {
-        await MichalDataStore.create({
-            businessId: business._id,
-            sourceSessionId: sessionId,
-            extractedContext: michalResult.args.extractedContext
-        });
-    }
-
-    // Roi Extraction
-    const roiTool = {
-        function_declarations: [{
-            name: "save_financial_raw_data",
-            description: "Saves raw financial context from the chat.",
-            parameters: {
-                type: "OBJECT",
-                properties: {
-                    extractedContext: { type: "STRING", description: "Financial signals extracted." }
-                },
-                required: ["extractedContext"]
-            }
-        }]
-    };
-    const roiContext = `Extract financial signals using save_financial_raw_data: \n${transcript}`;
-    const roiResult = await generateAgentResponse("Roi", AGENT_REGISTRY.roi.systemPrompt(business), roiContext, [roiTool]);
-
-    if (roiResult?.args?.extractedContext) {
-        await RoiDataStore.create({
-            businessId: business._id,
-            sourceSessionId: sessionId,
-            extractedContext: roiResult.args.extractedContext
-        });
-    }
-
-    console.log(`[Orchestrator] Orchestration complete for session: ${sessionId}`);
+    // 4. Non-urgent session — Golda now handles marketing & analytics directly.
+    // Specialist distribution to MichalDataStore / RoiDataStore has been deprecated.
+    console.log(`[Orchestrator] Non-urgent. Orchestration complete for session: ${sessionId}`);
 }

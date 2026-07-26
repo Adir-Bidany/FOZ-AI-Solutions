@@ -13,7 +13,7 @@ interface InsightCardProps {
     content: string;
     type: string;
     date: string;
-    agentName: "Michal" | "Roi";
+    agentName: "Golda";
     status?: string;
 }
 
@@ -23,8 +23,9 @@ export default function InsightCard({ id, title, content, type, date, agentName,
     const [isArchiving, setIsArchiving] = useState(false);
     const router = useRouter();
     
-    // Aesthetic Split: Violet/Indigo for Marketing, Emerald/Teal for Finance
-    const isMarketing = agentName === "Michal";
+    // Aesthetic Split: Violet/Indigo for Marketing assets, Emerald/Teal for Financial assets
+    const marketingTypes = ["social_post", "marketing_tip", "campaign_idea"];
+    const isMarketing = marketingTypes.includes(type);
 
     const cardBg = isMarketing ? "bg-indigo-50/40 border-indigo-100" : "bg-emerald-50/40 border-emerald-100";
     const badgeBg = isMarketing ? "bg-indigo-100" : "bg-emerald-100";
