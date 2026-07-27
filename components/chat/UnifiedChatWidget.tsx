@@ -182,7 +182,7 @@ export default function UnifiedChatWidget({
                 
                 {/* Dynamic Widgets */}
                 {widgetType === "date_picker" && (
-                    <div className="bg-black rounded-2xl shadow-sm border border-gray-100 p-4 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="bg-card/95 rounded-2xl shadow-sm border border-border p-4 animate-in fade-in slide-in-from-bottom-2">
                         <h4 className="text-sm font-bold text-center mb-2">בחירת תאריך</h4>
                         <div className="flex justify-center" dir="rtl">
                             <DayPicker 

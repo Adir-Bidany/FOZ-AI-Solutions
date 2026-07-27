@@ -132,9 +132,9 @@ export default async function ClientPage({
                 {/* === COLUMN 1: BUSINESS INFO === */}
                 <div className="flex flex-col justify-start space-y-6 lg:pt-8">
                     {/* Header Row: Logo & Text */}
-                    <div className="flex flex-row items-center gap-4">
+                    <div className="flex flex-row flex-wrap items-center gap-4">
                         {/* Logo / Hero Image */}
-                        <div className="relative w-32 h-32 shrink-0">
+                        <div className="relative w-20 h-20 sm:w-28 sm:h-28 shrink-0">
                             <ClientLogo
                                 src={heroImage}
                                 businessName={clientData.businessName}
@@ -143,7 +143,7 @@ export default async function ClientPage({
 
                         {/* Business Name & Description */}
                         <div className="space-y-2">
-                            <h1 className="text-4xl md:text-5xl font-bold leading-tight">
+                            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
                                 {heroTitle}
                             </h1>
                             <p className="text-lg leading-relaxed max-w-lg opacity-90">
@@ -187,7 +187,7 @@ export default async function ClientPage({
 
                 {/* === COLUMN 2: THE CHAT WIDGET === */}
                 <div className="w-full flex justify-center lg:justify-end">
-                    <div className="w-full max-w-md h-[80vh] min-h-[600px] bg-[#0B0E14] rounded-[2.5rem] shadow-2xl shadow-indigo-500/20 overflow-hidden relative flex flex-col">
+                    <div className="w-full max-w-md h-[75dvh] min-h-[380px] bg-[#0B0E14] rounded-[2.5rem] shadow-2xl shadow-indigo-500/20 overflow-hidden relative flex flex-col">
                         {/* The Header */}
                         <DanielaHeader businessName={clientData.businessName} />
 

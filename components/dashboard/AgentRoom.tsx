@@ -100,7 +100,7 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
     };
 
     return (
-        <div className={`bg-white rounded-3xl overflow-hidden flex flex-col h-[600px] xl:h-full transition-all duration-500 ${getModeStyles(lastMessageMode)}`}>
+        <div className={`bg-white dark:bg-card rounded-3xl overflow-hidden flex flex-col h-[400px] md:h-[550px] xl:h-full transition-all duration-500 ${getModeStyles(lastMessageMode)}`}>
             {/* Header */}
             <div className="p-6 border-b border-gray-50 bg-white shrink-0 flex items-center justify-between">
                 <div>
@@ -110,7 +110,7 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                         </div>
                         חדר המצב (Agent Room)
                     </h2>
-                    <p className="text-sm text-gray-500 mr-10">גולדה - רמטכ"לית, שיווק ופיננסים</p>
+                    <p className="text-sm text-gray-500 me-10">גולדה - רמטכ"לית, שיווק ופיננסים</p>
                 </div>
 
                 <Button
@@ -129,7 +129,7 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
             <div className="flex-1 bg-gray-50/50 p-4 overflow-hidden relative flex flex-col">
                 <div
                     ref={scrollContainerRef}
-                    className="flex-1 min-h-0 overflow-y-auto pr-4 custom-scrollbar"
+                    className="flex-1 min-h-0 overflow-y-auto pe-4 custom-scrollbar"
                 >
                     <div className="space-y-4 pb-4">
                         {isLoading ? (
@@ -187,7 +187,7 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                             onClick={handleSend}
                             disabled={!inputValue.trim() || isSending}
                             size="icon"
-                            className="absolute left-1 w-9 h-9 bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-all"
+                            className="absolute start-1 w-9 h-9 bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-all"
                         >
                             <Send size={16} />
                         </Button>

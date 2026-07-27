@@ -17,8 +17,8 @@ export default function RootLayout({
     children,
 }: Readonly<{ children: React.ReactNode }>) {
     return (
-        <html lang="he" dir="rtl">
-            <body className={inter.className}>
+        <html lang="he" dir="rtl" suppressHydrationWarning>
+            <body className={`${inter.className} bg-background text-foreground min-h-screen antialiased`}>
                 <Providers>
                     {children}
                     <Toaster />

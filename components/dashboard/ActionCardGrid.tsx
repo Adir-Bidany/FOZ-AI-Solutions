@@ -50,7 +50,7 @@ export default function ActionCardGrid({ cards = [] }: ActionCardProps) {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {cards.map((card) => (
-                    <Card key={card._id} className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
+                    <Card key={card._id} className="border-s-4 border-s-blue-500 shadow-sm hover:shadow-md transition-shadow">
                         <CardHeader className="pb-2">
                             <div className="flex justify-between items-start">
                                 <Badge variant="outline" className="mb-2 capitalize">
@@ -66,7 +66,7 @@ export default function ActionCardGrid({ cards = [] }: ActionCardProps) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                                 {card.display_content.description}
                             </p>
                         </CardContent>
@@ -78,7 +78,7 @@ export default function ActionCardGrid({ cards = [] }: ActionCardProps) {
                                 disabled={isPending}
                                 className="text-gray-500 hover:text-red-500"
                             >
-                                <X className="w-4 h-4 mr-1" />
+                                <X className="w-4 h-4 me-1" />
                                 Dismiss
                             </Button>
                             <Button
@@ -87,7 +87,7 @@ export default function ActionCardGrid({ cards = [] }: ActionCardProps) {
                                 disabled={isPending}
                                 className="bg-blue-600 hover:bg-blue-700 text-white"
                             >
-                                <Check className="w-4 h-4 mr-1" />
+                                <Check className="w-4 h-4 me-1" />
                                 Approve
                             </Button>
                         </CardFooter>

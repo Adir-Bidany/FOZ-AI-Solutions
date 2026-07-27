@@ -59,6 +59,19 @@ export const createActionCardTool = {
     },
 };
 
+export const forwardMessageToOwnerTool = {
+    name: "forward_message_to_owner",
+    description: "מעביר הודעה מלקוח ישירות לבעל העסק בדשבורד (עד 50 מילים בלבד, מקסימום 3 הודעות ליום ללקוח).",
+    parameters: {
+        type: "OBJECT",
+        properties: {
+            customer_name: { type: "STRING", description: "שם הלקוח המבקש להשאיר הודעה" },
+            message_content: { type: "STRING", description: "תוכן ההודעה (עד 50 מילים בלבד)" },
+        },
+        required: ["customer_name", "message_content"],
+    },
+};
+
 export const cancelAppointmentTool = {
     name: "cancel_appointment",
     description: "Cancels an existing appointment. ADMIN ONLY.",
@@ -165,6 +178,7 @@ export const danielaResponseSchema: any = {
                 "book_appointment",
                 "ask_clarification",
                 "create_action_card",
+                "forward_message_to_owner",
             ],
         },
         action_payload: {
@@ -258,6 +272,10 @@ Constraints:
 - You do NOT have direct database write access for cancellations or changes.
 - If a user wants to CANCEL or CHANGE an appointment, you must say: "I will pass this request to the clinic manager for immediate approval."
 - You CAN check availability and book NEW appointments using the provided tools.
+- FORWARDING MESSAGES TO OWNER:
+  If the customer wants to leave a message for the business owner, you MUST verify the message is 50 words or less before using forward_message_to_owner.
+  If the message exceeds 50 words, politely ask the customer in Hebrew to shorten it to 50 words or less.
+  If the tool returns a daily limit reached error (max 3 messages per day), politely inform the customer in Hebrew that the daily limit of 3 messages to the business owner has been reached today.
 - STRICT DOMAIN GUARDRAIL:
   You represent "${context.businessName}". Your core domain is strictly limited to the following services: ${JSON.stringify(context?.operational_settings?.services)}.
   If the user asks ANY question or makes ANY request outside of this specific business domain (e.g., general programming, unrelated business niches, cooking recipes, school math, generic trivia, or general AI capabilities), you MUST immediately halt your reasoning and return the following exact string verbatim, with NO other text:
@@ -271,7 +289,7 @@ Context:
 - Services: ${JSON.stringify(context?.operational_settings?.services)}
 - Client History: ${context?.client_history_summary || "No previous history."}
         `.trim(),
-        tools: [{ functionDeclarations: [checkAvailabilityTool, bookAppointmentTool, createActionCardTool] }],
+        tools: [{ functionDeclarations: [checkAvailabilityTool, bookAppointmentTool, createActionCardTool, forwardMessageToOwnerTool] }],
     },
 
     golda: {

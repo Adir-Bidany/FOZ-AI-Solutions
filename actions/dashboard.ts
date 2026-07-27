@@ -11,6 +11,7 @@ import { cleanAIResponse, extractJsonFromText, mapChatHistory, createGeminiInsta
 import { AGENT_REGISTRY } from "@/lib/agents/registry";
 import PendingAsset from "@/models/PendingAsset";
 import AgentInsight from "@/models/AgentInsight";
+import mongoose, { Types } from "mongoose";
 
 export async function fetchActionCards(businessId: string) {
     const session = await getServerSession(authOptions);
@@ -55,6 +56,116 @@ export async function approveActionCard(cardId: string) {
     } catch (error) {
         console.error("Failed to approve card:", error);
         return { success: false, error: "Failed to approve action" };
+    }
+}
+
+export async function completeActionCard(cardId: string) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.businessId) throw new Error("Unauthorized");
+
+    await connectToDatabase();
+    try {
+        const card = await ActionCard.findById(cardId);
+        if (!card) throw new Error("Card not found");
+        if (card.business_id.toString() !== session.user.businessId) throw new Error("Forbidden: Resource ownership mismatch");
+
+        card.status = "completed";
+        await card.save();
+
+        revalidatePath("/dashboard");
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to complete card:", error);
+        return { success: false, error: "Failed to complete card" };
+    }
+}
+
+export async function forwardMessageToOwner(
+    businessId: string,
+    customerName: string,
+    messageContent: string,
+    sessionId?: string
+) {
+    await connectToDatabase();
+    try {
+        // Guard against demo mode or non-ObjectId businessId strings
+        if (!businessId || businessId === "demo" || !Types.ObjectId.isValid(businessId)) {
+            return {
+                success: true,
+                message: "[DEMO] ההודעה נרשמה בהצלחה."
+            };
+        }
+
+        // 1. Word Limit Guard (strict 50 words max)
+        const words = messageContent.trim().split(/\s+/).filter(Boolean);
+        if (words.length > 50) {
+            return {
+                success: false,
+                error: "word_limit_exceeded",
+                message: "ההודעה ארוכה מ-50 מילים. אנא קצר אותה."
+            };
+        }
+
+        // 2. Daily Rate Limit Guard (max 3 messages per day per customer/session)
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const query: any = {
+            business_id: new Types.ObjectId(businessId),
+            source_agent: "receptionist",
+            created_at: { $gte: startOfDay },
+            "execution_payload.action_type": "send_message"
+        };
+
+        if (sessionId) {
+            query["execution_payload.params.sessionId"] = sessionId;
+        }
+
+        const todayCount = await ActionCard.countDocuments(query);
+        if (todayCount >= 3) {
+            return {
+                success: false,
+                error: "daily_limit_reached",
+                message: "הגעת למכסה היומית של 3 הודעות ליום לבעל העסק."
+            };
+        }
+
+        // 3. Create Action Card
+        const newCard = await ActionCard.create({
+            business_id: new Types.ObjectId(businessId),
+            source_agent: "receptionist",
+            status: "pending",
+            priority: "high",
+            display_content: {
+                title: `הודעה מ-${customerName}`,
+                description: messageContent,
+                icon: "MessageSquare"
+            },
+            execution_payload: {
+                action_type: "send_message",
+                params: {
+                    customer_name: customerName,
+                    message_content: messageContent,
+                    sessionId: sessionId || "public_chat",
+                    word_count: words.length
+                }
+            }
+        });
+
+        try {
+            revalidatePath("/dashboard");
+        } catch (e) {
+            // Ignore revalidation errors when invoked outside HTTP context
+        }
+
+        return {
+            success: true,
+            message: "ההודעה הועברה לבעל העסק בהצלחה.",
+            cardId: newCard._id.toString()
+        };
+    } catch (error) {
+        console.error("Failed to forward message to owner:", error);
+        return { success: false, error: "Failed to forward message" };
     }
 }
 

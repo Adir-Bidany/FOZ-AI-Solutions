@@ -3,8 +3,9 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { connectToDatabase as connectDB } from "@/lib/db";
 import Business from "@/models/Business";
-import Sidebar from "@/components/dashboard/Sidebar";
+import Sidebar, { MobileSidebarTrigger } from "@/components/dashboard/Sidebar";
 import BrandingAnchor from "@/components/BrandingAnchor";
+import GlobalHeader from "@/components/GlobalHeader";
 
 export default async function DashboardLayout({
     children,
@@ -48,14 +49,24 @@ export default async function DashboardLayout({
     // --- END LOGIC ---
 
     return (
-        <div className="flex h-screen bg-[#0B0E14] text-white w-full" dir="rtl">
-            <main className="w-full h-full overflow-y-auto custom-scrollbar flex flex-col">
-                <div className="flex-1 w-full relative">{children}</div>
-            </main>
+        <div className="flex flex-col h-screen bg-background text-foreground w-full overflow-hidden" dir="rtl">
+            {/* Pass mobile trigger so GlobalHeader can render the hamburger on mobile */}
+            <GlobalHeader
+                clientData={serializedClient}
+                mobileSidebarTrigger={<MobileSidebarTrigger client={serializedClient} />}
+            />
 
-            <BrandingAnchor context="dashboard" businessData={serializedClient}>
-                <Sidebar client={serializedClient} />
-            </BrandingAnchor>
+            {/* Content row: main area + desktop sidebar */}
+            {/* flex-1 min-h-0 removes the hardcoded calc(100vh-5rem) that mismatched the actual header height */}
+            <div className="flex flex-1 min-h-0 overflow-hidden w-full">
+                <main className="w-full h-full overflow-y-auto custom-scrollbar flex flex-col">
+                    <div className="flex-1 w-full relative">{children}</div>
+                </main>
+
+                <BrandingAnchor context="dashboard" businessData={serializedClient}>
+                    <Sidebar client={serializedClient} />
+                </BrandingAnchor>
+            </div>
         </div>
     );
 }
