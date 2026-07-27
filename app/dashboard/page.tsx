@@ -1,9 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import {
-    Calendar,
-    TrendingUp,
-    Bell
-} from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { connectToDatabase as connectDB } from "@/lib/db";
 import Business from "@/models/Business";
@@ -49,41 +44,39 @@ export default async function ClientDashboard() {
                 <ActionsDialog pendingCards={actionCards} pendingCount={pendingCount} />
 
                 {/* 2. Revenue Card */}
-                <Card className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-white dark:bg-card rounded-2xl overflow-hidden group">
-                    <CardContent className="p-6 flex items-center justify-between">
+                <Card className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-card rounded-2xl overflow-hidden group">
+                    <CardContent className="p-6 flex flex-col justify-between h-full">
                         <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-muted-foreground mb-1">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                                 הכנסות החודש
                             </p>
-                            <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-foreground tracking-tight">
+                            <h3 className="text-3xl font-extrabold text-foreground tracking-tight">
                                 ₪0
                             </h3>
-                            <span className="text-xs font-medium text-gray-500 dark:text-muted-foreground bg-gray-50 dark:bg-accent/40 px-2.5 py-1 rounded-full mt-3 inline-block border border-gray-100 dark:border-border group-hover:border-gray-200 transition-colors">
+                        </div>
+                        <div className="mt-4">
+                            <span className="text-xs font-medium text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md inline-block border border-border">
                                 התחלה חדשה
                             </span>
-                        </div>
-                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                            <TrendingUp size={28} />
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* 3. Appointments Card */}
-                <Card className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-white dark:bg-card rounded-2xl overflow-hidden group">
-                    <CardContent className="p-6 flex items-center justify-between">
+                <Card className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-card rounded-2xl overflow-hidden group">
+                    <CardContent className="p-6 flex flex-col justify-between h-full">
                         <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-muted-foreground mb-1">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                                 תורים עתידיים
                             </p>
-                            <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-foreground tracking-tight">
+                            <h3 className="text-3xl font-extrabold text-foreground tracking-tight">
                                 0
                             </h3>
-                            <span className="text-xs font-medium text-gray-500 dark:text-muted-foreground bg-gray-50 dark:bg-accent/40 px-2.5 py-1 rounded-full mt-3 inline-block border border-gray-100 dark:border-border group-hover:border-gray-200 transition-colors">
+                        </div>
+                        <div className="mt-4">
+                            <span className="text-xs font-medium text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md inline-block border border-border">
                                 מחכה ללידים
                             </span>
-                        </div>
-                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                            <Calendar size={28} />
                         </div>
                     </CardContent>
                 </Card>

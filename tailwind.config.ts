@@ -65,12 +65,12 @@ const config: Config = {
             keyframes: {
                 "inviting-pulse": {
                     "0%, 100%": {
-                        boxShadow: "0 0 0 0 rgba(147, 51, 234, 0)", // סגול שקוף
-                        borderColor: "rgba(229, 231, 235, 1)", // אפור רגיל
+                        boxShadow: "0 0 0 0 rgba(37, 99, 235, 0)", // blue transparent
+                        borderColor: "rgba(191, 219, 254, 1)",     // blue-200
                     },
                     "50%": {
-                        boxShadow: "0 0 0 4px rgba(147, 51, 234, 0.15)", // הילה סגולה עדינה
-                        borderColor: "rgba(147, 51, 234, 0.5)", // מסגרת סגלגלה
+                        boxShadow: "0 0 0 4px rgba(37, 99, 235, 0.2)", // blue glow
+                        borderColor: "rgba(37, 99, 235, 0.6)",         // blue-600
                     },
                 },
             },
@@ -78,7 +78,9 @@ const config: Config = {
                 "inviting-pulse":
                     "inviting-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
             },
-            // ------------------------------------
+            fontFamily: {
+                sans: ["var(--font-heebo)", "Heebo", "system-ui", "sans-serif"],
+            },
         },
     },
     plugins: [require("tailwindcss-animate")],

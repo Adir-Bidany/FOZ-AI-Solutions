@@ -71,7 +71,7 @@ function SidebarContent({
                 <Link href="/dashboard" onClick={onNavClick}>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 font-medium text-muted-foreground hover:bg-purple-50 hover:text-purple-900 dark:hover:bg-purple-950/40 dark:hover:text-purple-300 h-12 rounded-xl"
+                        className="w-full justify-start gap-3 font-semibold text-foreground hover:bg-primary/10 hover:text-primary h-12 rounded-xl"
                     >
                         <Sparkles size={20} /> המשרד שלי
                     </Button>
@@ -135,7 +135,7 @@ function SidebarContent({
                     <Link href="/pricing" onClick={onNavClick}>
                         <Button
                             variant="ghost"
-                            className="w-full justify-start gap-3 font-medium text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 h-12 rounded-xl"
+                            className="w-full justify-start gap-3 font-semibold text-primary hover:bg-primary/10 h-12 rounded-xl"
                         >
                             <Crown size={20} /> שדרוג חבילה
                         </Button>

@@ -34,7 +34,7 @@ export default function HeroSection() {
                         <Link href="/onboarding">
                             <Button
                                 size="lg"
-                                className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-8 py-6 text-lg gap-2 transition-all shadow-md"
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 py-6 text-lg gap-2 transition-all shadow-md"
                             >
                                 הקם עסק אוטונומי ב-5 דק' 🚀
                             </Button>

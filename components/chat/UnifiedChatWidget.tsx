@@ -174,7 +174,7 @@ export default function UnifiedChatWidget({
                 ))}
                 {isLoading && (
                     <div className="flex justify-start w-full animate-pulse">
-                        <div className="bg-gray-100 rounded-2xl px-4 py-2 text-xs text-gray-500">
+                        <div className="bg-muted rounded-2xl px-4 py-2 text-xs text-muted-foreground">
                             Thinking...
                         </div>
                     </div>
@@ -201,18 +201,18 @@ export default function UnifiedChatWidget({
                 )}
 
                 {widgetType === "service_selector" && (
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="bg-card rounded-2xl shadow-sm border border-border p-4 animate-in fade-in slide-in-from-bottom-2">
                         <h4 className="text-sm font-bold mb-3">איזה טיפול תרצי לבדוק?</h4>
                         <div className="flex flex-wrap gap-2">
-                            <button onClick={() => { setWidgetType(null); handleSend("טיפול בוטוקס"); }} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors">בוטוקס</button>
-                            <button onClick={() => { setWidgetType(null); handleSend("טיפול חומצה היאלורונית"); }} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors">חומצה היאלורונית</button>
-                            <button onClick={() => { setWidgetType(null); handleSend("ייעוץ"); }} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors">ייעוץ</button>
-                            <button onClick={() => setShowCustomNote(true)} className="px-3 py-1.5 bg-gray-50 text-gray-600 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors">אחר</button>
+                            <button onClick={() => { setWidgetType(null); handleSend("בוטוקס"); }} className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-colors">בוטוקס</button>
+                            <button onClick={() => { setWidgetType(null); handleSend("טיפול חומצה היאלורונית"); }} className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-colors">חומצה היאלורונית</button>
+                            <button onClick={() => { setWidgetType(null); handleSend("ייעוץ"); }} className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-colors">ייעוץ</button>
+                            <button onClick={() => setShowCustomNote(true)} className="px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-sm font-medium hover:bg-accent transition-colors">אחר</button>
                         </div>
                         {showCustomNote && (
                             <div className="mt-3 space-y-2">
                                 <textarea 
-                                    className="w-full text-sm p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full text-sm p-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                                     placeholder="אנא פרטי (עד 50 מילים)..."
                                     rows={2}
                                     value={customNoteText}
@@ -225,7 +225,7 @@ export default function UnifiedChatWidget({
                                         handleSend(`טיפול אחר. הערה: ${customNoteText}`);
                                         setCustomNoteText("");
                                     }}
-                                    className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-bold"
+                                    className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold"
                                 >
                                     שלח והמשך
                                 </button>

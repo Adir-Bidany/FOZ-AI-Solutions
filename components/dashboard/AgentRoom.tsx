@@ -100,17 +100,14 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
     };
 
     return (
-        <div className={`bg-white dark:bg-card rounded-3xl overflow-hidden flex flex-col h-[400px] md:h-[550px] xl:h-full transition-all duration-500 ${getModeStyles(lastMessageMode)}`}>
+        <div className={`bg-card rounded-3xl overflow-hidden flex flex-col h-[400px] md:h-[550px] xl:h-full transition-all duration-500 ${getModeStyles(lastMessageMode)}`}>
             {/* Header */}
-            <div className="p-6 border-b border-gray-50 bg-white shrink-0 flex items-center justify-between">
+            <div className="p-6 border-b border-border bg-card shrink-0 flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-bold flex items-center gap-2 text-gray-800 mb-1">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${currentAgent.bg} ${currentAgent.color}`}>
-                            <Sparkles size={18} />
-                        </div>
+                    <h2 className="text-xl font-bold text-foreground mb-1">
                         חדר המצב (Agent Room)
                     </h2>
-                    <p className="text-sm text-gray-500 me-10">גולדה - רמטכ"לית, שיווק ופיננסים</p>
+                    <p className="text-sm text-muted-foreground me-10">גולדה - רמטכ"לית, שיווק ופיננסים</p>
                 </div>
 
                 <Button
@@ -118,7 +115,7 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                     disabled={isLoading || isSending || isArchiving}
                     variant="outline"
                     size="sm"
-                    className="gap-2 rounded-xl text-gray-600 hover:text-purple-700 hover:bg-purple-50 border-gray-200"
+                    className="gap-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 border-border"
                     title="ארכוב השיחה הנוכחית ופתיחת שיחה חדשה"
                 >
                     <RotateCcw size={14} className={isArchiving ? "animate-spin" : ""} /> שיחה חדשה
@@ -126,14 +123,14 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 bg-gray-50/50 p-4 overflow-hidden relative flex flex-col">
+            <div className="flex-1 bg-muted/30 p-4 overflow-hidden relative flex flex-col">
                 <div
                     ref={scrollContainerRef}
                     className="flex-1 min-h-0 overflow-y-auto pe-4 custom-scrollbar"
                 >
                     <div className="space-y-4 pb-4">
                         {isLoading ? (
-                            <div className="flex items-center justify-center h-40 text-gray-400">
+                            <div className="flex items-center justify-center h-40 text-muted-foreground">
                                 טוען היסטוריה...
                             </div>
                         ) : messages.length === 0 ? (
@@ -160,8 +157,8 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                                     <div
                                         className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm leading-relaxed ${
                                             msg.role === "user"
-                                                ? "bg-indigo-600 text-white rounded-br-none"
-                                                : "bg-white border border-gray-100 text-gray-800 rounded-bl-none"
+                                                ? "bg-primary text-primary-foreground rounded-br-none"
+                                                : "bg-card border border-border text-foreground rounded-bl-none"
                                         }`}
                                     >
                                         {msg.parts[0].text}
@@ -173,21 +170,21 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                 </div>
 
                 {/* Input Area - ALWAYS VISIBLE */}
-                <div className="pt-4 border-t border-gray-100 bg-transparent shrink-0">
+                <div className="pt-4 border-t border-border bg-transparent shrink-0">
                     <div className="relative flex items-center gap-2">
                         <Input
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleSend()}
                             placeholder={`כתבי כאן ל${currentAgent.name}...`}
-                            className="bg-white border-gray-200 focus-visible:ring-indigo-500 rounded-xl h-11 pr-4 pl-12 shadow-sm"
+                            className="bg-card border-border focus-visible:ring-ring rounded-xl h-11 pe-4 ps-12 shadow-sm"
                             disabled={isSending}
                         />
                         <Button
                             onClick={handleSend}
                             disabled={!inputValue.trim() || isSending}
                             size="icon"
-                            className="absolute start-1 w-9 h-9 bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-all"
+                            className="absolute start-1 w-9 h-9 bg-primary hover:bg-primary/90 rounded-lg shadow-sm transition-all"
                         >
                             <Send size={16} />
                         </Button>

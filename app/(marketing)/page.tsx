@@ -177,7 +177,7 @@ export default function Home() {
                         הצטרף לבעלי עסקים שכבר חוסכים עשרות שעות בחודש ומגדילים הכנסות עם הצוות של FOZ AI Solutions
                     </p>
                     <Link href="/onboarding" className="inline-block mt-4">
-                        <Button className="h-16 px-12 text-xl rounded-full bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 transition-all font-bold shadow-[0_0_30px_rgba(37,99,235,0.3)] border border-blue-500">
+                        <Button className="h-16 px-12 text-xl rounded-full bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-all font-bold shadow-[0_0_30px_rgba(147,51,234,0.35)] border border-primary/60">
                           הצטרפו למהפכה
                         </Button>
                     </Link>
