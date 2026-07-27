@@ -142,9 +142,9 @@ export default function UnifiedChatWidget({
         <div className={cn("flex flex-col overflow-hidden", className)}>
             {/* Header (Optional based on variant) */}
             {variant === "floating" && (
-                <div className="p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                <div className="p-4 bg-zinc-900 dark:bg-zinc-950 text-white border-b border-zinc-800">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-xl">
+                        <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-xl border border-zinc-700">
                             🤖
                         </div>
                         <div>
@@ -154,7 +154,7 @@ export default function UnifiedChatWidget({
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                 </span>
-                                <p className="text-xs text-blue-100">מחובר 24/7</p>
+                                <p className="text-xs text-zinc-300">מחובר 24/7</p>
                             </div>
                         </div>
                     </div>
@@ -182,7 +182,7 @@ export default function UnifiedChatWidget({
                 
                 {/* Dynamic Widgets */}
                 {widgetType === "date_picker" && (
-                    <div className="bg-card/95 rounded-2xl shadow-sm border border-border p-4 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="bg-card/95 rounded-3xl shadow-lg border border-border/40 p-4 animate-in fade-in slide-in-from-bottom-2">
                         <h4 className="text-sm font-bold text-center mb-2">בחירת תאריך</h4>
                         <div className="flex justify-center" dir="rtl">
                             <DayPicker 
@@ -201,7 +201,7 @@ export default function UnifiedChatWidget({
                 )}
 
                 {widgetType === "service_selector" && (
-                    <div className="bg-card rounded-2xl shadow-sm border border-border p-4 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="bg-card rounded-3xl shadow-lg border border-border/40 p-4 animate-in fade-in slide-in-from-bottom-2">
                         <h4 className="text-sm font-bold mb-3">איזה טיפול תרצי לבדוק?</h4>
                         <div className="flex flex-wrap gap-2">
                             <button onClick={() => { setWidgetType(null); handleSend("בוטוקס"); }} className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-colors">בוטוקס</button>

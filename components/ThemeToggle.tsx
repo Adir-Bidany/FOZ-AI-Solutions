@@ -16,9 +16,9 @@ export function ThemeToggle({ className }: { className?: string }) {
     if (!mounted) {
         return (
             <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
-                className={`w-9 h-9 rounded-xl text-muted-foreground ${className || ""}`}
+                className={`w-10 h-10 rounded-full border border-border/60 bg-card/80 backdrop-blur-sm text-muted-foreground shadow-sm ${className || ""}`}
                 disabled
             >
                 <Sun size={18} className="opacity-0" />
@@ -30,17 +30,17 @@ export function ThemeToggle({ className }: { className?: string }) {
 
     return (
         <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             onClick={() => setTheme(isDark ? "light" : "dark")}
-            className={`w-9 h-9 rounded-xl transition-colors hover:bg-accent text-muted-foreground hover:text-foreground ${className || ""}`}
+            className={`w-10 h-10 rounded-full border border-border/60 bg-card/80 backdrop-blur-sm transition-all hover:bg-accent hover:border-border text-muted-foreground hover:text-foreground shadow-sm ${className || ""}`}
             title={isDark ? "החלף למצב יום" : "החלף למצב לילה"}
             aria-label="Toggle theme"
         >
             {isDark ? (
                 <Sun size={18} className="text-amber-400 transition-transform duration-300 rotate-0 scale-100" />
             ) : (
-                <Moon size={18} className="text-slate-700 dark:text-slate-200 transition-transform duration-300 rotate-0 scale-100" />
+                <Moon size={18} className="text-foreground transition-transform duration-300 rotate-0 scale-100" />
             )}
         </Button>
     );

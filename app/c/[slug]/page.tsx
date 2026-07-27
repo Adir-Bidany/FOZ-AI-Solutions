@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import DanielaHeader from "@/components/DanielaHeader";
 import ClientLogo from "@/components/ClientLogo";
+import ThemeToggle from "@/components/ThemeToggle";
 import { BACKGROUND_PRESETS } from "@/lib/background-presets";
 
 export const dynamic = "force-dynamic";
@@ -124,10 +125,15 @@ export default async function ClientPage({
 
     return (
         <div
-            className="min-h-screen flex items-center justify-center p-4 lg:p-8 transition-all duration-500"
+            className="min-h-screen flex items-center justify-center p-4 lg:p-8 transition-all duration-500 relative"
             style={pageStyle}
             dir="rtl"
         >
+            {/* Public Page Floating Theme Toggle */}
+            <div className="fixed top-6 left-6 z-50">
+                <ThemeToggle />
+            </div>
+
             <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
                 {/* === COLUMN 1: BUSINESS INFO === */}
                 <div className="flex flex-col justify-start space-y-6 lg:pt-8">
@@ -187,7 +193,7 @@ export default async function ClientPage({
 
                 {/* === COLUMN 2: THE CHAT WIDGET === */}
                 <div className="w-full flex justify-center lg:justify-end">
-                    <div className="w-full max-w-md h-[75dvh] min-h-[380px] bg-[#0B0E14] rounded-[2.5rem] shadow-2xl shadow-indigo-500/20 overflow-hidden relative flex flex-col">
+                    <div className="w-full max-w-md h-[75dvh] min-h-[380px] bg-[#0B0E14] rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_0_80px_rgba(255,255,255,0.15)] overflow-hidden relative flex flex-col border border-transparent dark:border-white/10">
                         {/* The Header */}
                         <DanielaHeader businessName={clientData.businessName} />
 

@@ -14,9 +14,9 @@ interface DanielaHeaderProps {
 
 export default function DanielaHeader({ businessName }: DanielaHeaderProps) {
     return (
-        <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 rounded-t-[2.5rem] flex items-center gap-4">
+        <div className="bg-zinc-900 dark:bg-zinc-950 text-white p-4 rounded-t-[2.5rem] flex items-center gap-4 border-b border-zinc-800/80">
             {/* The Animated Avatar (Left Side) */}
-            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-white/30 shrink-0 -scale-x-100">
+            <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden border border-zinc-700 shrink-0 -scale-x-100">
                 <Player
                     autoplay
                     loop
@@ -31,12 +31,12 @@ export default function DanielaHeader({ businessName }: DanielaHeaderProps) {
                 <h3 className="font-bold text-white text-lg leading-tight">
                     דניאלה
                 </h3>
-                <p className="text-indigo-100 text-sm opacity-90">
+                <p className="text-zinc-400 text-sm">
                     המזכירה של {businessName}
                 </p>
                 <div className="flex items-center gap-1.5 mt-1">
-                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-                    <span className="text-xs text-green-300 font-medium">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span className="text-xs text-zinc-300 font-medium">
                         זמינה כעת
                     </span>
                 </div>

@@ -34,7 +34,7 @@ export default function Home() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                         {[
                             {
-                                emoji: "👑",
+                             
                                 name: "גולדה",
                                 role: "מנהלת העסק וסמנכ\"לית צמיחה",
                                 desc: "הסוכנת הפנימית שלך. מנהלת את\ המשימות, מנסחת תוכן שיווקי ופוסטים בקליק, ומנתחת דוחות כספיים, תקציבים וסיכוני נטישה - הכל בשיחה טבעית.",
@@ -42,7 +42,7 @@ export default function Home() {
                                 borderColor: "border-amber-500/30"
                             },
                             {
-                                emoji: "🎧",
+                            
                                 name: "דניאלה",
                                 role: "נציגת שירות, מכירות ותורים",
                                 desc: "הפנים האוטונומיות של העסק שלך ברשת. עונה ללקוחות 24/7 באתר, מציגה שירותים, קובעת תורים ביומן, ומזהה את ההיסטוריה והצרכים של כל לקוח.",
@@ -51,7 +51,7 @@ export default function Home() {
                             }
                         ].map((agent, idx) => (
                             <div key={idx} className={`p-8 rounded-3xl bg-card text-card-foreground border ${agent.borderColor} shadow-sm hover:scale-[1.02] transition-transform`}>
-                                <div className="text-4xl mb-4">{agent.emoji}</div>
+                              
                                 <h3 className="text-2xl font-bold text-foreground mb-1">{agent.name}</h3>
                                 <div className="text-sm text-purple-500 dark:text-purple-400 mb-3 font-semibold">{agent.role}</div>
                                 <p className="text-muted-foreground text-base leading-relaxed">{agent.desc}</p>
@@ -120,41 +120,38 @@ export default function Home() {
                             {
                                 title: "דשבורד ניהול ו-CRM חכם",
                                 desc: "מעקב אחר לקוחות, ניטור שיחות AI וניתוח מדדים עסקיים מרכזיים",
-                                icon: LineChart,
+                               
                             },
                             {
-                                title: "אישור לקוחות חכם (Gated Access)",
+                                title: "אישור לקוחות חכם",
                                 desc: "שליטה מלאה בגישת לקוחות ואישור תורים מול נציגת ה-AI",
-                                icon: Lock,
+                              
                             },
                             {
                                 title: "מענה ומכירות 24/7",
                                 desc: "פז עונה לפניות בכל שעה באתר, מציגה שירותים וחוסכת זמן יקר",
-                                icon: Clock,
+                               
                             },
                             {
                                 title: "יצירת תוכן שיווקי בקליק",
                                 desc: "גולדה מנסחת פוסטים ורעיונות לקמפיינים הממתינים לאישורך בדשבורד",
-                                icon: Share2,
+                              
                             },
                             {
                                 title: "זיכרון ארגוני ואורכב שיחות",
                                 desc: "המערכת שומרת את היסטוריית השיחות, וגולדה מסוגלת לשלוף מידע משיחות עבר",
-                                icon: Brain,
+                               
                             },
                             {
                                 title: "אבטחה ופרטיות בסטנדרט גבוה",
                                 desc: "הגנה מלאה על המידע העסקי והפיננסי של העסק",
-                                icon: ShieldCheck,
+                               
                             },
                         ].map((item, i) => (
                             <div
                                 key={i}
                                 className="flex flex-col items-center text-center p-6 rounded-2xl bg-card border border-border text-card-foreground shadow-sm hover:shadow-md transition-shadow"
                             >
-                                <div className="w-12 h-12 bg-accent text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center shadow-sm mb-4 border border-border">
-                                    <item.icon size={24} />
-                                </div>
                                 <h4 className="font-bold text-foreground mb-3 text-lg">
                                     {item.title}
                                 </h4>
