@@ -268,7 +268,7 @@ export default function CinematicOnboarding() {
                             key={opt.value} 
                             variant="outline" 
                             onClick={() => handleOptionSelect(opt, "niche")}
-                            className="bg-white/5 border-white/10 hover:bg-purple-900/40 text-white rounded-xl"
+                            className="bg-zinc-900/80 border-zinc-800 hover:bg-zinc-800 text-zinc-100 rounded-2xl text-xs sm:text-sm font-medium"
                         >
                             {opt.label}
                         </Button>
@@ -287,14 +287,14 @@ export default function CinematicOnboarding() {
                         <div 
                             key={p.id}
                             onClick={() => handleOptionSelect({ label: p.name, value: p.promptValue }, "persona")}
-                            className="p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-purple-900/40 cursor-pointer flex items-center gap-3 transition-colors"
+                            className="p-3 rounded-2xl border border-zinc-800 bg-zinc-900/80 hover:bg-zinc-800 cursor-pointer flex items-center gap-3 transition-colors"
                         >
-                            <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center border border-slate-700 shrink-0">
-                                <Users size={20} className="text-purple-400" />
+                            <div className="w-10 h-10 bg-zinc-950 rounded-full flex items-center justify-center border border-zinc-800 shrink-0">
+                                <Users size={20} className="text-zinc-300" />
                             </div>
                             <div>
-                                <span className="text-white font-medium block">{p.name}</span>
-                                <span className="text-xs text-slate-400">{p.description}</span>
+                                <span className="text-zinc-100 font-medium block">{p.name}</span>
+                                <span className="text-xs text-zinc-400">{p.description}</span>
                             </div>
                         </div>
                     ))}
@@ -309,21 +309,21 @@ export default function CinematicOnboarding() {
                     className="p-4 flex flex-col gap-3"
                 >
                     <div 
-                        className="border-2 border-dashed border-slate-700 hover:border-slate-500 hover:bg-slate-800/50 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-colors"
+                        className="border-2 border-dashed border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/50 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-colors"
                         onClick={() => fileInputRef.current?.click()}
                     >
                         {isUploadingLogo ? (
-                            <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
+                            <Loader2 className="w-6 h-6 animate-spin text-zinc-300" />
                         ) : (
                             <>
-                                <UploadCloud size={24} className="text-slate-400 mb-2" />
-                                <span className="text-sm font-medium text-slate-300">לחצי להעלאת לוגו</span>
+                                <UploadCloud size={24} className="text-zinc-400 mb-2" />
+                                <span className="text-sm font-medium text-zinc-300">לחצי להעלאת לוגו</span>
                             </>
                         )}
                     </div>
                     <Button 
                         variant="ghost" 
-                        className="text-slate-500 hover:text-slate-300"
+                        className="text-zinc-400 hover:text-zinc-200"
                         onClick={() => {
                             setMessages(prev => [...prev, { id: `msg-${Date.now()}`, sender: "user", text: "אין לי לוגו כרגע" }]);
                             setTimeout(() => {
@@ -357,12 +357,12 @@ export default function CinematicOnboarding() {
                         currentField === "email" ? "admin@mybusiness.com..." :
                         "הקלידי כאן..."
                     }
-                    className="bg-white/5 border-white/10 text-white h-12 pr-4 rounded-xl flex-1 focus-visible:ring-purple-500" 
+                    className="bg-zinc-950/80 border-zinc-800 text-zinc-100 placeholder:text-zinc-500 h-12 pr-4 rounded-2xl flex-1 focus-visible:ring-primary font-sans text-sm" 
                 />
                 <Button 
                     type="submit" 
                     disabled={!inputValue.trim()}
-                    className="bg-purple-600 hover:bg-purple-700 text-white h-12 w-12 rounded-xl flex items-center justify-center shrink-0 p-0"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 p-0 shadow-sm"
                 >
                     <Send size={18} />
                 </Button>
@@ -427,14 +427,14 @@ export default function CinematicOnboarding() {
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
-                        className="relative z-40 w-full max-w-lg px-4 flex flex-col h-[70vh] md:h-[600px] mt-10"
+                        className="relative z-40 w-full max-w-xl px-4 flex flex-col h-[75dvh] max-h-[620px] my-auto space-y-3"
                     >
-                        {/* Reassurance Notice */}
-                        <div className="text-center mb-4 text-xs text-slate-400 bg-white/5 border border-white/10 rounded-full py-2 px-4 shadow-sm inline-flex mx-auto">
+                        {/* Reassurance Notice - Responsive text wrapping */}
+                        <div className="text-center text-xs sm:text-sm text-zinc-300 bg-zinc-900/90 border border-zinc-800 rounded-2xl py-2.5 px-4 shadow-sm max-w-full leading-relaxed font-medium mx-auto">
                             💡 כל הנתונים שתזין כאן אינם סופיים וניתן לערוך אותם בקלות בדשבורד הניהול בכל עת
                         </div>
 
-                        <div className="flex-1 bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl rounded-3xl overflow-hidden flex flex-col relative">
+                        <div className="flex-1 bg-[#12161F] border border-zinc-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.5)] dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] rounded-3xl overflow-hidden flex flex-col relative">
                             {/* Chat Log */}
                             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar scroll-smooth">
                                 <AnimatePresence initial={false}>
@@ -449,8 +449,8 @@ export default function CinematicOnboarding() {
                                             <div 
                                                 className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
                                                     msg.sender === "user" 
-                                                    ? "bg-purple-600 text-white rounded-tl-sm" 
-                                                    : "bg-slate-800 border border-slate-700 text-slate-200 rounded-tr-sm"
+                                                    ? "bg-primary text-primary-foreground font-medium rounded-tl-sm" 
+                                                    : "bg-zinc-800/90 border border-zinc-700/80 text-zinc-100 rounded-tr-sm"
                                                 }`}
                                             >
                                                 {msg.text}
@@ -462,7 +462,7 @@ export default function CinematicOnboarding() {
                             </div>
 
                             {/* Input Area */}
-                            <div className="border-t border-white/10 bg-slate-900/50">
+                            <div className="border-t border-zinc-800 bg-zinc-900/90">
                                 <AnimatePresence mode="wait">
                                     {renderInputArea()}
                                 </AnimatePresence>

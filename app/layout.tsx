@@ -21,7 +21,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
     return (
         <html lang="he" dir="rtl" suppressHydrationWarning className={heebo.variable}>
-            <body className={`${heebo.className} bg-background text-foreground min-h-screen antialiased font-sans`}>
+            <body suppressHydrationWarning className={`${heebo.className} bg-background text-foreground min-h-screen antialiased font-sans`}>
                 <Providers>
                     {children}
                     <Toaster />

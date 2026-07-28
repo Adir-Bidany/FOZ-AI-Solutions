@@ -100,7 +100,7 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
     };
 
     return (
-        <div className={`bg-card/90 backdrop-blur-md rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-[0_0_80px_rgba(255,255,255,0.15)] border border-border/60 dark:border-white/10 overflow-hidden flex flex-col h-[400px] md:h-[550px] xl:h-full transition-all duration-500 ${getModeStyles(lastMessageMode)}`}>
+        <div className={`bg-card/90 backdrop-blur-md rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] border border-border/60 dark:border-white/10 overflow-hidden flex flex-col h-[400px] md:h-[550px] xl:h-full transition-all duration-500 ${getModeStyles(lastMessageMode)}`}>
             {/* Header */}
             <div className="p-6 border-b border-border/40 bg-transparent shrink-0 flex items-center justify-between">
                 <div>
