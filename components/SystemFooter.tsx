@@ -21,8 +21,8 @@ export default function SystemFooter() {
     }
 
     return (
-        <footer className="bg-white border-t border-gray-100 py-8 mt-auto">
-            <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+        <footer className="bg-background border-t border-border py-8 mt-auto text-foreground">
+            <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
                 {/* זכויות יוצרים */}
                 <div className="text-center md:text-right">
                     <p>© {currentYear} FOZ AI Solutions. כל הזכויות שמורות.</p>
@@ -32,21 +32,16 @@ export default function SystemFooter() {
                 <div className="flex items-center gap-6">
                     <Link
                         href="/legal/terms"
-                        className="hover:text-purple-600 transition-colors"
+                        className="hover:text-foreground transition-colors"
                     >
                         תנאי שימוש
                     </Link>
                     <Link
                         href="/legal/privacy"
-                        className="hover:text-purple-600 transition-colors"
+                        className="hover:text-foreground transition-colors"
                     >
                         מדיניות פרטיות
                     </Link>
-                </div>
-
-                {/* קרדיט קטן (אופציונלי) */}
-                <div className="hidden md:block opacity-50 text-xs">
-                    Powered by Advanced AI
                 </div>
             </div>
         </footer>

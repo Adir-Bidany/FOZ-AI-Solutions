@@ -16,6 +16,17 @@ import { getAvailableSlots, bookAppointment, SimplyBookCreds } from "@/lib/simpl
 import jwt from "jsonwebtoken";
 import { forwardMessageToOwner } from "@/actions/dashboard";
 
+function isSameCalendarDay(date1?: Date | null, date2?: Date): boolean {
+    if (!date1 || !date2) return false;
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    return (
+        d1.getFullYear() === d2.getFullYear() &&
+        d1.getMonth() === d2.getMonth() &&
+        d1.getDate() === d2.getDate()
+    );
+}
+
 export async function POST(req: NextRequest) {
     try {
         let { message, businessId, sessionId, agentPersona = "daniela" } = await req.json();
@@ -249,6 +260,23 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        if (agentPersona === "golda") {
+            const isQuotaUsedToday = isSameCalendarDay(business?.lastImageGeneratedAt, new Date());
+
+            finalSystemPrompt += `\n\n[GOLDA AI IMAGE QUOTA AWARENESS]:
+- Daily AI Image Quota Status for Today: ${isQuotaUsedToday ? "QUOTA_USED_TODAY (0 of 1 image remaining today)" : "QUOTA_AVAILABLE (1 of 1 image available today)"}.
+
+MARKETING POST CREATION BEHAVIORAL RULES:
+1. IF QUOTA IS ALREADY USED TODAY (${isQuotaUsedToday ? "TRUE" : "FALSE"}):
+   If the user asks you to create/generate a marketing post, generate the post text (using submit_for_approval), and ALWAYS politely add a friendly note in Hebrew inside your conversational reply:
+   "אגב, כבר ניצלת את מכסת תמונות ה-AI היומית שלך להיום (תמונה 1 ביום), אז הכנתי עבורך את הפוסט המעולה הזה בפורמט טקסט בלבד! 📝"
+
+2. IF QUOTA IS AVAILABLE TODAY (${!isQuotaUsedToday ? "TRUE" : "FALSE"}):
+   If the user asks you to create/generate a marketing post:
+   - Proactively ask in Hebrew: "אני יכולה לחולל עבורך תמונת AI מותאמת אישית לפוסט הזה! תרצה שאיצר אותה? (יש לך תמונת AI 1 זמינה להיום 🎨)."
+   - If the user confirms or requests an image, set generateImage: true when invoking submit_for_approval.`;
+        }
+
         // 4. Select Tools & Schema natively from Registry
         const tools = AGENT_REGISTRY[agentPersona]?.tools;
         let responseSchema = AGENT_REGISTRY[agentPersona]?.responseSchema;
@@ -480,15 +508,31 @@ export async function POST(req: NextRequest) {
                     if (call.name === "submit_for_approval") {
                         const args = call.args as any;
                         if (businessId !== "demo" && Types.ObjectId.isValid(businessId)) {
+                            let generatedImageUrl = args.imageUrl;
+
+                            // If Golda requested image generation and quota is available, generate image & update business quota
+                            if (args.generateImage) {
+                                const isQuotaUsedToday = isSameCalendarDay(business?.lastImageGeneratedAt, new Date());
+                                if (!isQuotaUsedToday) {
+                                    const cleanPrompt = encodeURIComponent(
+                                        `${args.title}, luxury aesthetic marketing photo, 8k resolution, professional studio lighting`
+                                    );
+                                    generatedImageUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=1080&height=1080&nologo=true&seed=${Date.now()}`;
+                                    
+                                    await Business.findByIdAndUpdate(businessId, { lastImageGeneratedAt: new Date() });
+                                }
+                            }
+
                             await PendingAsset.create({
                                 businessId: new Types.ObjectId(businessId),
                                 agentName: "Golda",
                                 type: args.type,
                                 title: args.title,
                                 content: args.content,
+                                imageUrl: generatedImageUrl,
                                 status: "pending"
                             });
-                            responseText = `✅ ${args.title} has been submitted to Golda for final approval!`;
+                            responseText = `✅ ${args.title} הועבר בהצלחה למרכז התוכן של גולדה לאישור סופי!`;
                         } else {
                             responseText = `Simulation: Asset "${args.title}" submitted to Golda (Demo mode).`;
                         }

@@ -23,35 +23,31 @@ export function ChatBubble({ role, content, mode, avatarUrl }: ChatBubbleProps) 
 
     // Bubble styles based on Mode + Role
     const bubbleClass = cn(
-        "relative max-w-[85%] px-4 py-3 text-sm leading-relaxed shadow-sm whitespace-pre-wrap",
-        // Shape
+        "relative max-w-[85%] px-4 py-3 text-sm leading-relaxed shadow-sm whitespace-pre-wrap font-medium",
         // Shape - Adjusted for RTL
         isUser ? "rounded-2xl rounded-tl-sm" : "rounded-2xl rounded-tr-sm",
 
-        // Colors - PUBLIC MODE
-        isPublic && isUser && "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-blue-900/20",
-        isPublic && !isUser && "bg-white/10 backdrop-blur-md border border-white/10 text-gray-100",
+        // User bubble: Stark Black in Light mode, Silver in Dark mode
+        isUser && "bg-primary text-primary-foreground",
 
-        // Colors - ADMIN MODE
-        !isPublic && isUser && "bg-gray-900 text-white",
-        !isPublic && !isUser && "bg-white border border-gray-200 text-gray-800"
+        // Agent (Paz) bubble: Clean card background with stark text-foreground high contrast
+        !isUser && "bg-card border border-border text-foreground dark:text-zinc-50"
     );
 
     return (
         <div className={containerClass}>
-            {/* Avatar - Only show for bot in public, or both in admin if desired. 
-                For now, showing for bot in both, and user in admin. */}
+            {/* Avatar for bot */}
             {!isUser && (
-                <Avatar className={cn("w-8 h-8 mt-1", isPublic ? "border border-white/20" : "border border-gray-100")}>
+                <Avatar className="w-8 h-8 mt-1 border border-border shrink-0">
                     <AvatarImage src={avatarUrl || "/favicon.ico"} />
-                    <AvatarFallback>D</AvatarFallback>
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold">P</AvatarFallback>
                 </Avatar>
             )}
 
-            {/* User Avatar in Admin Mode only */}
+            {/* User Avatar in Admin Mode */}
             {isUser && !isPublic && (
-                <Avatar className="w-8 h-8 mt-1 border border-gray-100">
-                    <AvatarFallback className="bg-gray-200 text-gray-600">Me</AvatarFallback>
+                <Avatar className="w-8 h-8 mt-1 border border-border shrink-0">
+                    <AvatarFallback className="bg-primary text-primary-foreground font-bold">U</AvatarFallback>
                 </Avatar>
             )}
 

@@ -208,18 +208,8 @@ export default function HeroSection() {
     }, []);
 
     const handleHeadlineHover = () => {
-        if (isHovering) return;
-        setIsHovering(true);
-
-        const modes: ("hover1" | "hover2" | "hover3")[] = ["hover1", "hover2", "hover3"];
-        const currentMode = modes[hoverCount % 3];
-        setHoverState(currentMode);
-        setHoverCount((prev) => prev + 1);
-
-        setTimeout(() => {
-            setHoverState("none");
-            setIsHovering(false);
-        }, 2500);
+        // BATCH 30 Isolation: Disable hover completely to isolate Entrance -> Idle transition
+        return;
     };
 
     return (
@@ -231,8 +221,7 @@ export default function HeroSection() {
                 {/* Right Side: Text */}
                 <div className="flex flex-col gap-6 text-right order-2 lg:order-1">
                     <h1
-                        className="text-3xl md:text-5xl lg:text-7xl font-bold leading-tight tracking-tight cursor-pointer select-none"
-                        onMouseEnter={handleHeadlineHover}
+                        className="text-3xl md:text-5xl lg:text-7xl font-bold leading-tight tracking-tight select-none"
                     >
                         {mounted ? (
                             <>
@@ -244,7 +233,7 @@ export default function HeroSection() {
                                 />
                                 <ScatteredLine
                                     text="על טייס אוטומטי מלא"
-                                    className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-foreground via-foreground/80 to-foreground/50"
+                                    className="block mt-2 text-foreground/70 dark:text-foreground/60"
                                     delay={0.45}
                                     hoverState={hoverState}
                                 />
@@ -252,7 +241,7 @@ export default function HeroSection() {
                         ) : (
                             <>
                                 <span className="block">להפוך את העסק לאוטונומי</span>
-                                <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-foreground via-foreground/80 to-foreground/50">
+                                <span className="block mt-2 text-foreground/70 dark:text-foreground/60">
                                     על טייס אוטומטי מלא
                                 </span>
                             </>
@@ -307,7 +296,7 @@ export default function HeroSection() {
                                 logo: "/favicon.ico",
                             }}
                             agentPersona="paz"
-                            className="h-full w-full rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_80px_rgba(255,255,255,0.15)] border border-transparent dark:border-white/10 backdrop-blur-xl bg-card/90"
+                            className="h-full w-full rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] border border-transparent dark:border-white/10 backdrop-blur-xl bg-card/90"
                         />
 
                         {/* Floating Elements */}

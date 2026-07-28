@@ -193,7 +193,7 @@ export default async function ClientPage({
 
                 {/* === COLUMN 2: THE CHAT WIDGET === */}
                 <div className="w-full flex justify-center lg:justify-end">
-                    <div className="w-full max-w-md h-[75dvh] min-h-[380px] bg-[#0B0E14] rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_0_80px_rgba(255,255,255,0.15)] overflow-hidden relative flex flex-col border border-transparent dark:border-white/10">
+                    <div className="w-full max-w-md h-[75dvh] min-h-[380px] bg-[#0B0E14] rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] overflow-hidden relative flex flex-col border border-transparent dark:border-white/10">
                         {/* The Header */}
                         <DanielaHeader businessName={clientData.businessName} />
 

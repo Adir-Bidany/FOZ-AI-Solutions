@@ -2,11 +2,12 @@ import mongoose, { Schema, model, models, Document, Types } from "mongoose";
 
 export interface IAgentInsight extends Document {
     businessId: Types.ObjectId;
-    agentName: "Michal" | "Roi";
+    agentName: "Golda";
     type: string; // e.g., 'social_post', 'marketing_tip', 'financial_report', 'budget_analysis'
     title: string;
     content: string;
-    status: "draft" | "approved" | "archived";
+    imageUrl?: string;
+    status: "draft" | "approved" | "archived" | "pending";
     createdAt: Date;
     updatedAt: Date;
 }
@@ -14,11 +15,12 @@ export interface IAgentInsight extends Document {
 const AgentInsightSchema = new Schema<IAgentInsight>(
     {
         businessId: { type: Schema.Types.ObjectId, ref: "Business", required: true },
-        agentName: { type: String, enum: ["Michal", "Roi"], required: true },
+        agentName: { type: String, enum: ["Golda"], required: true, default: "Golda" },
         type: { type: String, required: true },
         title: { type: String, required: true },
         content: { type: String, required: true },
-        status: { type: String, enum: ["draft", "approved", "archived"], default: "draft" },
+        imageUrl: { type: String },
+        status: { type: String, enum: ["draft", "approved", "archived", "pending"], default: "draft" },
     },
     { timestamps: true }
 );

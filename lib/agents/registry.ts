@@ -123,6 +123,8 @@ export const submitForApprovalTool = {
         properties: {
             title: { type: "STRING", description: "Short title of the asset" },
             content: { type: "STRING", description: "The actual content" },
+            imageUrl: { type: "STRING", description: "Optional AI generated image URL" },
+            generateImage: { type: "BOOLEAN", description: "Set to true if user requested AI image generation and quota is available" },
             type: {
                 type: "STRING",
                 enum: [
