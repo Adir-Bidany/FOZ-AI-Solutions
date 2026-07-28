@@ -11,6 +11,7 @@ import {
     Crown,
     BarChart3,
     Globe,
+    TrendingUp,
     Menu,
 } from "lucide-react";
 import Link from "next/link";
@@ -119,6 +120,15 @@ function SidebarContent({
                         className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
                     >
                         <Globe size={20} /> עמוד נחיתה
+                    </Button>
+                </Link>
+
+                <Link href="/dashboard/growth" onClick={onNavClick}>
+                    <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
+                    >
+                        <TrendingUp size={20} /> צמיחה וידע
                     </Button>
                 </Link>
 

@@ -169,6 +169,78 @@ export async function forwardMessageToOwner(
     }
 }
 
+export async function reportMissingInfoQuestion(
+    businessId: string,
+    questionText: string,
+    customerName?: string
+) {
+    await connectToDatabase();
+    try {
+        if (!businessId || businessId === "demo" || !Types.ObjectId.isValid(businessId)) {
+            return { success: true };
+        }
+
+        await ActionCard.create({
+            business_id: new Types.ObjectId(businessId),
+            source_agent: "receptionist",
+            status: "pending",
+            priority: "high",
+            display_content: {
+                title: `שאלה ללא מענה בדניאלה`,
+                description: questionText,
+                icon: "HelpCircle"
+            },
+            execution_payload: {
+                action_type: "missing_info",
+                params: {
+                    question: questionText,
+                    customer_name: customerName || "לקוח קצה"
+                }
+            }
+        });
+
+        try { revalidatePath("/dashboard"); revalidatePath("/dashboard/growth"); } catch (e) {}
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to report missing info question:", error);
+        return { success: false, error: "Failed to report question" };
+    }
+}
+
+export async function resolveMissingInfoQuestion(
+    cardId: string,
+    question: string,
+    answer: string
+) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.businessId) throw new Error("Unauthorized");
+
+    await connectToDatabase();
+    try {
+        const card = await ActionCard.findById(cardId);
+        if (!card) throw new Error("Card not found");
+        if (card.business_id.toString() !== session.user.businessId) throw new Error("Forbidden");
+
+        // 1. Auto-append Q&A answer directly to business publicInstructions
+        const business = await Business.findById(session.user.businessId);
+        if (business) {
+            const newEntry = `\n\n- שאלה מלקוח: ${question}\n  תשובת העסק: ${answer}`;
+            business.publicInstructions = (business.publicInstructions || "") + newEntry;
+            await business.save();
+        }
+
+        // 2. Mark ActionCard as completed
+        card.status = "completed";
+        await card.save();
+
+        try { revalidatePath("/dashboard"); revalidatePath("/dashboard/growth"); } catch (e) {}
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to resolve missing info question:", error);
+        return { success: false, error: "Failed to resolve question" };
+    }
+}
+
 
 export async function fetchInternalChat(businessId: string, agentPersona: string) {
     const session = await getServerSession(authOptions);

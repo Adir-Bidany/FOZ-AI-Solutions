@@ -166,7 +166,7 @@ export default async function ClientPage({
                         {phone && (
                             <a
                                 href={`tel:${phone}`}
-                                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                                className="flex items-center gap-2 px-4 py-2 bg-card/90 border border-border/80 rounded-full text-foreground hover:bg-accent transition-colors shadow-sm backdrop-blur-md"
                             >
                                 <Phone
                                     size={16}
@@ -178,7 +178,7 @@ export default async function ClientPage({
                             </a>
                         )}
                         {address && (
-                            <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-gray-700 shadow-sm">
+                            <div className="flex items-center gap-2 px-4 py-2 bg-card/90 border border-border/80 rounded-full text-foreground shadow-sm backdrop-blur-md">
                                 <MapPin
                                     size={16}
                                     style={{ color: themeAccentColor }}

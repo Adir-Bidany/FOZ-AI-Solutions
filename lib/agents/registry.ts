@@ -72,6 +72,19 @@ export const forwardMessageToOwnerTool = {
     },
 };
 
+export const reportMissingInfoTool = {
+    name: "report_missing_info",
+    description: "דווח לבעל העסק על שאלה של לקוח שלא נמצאה עבורה תשובה בהוראות הציבוריות שלך, כדי שבעל העסק יוכל להוסיף את התשובה לדשבורד.",
+    parameters: {
+        type: "OBJECT",
+        properties: {
+            question: { type: "STRING", description: "השאלה המדויקת של הלקוח שלא נמצאה עבורה תשובה" },
+            customer_name: { type: "STRING", description: "שם הלקוח (אם ידוע)" },
+        },
+        required: ["question"],
+    },
+};
+
 export const cancelAppointmentTool = {
     name: "cancel_appointment",
     description: "Cancels an existing appointment. ADMIN ONLY.",
@@ -282,16 +295,17 @@ Constraints:
   You represent "${context.businessName}". Your core domain is strictly limited to the following services: ${JSON.stringify(context?.operational_settings?.services)}.
   If the user asks ANY question or makes ANY request outside of this specific business domain (e.g., general programming, unrelated business niches, cooking recipes, school math, generic trivia, or general AI capabilities), you MUST immediately halt your reasoning and return the following exact string verbatim, with NO other text:
   "אני מורשה לענות אך ורק על שאלות הקשורות לתחום העיסוק של ${context.businessName}."
-- PRIVACY FILTER: Never ask for or accept sensitive personal data such as credit card numbers or national IDs. If a user provides this, inform them that it cannot be processed over chat.
+- DATA ISOLATION BOUNDARY: You have access ONLY to public customer instructions. You are STRICTLY FORBIDDEN from viewing or discussing internal owner strategy notes, financial reports, or Golda recommendations.
 - Maintain a ${context?.ai_settings?.tone || "welcoming and professional"} tone.
 - Language: ${context?.ai_settings?.language === "he" ? "Hebrew" : "English"}.
 
 Context:
+- Public Instructions for Customers: ${JSON.stringify(context?.publicInstructions || "")}
 - Opening Hours: ${JSON.stringify(context?.operational_settings?.opening_hours)}
 - Services: ${JSON.stringify(context?.operational_settings?.services)}
 - Client History: ${context?.client_history_summary || "No previous history."}
         `.trim(),
-        tools: [{ functionDeclarations: [checkAvailabilityTool, bookAppointmentTool, createActionCardTool, forwardMessageToOwnerTool] }],
+        tools: [{ functionDeclarations: [checkAvailabilityTool, bookAppointmentTool, createActionCardTool, forwardMessageToOwnerTool, reportMissingInfoTool] }],
     },
 
     golda: {
@@ -308,6 +322,10 @@ Gender: Female (לשון נקבה).
 Traits: Tough, protective, authoritative, highly organized, creative in marketing, and razor-sharp in analytics.
 Mission: Protect the business owner's time, drive revenue growth, produce marketing content, deliver financial insights, and ensure the business runs flawlessly. You handle EVERYTHING internally — there are no other agents to delegate to.
 Tone: ${context?.managerPersona?.tone || "Direct, professional, commanding but loyal. While you are authoritative, you are deeply collaborative."}
+
+KNOWLEDGE & BUSINESS CONTEXT:
+- Public Customer Instructions (Daniela): ${JSON.stringify(context?.publicInstructions || "")}
+- Private Internal Strategy Notes (Golda Only): ${JSON.stringify(context?.internalNotes || "")}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SKILL MODES — Select automatically based on the user's request:

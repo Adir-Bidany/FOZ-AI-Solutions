@@ -28,12 +28,12 @@ export default function InsightCard({ id, title, content, imageUrl, type, date, 
     const marketingTypes = ["social_post", "marketing_tip", "campaign_idea"];
     const isMarketing = marketingTypes.includes(type);
 
-    const cardBg = isMarketing ? "bg-indigo-50/40 border-indigo-100" : "bg-emerald-50/40 border-emerald-100";
-    const badgeBg = isMarketing ? "bg-indigo-100" : "bg-emerald-100";
-    const badgeText = isMarketing ? "text-indigo-700" : "text-emerald-700";
-    const btnText = isMarketing ? "text-indigo-600" : "text-emerald-600";
-    const btnBorder = isMarketing ? "border-indigo-200" : "border-emerald-200";
-    const btnHover = isMarketing ? "hover:bg-indigo-50" : "hover:bg-emerald-50";
+    const cardBg = "bg-card/90 border-border text-card-foreground shadow-sm backdrop-blur-xl hover:shadow-md";
+    const badgeBg = "bg-muted border border-border";
+    const badgeText = "text-muted-foreground font-semibold";
+    const btnText = "text-foreground font-semibold";
+    const btnBorder = "border-border";
+    const btnHover = "hover:bg-accent";
 
     const isPending = status === "pending";
 

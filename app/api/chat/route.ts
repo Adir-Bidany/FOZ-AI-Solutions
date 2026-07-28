@@ -14,7 +14,7 @@ import { Types } from "mongoose";
 import { cleanAIResponse, extractJsonFromText, mapChatHistory, createGeminiInstance } from "@/lib/utils/ai-helpers";
 import { getAvailableSlots, bookAppointment, SimplyBookCreds } from "@/lib/simplybook";
 import jwt from "jsonwebtoken";
-import { forwardMessageToOwner } from "@/actions/dashboard";
+import { forwardMessageToOwner, reportMissingInfoQuestion } from "@/actions/dashboard";
 
 function isSameCalendarDay(date1?: Date | null, date2?: Date): boolean {
     if (!date1 || !date2) return false;
@@ -557,6 +557,10 @@ MARKETING POST CREATION BEHAVIORAL RULES:
                         } else {
                             responseText = `Simulation: Asset approved (Demo mode).`;
                         }
+                    } else if (call.name === "report_missing_info") {
+                        const args = call.args as any;
+                        await reportMissingInfoQuestion(businessId, args.question, args.customer_name);
+                        responseText = "העברתי את השאלה לבעל העסק, וארשום לעצמי את התשובה לפעמים הבאות! 📝";
                     }
                 }
             }

@@ -2,7 +2,7 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface IPendingAsset extends Document {
     businessId: Types.ObjectId;
-    agentName: "Golda";
+    agentName: string;
     type: string;
     title: string;
     content: string;
@@ -16,7 +16,7 @@ export interface IPendingAsset extends Document {
 const PendingAssetSchema = new Schema(
     {
         businessId: { type: Schema.Types.ObjectId, ref: "Business", required: true },
-        agentName: { type: String, enum: ["Golda"], required: true, default: "Golda" },
+        agentName: { type: String, required: true, default: "Golda" },
         type: { type: String, required: true },
         title: { type: String, required: true },
         content: { type: String, required: true },

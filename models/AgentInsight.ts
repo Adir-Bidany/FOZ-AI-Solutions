@@ -2,7 +2,7 @@ import mongoose, { Schema, model, models, Document, Types } from "mongoose";
 
 export interface IAgentInsight extends Document {
     businessId: Types.ObjectId;
-    agentName: "Golda";
+    agentName: string;
     type: string; // e.g., 'social_post', 'marketing_tip', 'financial_report', 'budget_analysis'
     title: string;
     content: string;
@@ -15,7 +15,7 @@ export interface IAgentInsight extends Document {
 const AgentInsightSchema = new Schema<IAgentInsight>(
     {
         businessId: { type: Schema.Types.ObjectId, ref: "Business", required: true },
-        agentName: { type: String, enum: ["Golda"], required: true, default: "Golda" },
+        agentName: { type: String, required: true, default: "Golda" },
         type: { type: String, required: true },
         title: { type: String, required: true },
         content: { type: String, required: true },

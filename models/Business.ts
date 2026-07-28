@@ -41,6 +41,8 @@ export interface IBusiness extends Document {
     };
     subscriptionStatus: "active" | "trial" | "expired";
     lastImageGeneratedAt?: Date;
+    publicInstructions?: string;
+    internalNotes?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -107,6 +109,8 @@ const BusinessSchema = new Schema<IBusiness>(
             default: "trial"
         },
         lastImageGeneratedAt: { type: Date },
+        publicInstructions: { type: String, default: "" },
+        internalNotes: { type: String, default: "" },
     },
     { timestamps: true }
 );
