@@ -144,9 +144,6 @@ export default function UnifiedChatWidget({
             {variant === "floating" && (
                 <div className="p-4 bg-zinc-900 dark:bg-zinc-950 text-white border-b border-zinc-800">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-xl border border-zinc-700">
-                            🤖
-                        </div>
                         <div>
                             <h3 className="font-bold text-sm">FOZ AI Solutions</h3>
                             <div className="flex items-center gap-2 mt-0.5">

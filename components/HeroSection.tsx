@@ -247,8 +247,8 @@ export default function HeroSection() {
 
                     <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
                         צוות סוכני ה-AI המתקדם של FOZ (גולדה ודניאלה) שמנהלים עבורך את
-                        השירות, היומן, השיווק והניתוח הפיננסי — 24/7. ענו על מספר שאלות קצרות
-                        וקבלו אתר אינטרנט, דשבורד ניהול וסוכנים חכמים מוכנים ב-5 דקות!
+                        השירות, היומן והשיווק - 24/7. הקמה קצרה - מספר שאלות
+                     ויש לך עמוד נחיתה, דשבורד ניהול וסוכנים חכמים  !
                     </p>
 
                 </div>
@@ -280,7 +280,7 @@ export default function HeroSection() {
                             businessConfig={{
                                 _id: "demo",
                                 slug: "demo",
-                                logo: "/favicon.ico",
+                                logo: "/logo.png",
                             }}
                             agentPersona="foz"
                             className="h-full w-full rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] border border-transparent dark:border-white/10 backdrop-blur-xl bg-card/90"
