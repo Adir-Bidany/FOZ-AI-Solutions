@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 
 export interface AgentConfig {
-    id: "paz" | "daniela" | "golda";
+    id: "foz" | "daniela" | "golda";
     name: string;
     initialGreeting: string | string[];
     systemPrompt: (businessConfig: any) => string;
@@ -233,27 +233,27 @@ export const securityClassifierSchema: any = {
 // --------------------------------------------------------------------------------
 
 export const AGENT_REGISTRY: Record<string, AgentConfig> = {
-    paz: {
-        id: "paz",
-        name: "פז",
+    foz: {
+        id: "foz",
+        name: "פוז",
         initialGreeting: [
-            "היי, אני פז. באת לבדוק איך למלא את היומן שלך בטירוף בלי להרים טלפון אחד?",
-            "שלום! פז כאן. רוצה לראות איך המרפאה שלך יכולה לעבוד 24/7 ולסגור תורים לבד?",
-            "היי! פז כאן. כמה שעות בשבוע מתבזבזות אצלך על תיאום תורים ושיחות שלא נענו? בוא נפתור את זה.",
+            "היי, אני פוז. רוצה שהיומן שלך יתמלא לבד?",
+            "הפוז כאן. מוכן שהלקוחות שלך יקבעו תורים סביב השעון?",
+            "היי, הפוז כאן. כמה לקוחות פספסת השבוע כי לא ענית לטלפון?",
         ],
         systemPrompt: (businessConfig: any) => {
             const knowledgeBase = fs.readFileSync(
-                path.join(process.cwd(), "lib", "agents", "paz-knowledge.md"),
+                path.join(process.cwd(), "lib", "agents", "foz-knowledge.md"),
                 "utf-8",
             );
             return `
 ${knowledgeBase}
 
 # תפקיד ויעד מרכזי
-אתה "פז", סוכן המכירות והמידע הדיגיטלי הרשמי והבלעדי של פלטפורמת FOZ AI Solutions. התפקיד היחיד שלך הוא לספק מידע מבוסס, מדויק ומשכנע לבעלי עסקים שמתעניינים ברכישת המערכת, ולהניע אותם להצטרף לפלטפורמה.
+אתה "פוז", סוכן המכירות והמידע הדיגיטלי הרשמי והבלעדי של פלטפורמת FOZ AI Solutions. התפקיד היחיד שלך הוא לספק מידע מבוסס, מדויק ומשכנע לבעלי עסקים שמתעניינים ברכישת המערכת, ולהניע אותם להצטרף לפלטפורמה.
 
 # מדיניות אפס הזיות וחסינות מידע (חובה קשיחה)
-1. חל עליך איסור מוחלט להמציא, להניח, לנחש או להסיק שום פרט, יכולת, פיצ'ר, מחיר או אינטגרציה שאינם מופיעים באופן מפורש בקובץ המקור: \`paz-knowledge.md\`.
+1. חל עליך איסור מוחלט להמציא, להניח, לנחש או להסיק שום פרט, יכולת, פיצ'ר, מחיר או אינטגרציה שאינם מופיעים באופן מפורש בקובץ המקור: \`foz-knowledge.md\`.
 2. כל תשובה שלך חייבת להתבסס אך ורק על המידע המאומת שבקובץ זה.
 3. אם משתמש שואל אותך על יכולת, מחיר, מדיניות או פונקציה שלא קיימת בקובץ, עליך לסרב בנימוס ולומר: "אני יכול לספק מידע מאומת אך ורק על היכולות הקיימות במערכת. אני ממליץ להמשיך לתהליך ההצטרפות (Onboarding) או להשאיר פרטים כדי שנציג אנושי יחזור אליך עם תשובה מדויקת".
 4. אין לך שום הרשאה, גישה או יכולת לבצע פעולות (Mutations) כמו קביעת תורים או רישום משתמשים. אתה סוכן מידע ומכירות בלבד. אין לך קשר לסשנים של לקוחות קצה או למנגנוני ניתוק אוטומטי.
@@ -305,7 +305,17 @@ Context:
 - Services: ${JSON.stringify(context?.operational_settings?.services)}
 - Client History: ${context?.client_history_summary || "No previous history."}
         `.trim(),
-        tools: [{ functionDeclarations: [checkAvailabilityTool, bookAppointmentTool, createActionCardTool, forwardMessageToOwnerTool, reportMissingInfoTool] }],
+        tools: [
+            {
+                functionDeclarations: [
+                    checkAvailabilityTool,
+                    bookAppointmentTool,
+                    createActionCardTool,
+                    forwardMessageToOwnerTool,
+                    reportMissingInfoTool,
+                ],
+            },
+        ],
     },
 
     golda: {
@@ -370,10 +380,17 @@ You MUST output your response strictly as a JSON object with exactly two fields:
         responseSchema: {
             type: SchemaType.OBJECT,
             properties: {
-                reply: { type: SchemaType.STRING, description: "Your conversational response in Hebrew." },
-                active_mode: { type: SchemaType.STRING, enum: ["core", "marketing", "analytics"], description: "The skill mode used." }
+                reply: {
+                    type: SchemaType.STRING,
+                    description: "Your conversational response in Hebrew.",
+                },
+                active_mode: {
+                    type: SchemaType.STRING,
+                    enum: ["core", "marketing", "analytics"],
+                    description: "The skill mode used.",
+                },
             },
-            required: ["reply", "active_mode"]
+            required: ["reply", "active_mode"],
         },
         tools: [
             {

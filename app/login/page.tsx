@@ -62,9 +62,11 @@ export default function LoginPage() {
             <div className="w-full max-w-md relative z-10 space-y-6">
                 {/* Logo Branding */}
                 <div className="flex flex-col items-center justify-center space-y-3 text-center">
-                    <div className="relative w-48 h-20 sm:w-56 sm:h-24">
-                        <Image src="/logo.png" alt="FOZ AI Solutions" fill className="object-contain" priority />
-                    </div>
+                    <Link href="/" className="cursor-pointer hover:opacity-90 transition-opacity inline-block">
+                        <div className="relative w-48 h-20 sm:w-56 sm:h-24">
+                            <Image src="/logo.png" alt="FOZ AI Solutions" fill className="object-contain" priority />
+                        </div>
+                    </Link>
                 </div>
 
                 {/* Login Card */}

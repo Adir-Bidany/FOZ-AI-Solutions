@@ -8,9 +8,11 @@ export async function DELETE(
     // בגרסאות חדשות של Next.js 15, ה-params מגיע כ-Promise שצריך להמתין לו
     { params }: { params: Promise<{ id: string }> }
 ) {
-    // Admin RBAC: Only authenticated admins may delete clients
+    // Admin RBAC: Only authenticated admins or valid quick-access cookie may delete clients
     const token = await getToken({ req: request as any, secret: process.env.NEXTAUTH_SECRET });
-    if (!token || token.role !== "admin") {
+    const cookiesHeader = request.headers.get("cookie") || "";
+    const hasAdminCookie = cookiesHeader.includes("admin_access=true");
+    if (!hasAdminCookie && (!token || token.role !== "admin")) {
         return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 

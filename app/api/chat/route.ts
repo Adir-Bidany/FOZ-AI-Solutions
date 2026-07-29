@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
     try {
         let { message, businessId, sessionId, agentPersona = "daniela" } = await req.json();
 
-        if (businessId === "demo" || agentPersona === "paz") {
-            agentPersona = "paz";
+        if (businessId === "demo" || agentPersona === "foz") {
+            agentPersona = "foz";
         }
 
         if (!message || !businessId) {
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
         let customerId: string | null = null;
         const consumerToken = req.cookies.get("consumer_token")?.value;
         
-        if (agentPersona !== "paz" && consumerToken) {
+        if (agentPersona !== "foz" && consumerToken) {
             try {
                 const decoded = jwt.verify(consumerToken, JWT_SECRET) as any;
                 // Strict Tenancy Match
@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
         }
 
         // --- DUAL-DEFENSE FIREWALL (Public Agent ONLY) ---
-        if ((agentPersona === "daniela" || agentPersona === "paz") && chat) {
+        if ((agentPersona === "daniela" || agentPersona === "foz") && chat) {
             
             // LAYER 1: Hardened Production Blacklist
             const injectionBlacklist = [
@@ -304,7 +304,7 @@ MARKETING POST CREATION BEHAVIORAL RULES:
         
         let responseText = "";
 
-        if (["daniela", "paz"].includes(agentPersona)) {
+        if (["daniela", "foz"].includes(agentPersona)) {
             let parsedJson: any = null;
 
             // 1. Safely inspect function calls across external personas
@@ -446,7 +446,7 @@ MARKETING POST CREATION BEHAVIORAL RULES:
             if (!responseText) {
                 try {
                     const rawText = result.response.text();
-                    if (agentPersona === "paz") {
+                    if (agentPersona === "foz") {
                         try {
                             const structuredData = JSON.parse(rawText);
                             responseText = structuredData.conversational_reply || cleanAIResponse(rawText);

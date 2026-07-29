@@ -25,7 +25,7 @@ export default function SystemFooter() {
             <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
                 {/* זכויות יוצרים */}
                 <div className="text-center md:text-right">
-                    <p>© {currentYear} FOZ AI Solutions. כל הזכויות שמורות.</p>
+                    <p>© {currentYear} FOZ AI Solutions</p>
                 </div>
 
                 {/* קישורים משפטיים */}

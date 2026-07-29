@@ -30,7 +30,7 @@ export function ChatBubble({ role, content, mode, avatarUrl }: ChatBubbleProps) 
         // User bubble: Stark Black in Light mode, Silver in Dark mode
         isUser && "bg-primary text-primary-foreground",
 
-        // Agent (Paz) bubble: Clean card background with stark text-foreground high contrast
+        // Agent (Foz) bubble: Clean card background with stark text-foreground high contrast
         !isUser && "bg-card border border-border text-foreground dark:text-zinc-50"
     );
 

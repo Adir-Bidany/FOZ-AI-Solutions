@@ -31,7 +31,7 @@ export default function DanielaHeader({ businessName }: DanielaHeaderProps) {
                 <h3 className="font-bold text-white text-lg leading-tight">
                     דניאלה
                 </h3>
-                <p className="text-zinc-400 text-sm">
+                <p className="text-zinc-300 text-sm">
                     המזכירה של {businessName}
                 </p>
                 <div className="flex items-center gap-1.5 mt-1">

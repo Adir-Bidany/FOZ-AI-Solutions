@@ -24,32 +24,6 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 async function getClientData(slug: string) {
-    if (slug === "demo") {
-        return {
-            _id: "demo",
-            businessName: "קליניקת הדגמה (FOZ)",
-            ownerName: "צוות FOZ",
-            phone: "050-0000000",
-            address: "מתחם ההייטק, תל אביב",
-            domainGuidelines: "זוהי קליניקת הדגמה.",
-            tone: "מכירתי ומקצועי",
-            isDemo: true,
-            logo: "/logo.png",
-            heroImage:
-                "https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=2068&auto=format&fit=crop",
-            landing_page_data: {
-                hero_title: "טיפולי פנים ברמה אחרת",
-                hero_subtitle:
-                    "העסק המובילה לטיפולי אנטי-אייג'ינג ואסתטיקה מתקדמת.",
-                features: [
-                    "טכנולוגיה מתקדמת",
-                    "חומרים טבעיים",
-                    "ליווי אישי",
-                    "תוצאות מוכחות",
-                ],
-            },
-        };
-    }
     const client = await getClientBySlug(slug);
     if (!client) return null;
     return {

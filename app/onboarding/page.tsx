@@ -294,7 +294,7 @@ export default function CinematicOnboarding() {
                             </div>
                             <div>
                                 <span className="text-zinc-100 font-medium block">{p.name}</span>
-                                <span className="text-xs text-zinc-400">{p.description}</span>
+                                <span className="text-xs text-zinc-300">{p.description}</span>
                             </div>
                         </div>
                     ))}
@@ -316,14 +316,14 @@ export default function CinematicOnboarding() {
                             <Loader2 className="w-6 h-6 animate-spin text-zinc-300" />
                         ) : (
                             <>
-                                <UploadCloud size={24} className="text-zinc-400 mb-2" />
+                                <UploadCloud size={24} className="text-zinc-300 mb-2" />
                                 <span className="text-sm font-medium text-zinc-300">לחצי להעלאת לוגו</span>
                             </>
                         )}
                     </div>
                     <Button 
                         variant="ghost" 
-                        className="text-zinc-400 hover:text-zinc-200"
+                        className="text-zinc-300 hover:text-zinc-200"
                         onClick={() => {
                             setMessages(prev => [...prev, { id: `msg-${Date.now()}`, sender: "user", text: "אין לי לוגו כרגע" }]);
                             setTimeout(() => {
