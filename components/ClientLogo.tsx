@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React from "react";
 
 interface ClientLogoProps {
     src: string | null;
@@ -8,19 +8,6 @@ interface ClientLogoProps {
 }
 
 export default function ClientLogo({ src, businessName }: ClientLogoProps) {
-    const [isMounted, setIsMounted] = useState(false);
-
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
-    if (!isMounted) {
-        // Render minimal placeholder during SSR/Hydration to match layout
-        return (
-            <div className="w-full h-full bg-slate-50 rounded-lg animate-pulse" />
-        );
-    }
-
     if (src) {
         return (
             <img
@@ -31,10 +18,11 @@ export default function ClientLogo({ src, businessName }: ClientLogoProps) {
         );
     }
 
-    // Fallback if no src (should generally be handled by parent, but safe to have)
+    const firstChar = businessName ? businessName.trim().charAt(0) : "E";
+
     return (
-        <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-purple-100 to-pink-100 text-purple-600 rounded-2xl text-3xl font-bold shadow-sm">
-            {businessName.charAt(0)}
+        <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-950 dark:to-pink-950 text-purple-600 dark:text-purple-300 rounded-2xl text-3xl font-bold shadow-sm">
+            {firstChar}
         </div>
     );
 }

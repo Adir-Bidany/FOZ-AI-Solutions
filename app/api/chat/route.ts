@@ -14,13 +14,25 @@ import { Types } from "mongoose";
 import { cleanAIResponse, extractJsonFromText, mapChatHistory, createGeminiInstance } from "@/lib/utils/ai-helpers";
 import { getAvailableSlots, bookAppointment, SimplyBookCreds } from "@/lib/simplybook";
 import jwt from "jsonwebtoken";
+import { forwardMessageToOwner, reportMissingInfoQuestion } from "@/actions/dashboard";
+
+function isSameCalendarDay(date1?: Date | null, date2?: Date): boolean {
+    if (!date1 || !date2) return false;
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    return (
+        d1.getFullYear() === d2.getFullYear() &&
+        d1.getMonth() === d2.getMonth() &&
+        d1.getDate() === d2.getDate()
+    );
+}
 
 export async function POST(req: NextRequest) {
     try {
         let { message, businessId, sessionId, agentPersona = "daniela" } = await req.json();
 
-        if (businessId === "demo" || agentPersona === "paz") {
-            agentPersona = "paz";
+        if (businessId === "demo" || agentPersona === "foz") {
+            agentPersona = "foz";
         }
 
         if (!message || !businessId) {
@@ -35,7 +47,7 @@ export async function POST(req: NextRequest) {
         let customerId: string | null = null;
         const consumerToken = req.cookies.get("consumer_token")?.value;
         
-        if (agentPersona !== "paz" && consumerToken) {
+        if (agentPersona !== "foz" && consumerToken) {
             try {
                 const decoded = jwt.verify(consumerToken, JWT_SECRET) as any;
                 // Strict Tenancy Match
@@ -133,7 +145,7 @@ export async function POST(req: NextRequest) {
         }
 
         // --- DUAL-DEFENSE FIREWALL (Public Agent ONLY) ---
-        if ((agentPersona === "daniela" || agentPersona === "paz") && chat) {
+        if ((agentPersona === "daniela" || agentPersona === "foz") && chat) {
             
             // LAYER 1: Hardened Production Blacklist
             const injectionBlacklist = [
@@ -248,6 +260,23 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        if (agentPersona === "golda") {
+            const isQuotaUsedToday = isSameCalendarDay(business?.lastImageGeneratedAt, new Date());
+
+            finalSystemPrompt += `\n\n[GOLDA AI IMAGE QUOTA AWARENESS]:
+- Daily AI Image Quota Status for Today: ${isQuotaUsedToday ? "QUOTA_USED_TODAY (0 of 1 image remaining today)" : "QUOTA_AVAILABLE (1 of 1 image available today)"}.
+
+MARKETING POST CREATION BEHAVIORAL RULES:
+1. IF QUOTA IS ALREADY USED TODAY (${isQuotaUsedToday ? "TRUE" : "FALSE"}):
+   If the user asks you to create/generate a marketing post, generate the post text (using submit_for_approval), and ALWAYS politely add a friendly note in Hebrew inside your conversational reply:
+   "אגב, כבר ניצלת את מכסת תמונות ה-AI היומית שלך להיום (תמונה 1 ביום), אז הכנתי עבורך את הפוסט המעולה הזה בפורמט טקסט בלבד! 📝"
+
+2. IF QUOTA IS AVAILABLE TODAY (${!isQuotaUsedToday ? "TRUE" : "FALSE"}):
+   If the user asks you to create/generate a marketing post:
+   - Proactively ask in Hebrew: "אני יכולה לחולל עבורך תמונת AI מותאמת אישית לפוסט הזה! תרצה שאיצר אותה? (יש לך תמונת AI 1 זמינה להיום 🎨)."
+   - If the user confirms or requests an image, set generateImage: true when invoking submit_for_approval.`;
+        }
+
         // 4. Select Tools & Schema natively from Registry
         const tools = AGENT_REGISTRY[agentPersona]?.tools;
         let responseSchema = AGENT_REGISTRY[agentPersona]?.responseSchema;
@@ -259,8 +288,7 @@ export async function POST(req: NextRequest) {
         }
 
         let systemAction: string | undefined = undefined;
-
-        // 5. AI Execution
+// 5. AI Execution
         const model = createGeminiInstance({
             modelName: "gemini-2.5-flash",
             systemInstruction: finalSystemPrompt,
@@ -275,174 +303,189 @@ export async function POST(req: NextRequest) {
         const result = await chatSession.sendMessage(message);
         
         let responseText = "";
-        
-        if (agentPersona === "paz") {
+
+        if (["daniela", "foz"].includes(agentPersona)) {
+            let parsedJson: any = null;
+
+            // 1. Safely inspect function calls across external personas
+            let functionCalls: any[] | undefined = undefined;
             try {
-                const rawJsonString = result.response.text();
-                const structuredData = JSON.parse(rawJsonString);
-                responseText = structuredData.conversational_reply || "מצטערת, לא הבנתי.";
+                functionCalls = result.response.functionCalls();
             } catch (err) {
-                console.error("Paz parse error:", err);
-                responseText = "אירעה שגיאה בעיבוד התשובה.";
+                // No function calls in response
             }
-        } else if (agentPersona === "daniela") {
-            try {
-                let parsedJson: any = null;
-                let rawText = result.response.text();
-                try {
-                    const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-                    const jsonString = jsonMatch ? jsonMatch[1] : rawText;
-                    parsedJson = JSON.parse(jsonString);
-                    responseText = parsedJson.conversational_reply || cleanAIResponse(rawText);
-                } catch (e) {
-                    responseText = cleanAIResponse(rawText);
-                }
-                
-                const functionCalls = result.response.functionCalls();
-                
-                if (functionCalls && functionCalls.length > 0) {
-                    for (const call of functionCalls) {
-                        const payload = call.args as any;
-                        
-                        if (call.name === "book_appointment") {
-                            // 1. Strict Validation Guard
-                            if (payload && payload.date && payload.time && payload.service_type) {
-                                const sbCreds = business?.api_keys?.simplybook;
-                                
-                                let bookingResult;
-                                if (!sbCreds || !sbCreds.companyLogin || !sbCreds.apiKey) {
-                                    // Mock Booking
-                                    bookingResult = "DEMO-" + Math.floor(Math.random() * 10000);
-                                } else {
-                                    // 3. Live Execution
-                                    const clientData = {
-                                        name: payload.customer_name || customer?.name || "לקוח מערכת",
-                                        phone: payload.customer_phone || customer?.phone || "0000000000",
-                                        note: payload.note || undefined
-                                    };
-                                    
-                                    try {
-                                        bookingResult = await bookAppointment(
-                                            sbCreds as SimplyBookCreds,
-                                            payload.date,
-                                            payload.time,
-                                            clientData
-                                        );
-                                    } catch (err) {
-                                        console.error("Booking integration failed:", err);
-                                        responseText += "\n\nאירעה תקלה זמנית מול מערכת התורים. אנא נסה שוב בעוד מספר דקות.";
-                                    }
-                                }
-                                
-                                if (bookingResult) {
-                                    responseText += `\n\n✅ התור שלך נקבע בהצלחה! (מספר אישור: ${bookingResult})`;
-                                    systemAction = "force_logout";
-                                } else {
-                                    responseText += "\n\nלצערי לא הצלחתי לקבוע את התור, ייתכן שהשעה כבר נתפסה. תרצה לבדוק שעה אחרת?";
-                                }
+
+            if (functionCalls && functionCalls.length > 0) {
+                for (const call of functionCalls) {
+                    const payload = call.args as any;
+
+                    if (call.name === "book_appointment") {
+                        if (payload && payload.date && payload.time && payload.service_type) {
+                            const sbCreds = business?.api_keys?.simplybook;
+                            let bookingResult;
+                            if (!sbCreds || !sbCreds.companyLogin || !sbCreds.apiKey) {
+                                bookingResult = "DEMO-" + Math.floor(Math.random() * 10000);
                             } else {
-                                responseText += "\n\nכדי שאוכל לקבוע את התור, אשמח לדעת תאריך, שעה, ואיזה טיפול תרצה לקבוע. מה חסר לנו?";
-                                systemAction = "show_date_picker";
-                            }
-                            
-                        } else if (call.name === "check_availability") {
-                            if (payload && payload.date) {
-                                const sbCreds = business?.api_keys?.simplybook;
-                                
-                                let timeMatrix;
-                                if (!sbCreds || !sbCreds.companyLogin || !sbCreds.apiKey) {
-                                    // Mock availability for demo
-                                    timeMatrix = {
-                                        [payload.date]: ["10:00", "11:30", "14:00", "16:30"]
-                                    };
-                                } else {
-                                    try {
-                                        const toDate = new Date(new Date(payload.date).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-                                        
-                                        timeMatrix = await getAvailableSlots(
-                                            sbCreds as SimplyBookCreds, 
-                                            payload.date, 
-                                            toDate
-                                        );
-                                    } catch (err) {
-                                        console.error("Availability integration failed:", err);
-                                        responseText += "\n\nאירעה שגיאה בבדיקת התורים. נסה שוב מאוחר יותר.";
-                                    }
+                                const clientData = {
+                                    name: payload.customer_name || customer?.name || "לקוח מערכת",
+                                    phone: payload.customer_phone || customer?.phone || "0000000000",
+                                    note: payload.note || undefined
+                                };
+                                try {
+                                    bookingResult = await bookAppointment(
+                                        sbCreds as SimplyBookCreds,
+                                        payload.date,
+                                        payload.time,
+                                        clientData
+                                    );
+                                } catch (err) {
+                                    console.error("Booking integration failed:", err);
+                                    responseText += "\n\nאירעה תקלה זמנית מול מערכת התורים. אנא נסה שוב בעוד מספר דקות.";
                                 }
-                                
-                                if (timeMatrix && Object.keys(timeMatrix).length > 0) {
-                                    let availableString = "";
-                                    for (const [dateKey, times] of Object.entries(timeMatrix).slice(0, 3)) {
-                                        const timesArray = times as string[];
-                                        if (timesArray.length > 0) {
-                                            availableString += `\n📅 ב-${dateKey}: ${timesArray.slice(0, 3).join(", ")}`;
-                                        }
-                                    }
-                                    responseText += `\n\nמצאתי את התורים הבאים עבורך:${availableString}\nהאם אחד מהם מתאים לך?`;
-                                    systemAction = "show_services";
-                                } else {
-                                    responseText += "\n\nלצערי אין תורים פנויים בתאריכים שביקשת. תרצה לבדוק שבוע אחר?";
-                                    systemAction = "show_date_picker";
-                                }
-                            } else {
-                                responseText += "\n\nלאיזה תאריך היית רוצה שאבדוק פניות?";
-                                systemAction = "show_date_picker";
                             }
-                            
-                        } else if (call.name === "create_action_card") {
-                            if (businessId !== "demo") {
-                                await ActionCard.create({
-                                    business_id: business._id,
-                                    source_agent: "receptionist",
-                                    status: "pending",
-                                    priority: payload?.priority || "medium",
-                                    display_content: {
-                                        title: payload?.title || "בקשה מהלקוח",
-                                        description: payload?.description || "",
-                                        icon: "AlertCircle"
-                                    },
-                                    execution_payload: {
-                                        action_type: "cancel_appointment",
-                                        params: {
-                                            original_message: message,
-                                            chat_id: chat._id,
-                                            details: payload?.description
-                                        }
-                                    }
-                                });
+
+                            if (bookingResult) {
+                                responseText += `\n\n✅ התור שלך נקבע בהצלחה! (מספר אישור: ${bookingResult})`;
                                 systemAction = "force_logout";
+                            } else {
+                                responseText += "\n\nלצערי לא הצלחתי לקבוע את התור, ייתכן שהשעה כבר נתפסה. תרצה לבדוק שעה אחרת?";
                             }
+                        } else {
+                            responseText += "\n\nכדי שאוכל לקבוע את התור, אשמח לדעת תאריך, שעה, ואיזה טיפול תרצה לקבוע. מה חסר לנו?";
+                            systemAction = "show_date_picker";
+                        }
+
+                    } else if (call.name === "check_availability") {
+                        if (payload && payload.date) {
+                            const sbCreds = business?.api_keys?.simplybook;
+                            let timeMatrix;
+                            if (!sbCreds || !sbCreds.companyLogin || !sbCreds.apiKey) {
+                                timeMatrix = {
+                                    [payload.date]: ["10:00", "11:30", "14:00", "16:30"]
+                                };
+                            } else {
+                                try {
+                                    const toDate = new Date(new Date(payload.date).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+                                    timeMatrix = await getAvailableSlots(
+                                        sbCreds as SimplyBookCreds,
+                                        payload.date,
+                                        toDate
+                                    );
+                                } catch (err) {
+                                    console.error("Availability integration failed:", err);
+                                    responseText += "\n\nאירעה שגיאה בבדיקת התורים. נסה שוב מאוחר יותר.";
+                                }
+                            }
+
+                            if (timeMatrix && Object.keys(timeMatrix).length > 0) {
+                                let availableString = "";
+                                for (const [dateKey, times] of Object.entries(timeMatrix).slice(0, 3)) {
+                                    const timesArray = times as string[];
+                                    if (timesArray.length > 0) {
+                                        availableString += `\n📅 ב-${dateKey}: ${timesArray.slice(0, 3).join(", ")}`;
+                                    }
+                                }
+                                responseText += `\n\nמצאתי את התורים הבאים עבורך:${availableString}\nהאם אחד מהם מתאים לך?`;
+                                systemAction = "show_services";
+                            } else {
+                                responseText += "\n\nלצערי אין תורים פנויים בתאריכים שביקשת. תרצה לבדוק שבוע אחר?";
+                                systemAction = "show_date_picker";
+                            }
+                        } else {
+                            responseText += "\n\nלאיזה תאריך היית רוצה שאבדוק פניות?";
+                            systemAction = "show_date_picker";
+                        }
+
+                    } else if (call.name === "create_action_card") {
+                        if (businessId !== "demo" && Types.ObjectId.isValid(businessId)) {
+                            await ActionCard.create({
+                                business_id: new Types.ObjectId(businessId),
+                                source_agent: "receptionist",
+                                status: "pending",
+                                priority: payload?.priority || "medium",
+                                display_content: {
+                                    title: payload?.title || "בקשה מהלקוח",
+                                    description: payload?.description || "",
+                                    icon: "AlertCircle"
+                                },
+                                execution_payload: {
+                                    action_type: "cancel_appointment",
+                                    params: {
+                                        original_message: message,
+                                        chat_id: chat?._id,
+                                        details: payload?.description
+                                    }
+                                }
+                            });
+                            systemAction = "force_logout";
+                        }
+
+                    } else if (call.name === "forward_message_to_owner") {
+                        const custName = payload?.customer_name || "לקוח באתר";
+                        const msgContent = payload?.message_content || message || "";
+
+                        const res = await forwardMessageToOwner(
+                            businessId,
+                            custName,
+                            msgContent,
+                            sessionId
+                        );
+
+                        if (res.success) {
+                            responseText += `\n\n✉️ ההודעה שלך הועברה בהצלחה לבעל העסק!`;
+                        } else if (res.error === "daily_limit_reached") {
+                            responseText += `\n\n⚠️ הגעת למכסה היומית של 3 הודעות ליום לבעל העסק. תוכל להשאיר הודעה נוספת מחר!`;
+                        } else if (res.error === "word_limit_exceeded") {
+                            responseText += `\n\n⚠️ ההודעה ארוכה מ-50 מילים. אנא קצר אותה ל-50 מילים לכל היותר ושלח שוב.`;
                         }
                     }
                 }
-                
-                // NEW: Routing Logic Interceptor for Booking Intents without function calls
-                if (!systemAction) {
-                    const action = parsedJson?.action_type;
-                    const isBookingIntent = action === "book_appointment" || action === "check_availability";
-                    const isAskingForDate = responseText && (responseText.includes("בחרי תאריך") || responseText.includes("בחר תאריך"));
-                    
-                    if (isBookingIntent || isAskingForDate) {
-                        // If LLM didn't call the tool because it's missing the date, enforce the date picker
-                        systemAction = "show_date_picker";
-                        if (!responseText || responseText.includes("איזה") || responseText.includes("שירות")) {
-                            responseText = "אנא בחרי תאריך:";
+            }
+
+            // 2. Fallback text parsing if no function call populated text
+            if (!responseText) {
+                try {
+                    const rawText = result.response.text();
+                    if (agentPersona === "foz") {
+                        try {
+                            const structuredData = JSON.parse(rawText);
+                            responseText = structuredData.conversational_reply || cleanAIResponse(rawText);
+                        } catch (e) {
+                            responseText = cleanAIResponse(rawText);
+                        }
+                    } else {
+                        try {
+                            const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                            const jsonString = jsonMatch ? jsonMatch[1] : rawText;
+                            parsedJson = JSON.parse(jsonString);
+                            responseText = parsedJson.conversational_reply || cleanAIResponse(rawText);
+                        } catch (e) {
+                            responseText = cleanAIResponse(rawText);
                         }
                     }
-                }
-                
-                if (!responseText && (!functionCalls || functionCalls.length === 0)) {
+                } catch (err) {
+                    console.error("Text extraction fallback error:", err);
                     responseText = "מצטערת, לא הבנתי.";
                 }
-                
-                responseText = responseText.trim();
-                
-            } catch (error) {
-                console.error("Failed to execute Daniela native tool calls", error);
-                responseText = "אני מצטערת, חלה שגיאה בעיבוד הבקשה שלך. 😅";
             }
+
+            // Routing Logic Interceptor for Booking Intents without function calls
+            if (!systemAction) {
+                const action = parsedJson?.action_type;
+                const isBookingIntent = action === "book_appointment" || action === "check_availability";
+                const isAskingForDate = responseText && (responseText.includes("בחרי תאריך") || responseText.includes("בחר תאריך"));
+
+                if (isBookingIntent || isAskingForDate) {
+                    systemAction = "show_date_picker";
+                    if (!responseText || responseText.includes("איזה") || responseText.includes("שירות")) {
+                        responseText = "אנא בחרי תאריך:";
+                    }
+                }
+            }
+
+            responseText = responseText.trim();
         } else {
-            // Internal agents: extract plain reply text, handling Golda's JSON schema format
+            // Internal agents (Golda): extract plain reply text, handling Golda's JSON schema format
             try {
                 const rawText = result.response.text();
                 if (agentPersona === "golda") {
@@ -454,55 +497,74 @@ export async function POST(req: NextRequest) {
             } catch (e) {
                 responseText = "";
             }
-            const functionCalls = result.response.functionCalls();
 
-            // 6. Handle Function Calls (Tool Execution)
+            let functionCalls: any[] | undefined = undefined;
+            try {
+                functionCalls = result.response.functionCalls();
+            } catch (e) {}
+
             if (functionCalls && functionCalls.length > 0) {
                 for (const call of functionCalls) {
                     if (call.name === "submit_for_approval") {
-                    const args = call.args as any;
-                    if (businessId !== "demo") {
-                        await PendingAsset.create({
-                            businessId: business._id,
-                        agentName: "Golda",
-                            type: args.type,
-                            title: args.title,
-                            content: args.content,
-                            status: "pending"
-                        });
-                        responseText = `✅ ${args.title} has been submitted to Golda for final approval!`;
-                    } else {
-                        responseText = `Simulation: Asset "${args.title}" submitted to Golda (Demo mode).`;
-                    }
-                } else if (call.name === "approve_asset") {
-                    const args = call.args as any;
-                    if (businessId !== "demo") {
-                        const pending = await PendingAsset.findById(args.asset_id);
-                        if (pending) {
-                            await AgentInsight.create({
-                                businessId: pending.businessId,
-                                agentName: pending.agentName,
-                                type: pending.type,
-                                title: pending.title,
-                                content: pending.content,
-                                status: "approved"
+                        const args = call.args as any;
+                        if (businessId !== "demo" && Types.ObjectId.isValid(businessId)) {
+                            let generatedImageUrl = args.imageUrl;
+
+                            // If Golda requested image generation and quota is available, generate image & update business quota
+                            if (args.generateImage) {
+                                const isQuotaUsedToday = isSameCalendarDay(business?.lastImageGeneratedAt, new Date());
+                                if (!isQuotaUsedToday) {
+                                    const cleanPrompt = encodeURIComponent(
+                                        `${args.title}, luxury aesthetic marketing photo, 8k resolution, professional studio lighting`
+                                    );
+                                    generatedImageUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=1080&height=1080&nologo=true&seed=${Date.now()}`;
+                                    
+                                    await Business.findByIdAndUpdate(businessId, { lastImageGeneratedAt: new Date() });
+                                }
+                            }
+
+                            await PendingAsset.create({
+                                businessId: new Types.ObjectId(businessId),
+                                agentName: "Golda",
+                                type: args.type,
+                                title: args.title,
+                                content: args.content,
+                                imageUrl: generatedImageUrl,
+                                status: "pending"
                             });
-                            await PendingAsset.findByIdAndDelete(args.asset_id);
-                            responseText = `✅ The asset has been approved and moved to the production dashboard!`;
+                            responseText = `✅ ${args.title} הועבר בהצלחה למרכז התוכן של גולדה לאישור סופי!`;
                         } else {
-                            responseText = `❌ Could not find pending asset with that ID.`;
+                            responseText = `Simulation: Asset "${args.title}" submitted to Golda (Demo mode).`;
                         }
-                    } else {
-                        responseText = `Simulation: Asset approved (Demo mode).`;
+                    } else if (call.name === "approve_asset") {
+                        const args = call.args as any;
+                        if (businessId !== "demo" && Types.ObjectId.isValid(args.asset_id)) {
+                            const pending = await PendingAsset.findById(args.asset_id);
+                            if (pending) {
+                                await AgentInsight.create({
+                                    businessId: pending.businessId,
+                                    agentName: pending.agentName,
+                                    type: pending.type,
+                                    title: pending.title,
+                                    content: pending.content,
+                                    status: "approved"
+                                });
+                                await PendingAsset.findByIdAndDelete(args.asset_id);
+                                responseText = `✅ The asset has been approved and moved to the production dashboard!`;
+                            } else {
+                                responseText = `❌ Could not find pending asset with that ID.`;
+                            }
+                        } else {
+                            responseText = `Simulation: Asset approved (Demo mode).`;
+                        }
+                    } else if (call.name === "report_missing_info") {
+                        const args = call.args as any;
+                        await reportMissingInfoQuestion(businessId, args.question, args.customer_name);
+                        responseText = "העברתי את השאלה לבעל העסק, וארשום לעצמי את התשובה לפעמים הבאות! 📝";
                     }
-                }
-                // Handle other tools (book_appointment, etc.) - Mocking success for now
-                if (call.name === "book_appointment") {
-                    responseText = "מעולה, קבעתי לך את התור. נתראה!";
                 }
             }
-        } // End of functionCalls block
-        } // End of else (internal agents) block
+        }
 
         // 7. Persistence
         // Ensure parts structure is correct

@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Heebo } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/Providers";
-// מחקנו את SystemHeader ואת SystemFooter מכאן!
 
-const inter = Inter({ subsets: ["latin"] });
+const heebo = Heebo({ 
+    subsets: ["latin", "hebrew"],
+    variable: "--font-heebo",
+    weight: ["300", "400", "500", "600", "700", "800"]
+});
 
 export const metadata: Metadata = {
     title: "FOZ AI Solutions",
@@ -17,8 +20,8 @@ export default function RootLayout({
     children,
 }: Readonly<{ children: React.ReactNode }>) {
     return (
-        <html lang="he" dir="rtl">
-            <body className={inter.className}>
+        <html lang="he" dir="rtl" suppressHydrationWarning className={heebo.variable}>
+            <body suppressHydrationWarning className={`${heebo.className} bg-background text-foreground min-h-screen antialiased font-sans`}>
                 <Providers>
                     {children}
                     <Toaster />

@@ -17,38 +17,13 @@ import {
 } from "lucide-react";
 import DanielaHeader from "@/components/DanielaHeader";
 import ClientLogo from "@/components/ClientLogo";
+import ThemeToggle from "@/components/ThemeToggle";
 import { BACKGROUND_PRESETS } from "@/lib/background-presets";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 async function getClientData(slug: string) {
-    if (slug === "demo") {
-        return {
-            _id: "demo",
-            businessName: "קליניקת הדגמה (FOZ)",
-            ownerName: "צוות FOZ",
-            phone: "050-0000000",
-            address: "מתחם ההייטק, תל אביב",
-            domainGuidelines: "זוהי קליניקת הדגמה.",
-            tone: "מכירתי ומקצועי",
-            isDemo: true,
-            logo: "/logo.png",
-            heroImage:
-                "https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=2068&auto=format&fit=crop",
-            landing_page_data: {
-                hero_title: "טיפולי פנים ברמה אחרת",
-                hero_subtitle:
-                    "העסק המובילה לטיפולי אנטי-אייג'ינג ואסתטיקה מתקדמת.",
-                features: [
-                    "טכנולוגיה מתקדמת",
-                    "חומרים טבעיים",
-                    "ליווי אישי",
-                    "תוצאות מוכחות",
-                ],
-            },
-        };
-    }
     const client = await getClientBySlug(slug);
     if (!client) return null;
     return {
@@ -124,17 +99,22 @@ export default async function ClientPage({
 
     return (
         <div
-            className="min-h-screen flex items-center justify-center p-4 lg:p-8 transition-all duration-500"
+            className="min-h-screen flex items-center justify-center p-4 lg:p-8 transition-all duration-500 relative"
             style={pageStyle}
             dir="rtl"
         >
+            {/* Public Page Floating Theme Toggle */}
+            <div className="fixed top-6 left-6 z-50">
+                <ThemeToggle />
+            </div>
+
             <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
                 {/* === COLUMN 1: BUSINESS INFO === */}
                 <div className="flex flex-col justify-start space-y-6 lg:pt-8">
                     {/* Header Row: Logo & Text */}
-                    <div className="flex flex-row items-center gap-4">
+                    <div className="flex flex-row flex-wrap items-center gap-4">
                         {/* Logo / Hero Image */}
-                        <div className="relative w-32 h-32 shrink-0">
+                        <div className="relative w-20 h-20 sm:w-28 sm:h-28 shrink-0">
                             <ClientLogo
                                 src={heroImage}
                                 businessName={clientData.businessName}
@@ -143,7 +123,7 @@ export default async function ClientPage({
 
                         {/* Business Name & Description */}
                         <div className="space-y-2">
-                            <h1 className="text-4xl md:text-5xl font-bold leading-tight">
+                            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
                                 {heroTitle}
                             </h1>
                             <p className="text-lg leading-relaxed max-w-lg opacity-90">
@@ -160,7 +140,7 @@ export default async function ClientPage({
                         {phone && (
                             <a
                                 href={`tel:${phone}`}
-                                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                                className="flex items-center gap-2 px-4 py-2 bg-card/90 border border-border/80 rounded-full text-foreground hover:bg-accent transition-colors shadow-sm backdrop-blur-md"
                             >
                                 <Phone
                                     size={16}
@@ -172,7 +152,7 @@ export default async function ClientPage({
                             </a>
                         )}
                         {address && (
-                            <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-gray-700 shadow-sm">
+                            <div className="flex items-center gap-2 px-4 py-2 bg-card/90 border border-border/80 rounded-full text-foreground shadow-sm backdrop-blur-md">
                                 <MapPin
                                     size={16}
                                     style={{ color: themeAccentColor }}
@@ -187,7 +167,7 @@ export default async function ClientPage({
 
                 {/* === COLUMN 2: THE CHAT WIDGET === */}
                 <div className="w-full flex justify-center lg:justify-end">
-                    <div className="w-full max-w-md h-[80vh] min-h-[600px] bg-[#0B0E14] rounded-[2.5rem] shadow-2xl shadow-indigo-500/20 overflow-hidden relative flex flex-col">
+                    <div className="w-full max-w-md h-[75dvh] min-h-[380px] bg-[#0B0E14] rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] overflow-hidden relative flex flex-col border border-transparent dark:border-white/10">
                         {/* The Header */}
                         <DanielaHeader businessName={clientData.businessName} />
 

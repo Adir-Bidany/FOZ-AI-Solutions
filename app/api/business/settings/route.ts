@@ -47,6 +47,8 @@ export async function GET(req: Request) {
                 // Actually, let's check the schema again.
                 // Schema has: landing_page_data.about_text.
                 description: business.landing_page_data?.about_text || "",
+                publicInstructions: business.publicInstructions || "",
+                internalNotes: business.internalNotes || "",
 
                 persona: business.ai_settings?.manager_name === "David" ? "david" : "golda",
 
@@ -97,6 +99,8 @@ export async function POST(req: Request) {
         if (body.ownerName) business.ownerName = body.ownerName;
         if (body.phone) business.phone = body.phone;
         if (body.address) business.address = body.address;
+        if (body.publicInstructions !== undefined) business.publicInstructions = body.publicInstructions;
+        if (body.internalNotes !== undefined) business.internalNotes = body.internalNotes;
 
         // Update description -> landing_page_data.about_text
         if (body.description !== undefined) {

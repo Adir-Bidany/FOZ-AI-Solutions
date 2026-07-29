@@ -63,39 +63,39 @@ export default function PendingAssetCard({
 
     return (
         <>
-            <Card className="bg-fuchsia-50/40 border-fuchsia-100 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between overflow-hidden">
+            <Card className="bg-card/90 border-border text-card-foreground shadow-sm hover:shadow-md transition-all duration-300 rounded-3xl flex flex-col justify-between overflow-hidden backdrop-blur-xl">
                 <CardHeader className="pb-2">
                     <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-fuchsia-100 text-fuchsia-800 flex items-center gap-1">
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-muted border border-border text-muted-foreground flex items-center gap-1">
                             <Clock size={12} /> ממתין לאישור שלך
                         </span>
-                        <span className="text-xs text-gray-400">{formattedDate}</span>
+                        <span className="text-xs text-muted-foreground">{formattedDate}</span>
                     </div>
-                    <CardTitle className="text-lg font-bold text-gray-900 leading-snug line-clamp-2">
+                    <CardTitle className="text-lg font-bold text-foreground leading-snug line-clamp-2">
                         {title}
                     </CardTitle>
                 </CardHeader>
 
                 <CardContent className="py-2 flex-1">
-                    <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed whitespace-pre-wrap">
+                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed whitespace-pre-wrap">
                         {content}
                     </p>
                 </CardContent>
 
-                <CardFooter className="pt-4 pb-4 border-t border-fuchsia-100/60 bg-white/60 flex flex-col gap-2">
+                <CardFooter className="pt-4 pb-4 border-t border-border bg-muted/30 flex flex-col gap-2">
                     <div className="grid grid-cols-2 gap-2 w-full">
                         <Button
                             onClick={() => setIsViewModalOpen(true)}
                             variant="outline"
                             size="sm"
-                            className="w-full gap-1.5 rounded-xl border-fuchsia-200 text-fuchsia-700 hover:bg-fuchsia-50 text-xs font-medium"
+                            className="w-full gap-1.5 rounded-2xl border-border text-foreground hover:bg-accent text-xs font-semibold"
                         >
                             <Eye size={14} /> הצג פוסט
                         </Button>
                         <Button
                             onClick={handleApproveAndPublish}
                             size="sm"
-                            className="w-full gap-1.5 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-xs font-medium shadow-sm"
+                            className="w-full gap-1.5 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold shadow-sm"
                         >
                             <CheckCircle size={14} /> אישור ופרסום
                         </Button>
@@ -106,7 +106,7 @@ export default function PendingAssetCard({
                         disabled={isDeleting}
                         variant="ghost"
                         size="sm"
-                        className="w-full gap-1.5 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 text-xs"
+                        className="w-full gap-1.5 rounded-2xl text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 text-xs font-medium"
                     >
                         <Trash2 size={14} /> מחק פוסט
                     </Button>
@@ -115,36 +115,36 @@ export default function PendingAssetCard({
 
             {/* Modal for הצג פוסט */}
             <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-                <DialogContent className="sm:max-w-xl dir-rtl text-right rounded-2xl p-6" dir="rtl">
-                    <DialogHeader className="text-right pb-3 border-b border-gray-100">
+                <DialogContent className="sm:max-w-xl dir-rtl text-right rounded-3xl p-6 bg-card text-foreground border border-border" dir="rtl">
+                    <DialogHeader className="text-right pb-3 border-b border-border">
                         <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-fuchsia-100 text-fuchsia-800">
+                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-muted border border-border text-muted-foreground">
                                 תצוגה מקדימה - הצעת תוכן מגולדה
                             </span>
                         </div>
-                        <DialogTitle className="text-xl font-bold text-gray-900 mt-1">
+                        <DialogTitle className="text-xl font-bold text-foreground mt-1">
                             {title}
                         </DialogTitle>
                     </DialogHeader>
 
                     <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
-                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+                        <div className="bg-muted/40 p-4 rounded-2xl border border-border text-sm text-foreground leading-relaxed whitespace-pre-wrap">
                             {content}
                         </div>
                     </div>
 
-                    <DialogFooter className="gap-2 sm:justify-between flex-row-reverse border-t border-gray-100 pt-4">
+                    <DialogFooter className="gap-2 sm:justify-between flex-row-reverse border-t border-border pt-4">
                         <div className="flex gap-2">
                             <Button
                                 onClick={handleApproveAndPublish}
-                                className="gap-2 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-xl shadow-sm"
+                                className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-2xl shadow-sm font-semibold"
                             >
                                 <CheckCircle size={16} /> אישור ופרסום
                             </Button>
                             <Button
                                 onClick={() => setIsViewModalOpen(false)}
                                 variant="outline"
-                                className="rounded-xl border-gray-200"
+                                className="rounded-2xl border-border text-foreground hover:bg-accent"
                             >
                                 סגור
                             </Button>

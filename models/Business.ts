@@ -40,6 +40,9 @@ export interface IBusiness extends Document {
         custom_background_image?: string;
     };
     subscriptionStatus: "active" | "trial" | "expired";
+    lastImageGeneratedAt?: Date;
+    publicInstructions?: string;
+    internalNotes?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -105,6 +108,9 @@ const BusinessSchema = new Schema<IBusiness>(
             enum: ["active", "trial", "expired"],
             default: "trial"
         },
+        lastImageGeneratedAt: { type: Date },
+        publicInstructions: { type: String, default: "" },
+        internalNotes: { type: String, default: "" },
     },
     { timestamps: true }
 );

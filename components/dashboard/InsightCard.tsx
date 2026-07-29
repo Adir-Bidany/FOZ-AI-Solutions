@@ -11,13 +11,14 @@ interface InsightCardProps {
     id: string;
     title: string;
     content: string;
+    imageUrl?: string;
     type: string;
     date: string;
     agentName: "Golda";
     status?: string;
 }
 
-export default function InsightCard({ id, title, content, type, date, agentName, status = "approved" }: InsightCardProps) {
+export default function InsightCard({ id, title, content, imageUrl, type, date, agentName, status = "approved" }: InsightCardProps) {
     const [copied, setCopied] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [isArchiving, setIsArchiving] = useState(false);
@@ -27,12 +28,12 @@ export default function InsightCard({ id, title, content, type, date, agentName,
     const marketingTypes = ["social_post", "marketing_tip", "campaign_idea"];
     const isMarketing = marketingTypes.includes(type);
 
-    const cardBg = isMarketing ? "bg-indigo-50/40 border-indigo-100" : "bg-emerald-50/40 border-emerald-100";
-    const badgeBg = isMarketing ? "bg-indigo-100" : "bg-emerald-100";
-    const badgeText = isMarketing ? "text-indigo-700" : "text-emerald-700";
-    const btnText = isMarketing ? "text-indigo-600" : "text-emerald-600";
-    const btnBorder = isMarketing ? "border-indigo-200" : "border-emerald-200";
-    const btnHover = isMarketing ? "hover:bg-indigo-50" : "hover:bg-emerald-50";
+    const cardBg = "bg-card/90 border-border text-card-foreground shadow-sm backdrop-blur-xl hover:shadow-md";
+    const badgeBg = "bg-muted border border-border";
+    const badgeText = "text-muted-foreground font-semibold";
+    const btnText = "text-foreground font-semibold";
+    const btnBorder = "border-border";
+    const btnHover = "hover:bg-accent";
 
     const isPending = status === "pending";
 
@@ -116,8 +117,20 @@ export default function InsightCard({ id, title, content, type, date, agentName,
             </CardHeader>
             
             <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"}`}>
-                <CardContent className="p-6 pt-2 flex-grow relative">
-                    <div className={`text-gray-700 whitespace-pre-wrap text-[15px] leading-relaxed`} dir="auto">
+                <CardContent className="p-6 pt-2 flex-grow relative space-y-4">
+                    {imageUrl && (
+                        <div className="relative w-full h-56 rounded-2xl overflow-hidden border border-border/60 shadow-sm bg-black/5 group">
+                            <img
+                                src={imageUrl}
+                                alt={title}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                            <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/20">
+                                AI Image
+                            </div>
+                        </div>
+                    )}
+                    <div className="text-foreground whitespace-pre-wrap text-[15px] leading-relaxed" dir="auto">
                         {content}
                     </div>
                 </CardContent>

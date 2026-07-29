@@ -154,7 +154,7 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
             {/* The Floating Action Button (Anchor) */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`relative w-16 h-16 rounded-full overflow-hidden shadow-2xl transition-transform hover:scale-105 border-4 ${ringClass} ring-4 ring-[#FCE7F3] bg-white flex items-center justify-center cursor-pointer ${!isOpen ? "animate-pulse" : ""}`}
+                className={`relative w-16 h-16 rounded-full overflow-hidden shadow-2xl transition-transform hover:scale-105 border-4 ${ringClass} ring-4 ring-[#FCE7F3] bg-card flex items-center justify-center cursor-pointer ${!isOpen ? "animate-pulse" : ""}`}
             >
                 {isFozLogo ? (
                     <Image src="/logo.png" alt="FOZ AI" width={40} height={40} className="object-contain" />
@@ -165,11 +165,11 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
 
             {/* Platform Context: Sliding Drawer */}
             {context === "platform" && isOpen && (
-                <div className="absolute bottom-20 right-0 w-80 bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-gray-100 animate-in slide-in-from-bottom-10 fade-in duration-300">
-                    <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 text-gray-500 hover:text-black">
+                <div className="absolute bottom-20 right-0 w-80 bg-card/90 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-border animate-in slide-in-from-bottom-10 fade-in duration-300">
+                    <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
                         <X size={20} />
                     </button>
-                    <h3 className="font-bold text-xl mb-4 text-gray-800 pt-2">ניווט מהיר</h3>
+                    <h3 className="font-bold text-xl mb-4 text-foreground pt-2">ניווט מהיר</h3>
                     <div className="space-y-3">
                         <Button variant="outline" className="w-full justify-start gap-2 h-12" onClick={() => setShowRegisterModal(true)}>
                             <UserPlus className="w-4 h-4 text-blue-500" /> הרשמה כלקוח
@@ -191,13 +191,13 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
             {/* Platform Registration Modal */}
             {context === "platform" && showRegisterModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
-                    <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
-                        <button onClick={() => setShowRegisterModal(false)} className="absolute top-4 left-4 text-gray-400 hover:text-black">
+                    <div className="bg-card rounded-3xl p-8 max-w-md w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
+                        <button onClick={() => setShowRegisterModal(false)} className="absolute top-4 left-4 text-muted-foreground hover:text-foreground">
                             <X size={24} />
                         </button>
                         
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">הרשמה לאזור אישי</h2>
-                        <p className="text-sm text-gray-500 mb-6 flex items-center gap-2">
+                        <h2 className="text-2xl font-bold text-foreground mb-2">הרשמה לאזור אישי</h2>
+                        <p className="text-sm text-muted-foreground mb-6 flex items-center gap-2">
                             <ShieldCheck size={16} className="text-green-500" />
                             הפרטים שלך נשמרים בצורה מאובטחת.
                         </p>
@@ -207,8 +207,8 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
                                 <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <ShieldCheck size={32} />
                                 </div>
-                                <h3 className="font-bold text-lg text-gray-900 mb-2">הרשמה בוצעה בהצלחה!</h3>
-                                <p className="text-gray-600">בקשתך נשלחה למנהל העסק. תוכל להתחבר לאזור האישי מיד לאחר האישור.</p>
+                                <h3 className="font-bold text-lg text-foreground mb-2">הרשמה בוצעה בהצלחה!</h3>
+                                <p className="text-muted-foreground">בקשתך נשלחה למנהל העסק. תוכל להתחבר לאזור האישי מיד לאחר האישור.</p>
                                 <Button className="mt-6 w-full" onClick={() => setShowRegisterModal(false)}>סגור</Button>
                             </div>
                         ) : (
@@ -216,9 +216,9 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
                                 {error && <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
 
                                 <div>
-                                    <label className="text-xs font-semibold text-gray-600 mb-1 block">בחר עסק</label>
+                                    <label className="text-xs font-semibold text-muted-foreground mb-1 block">בחר עסק</label>
                                     <select 
-                                        className="w-full h-10 px-3 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full h-10 px-3 rounded-md border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                                         value={businessId}
                                         onChange={(e) => setBusinessId(e.target.value)}
                                     >
@@ -238,7 +238,7 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
                                 <Input placeholder="סיסמה" type="password" value={password} onChange={e => setPassword(e.target.value)} />
 
                                 <Button 
-                                    className="w-full bg-indigo-600 hover:bg-indigo-700 h-12 text-lg rounded-xl mt-2" 
+                                    className="w-full bg-primary hover:bg-primary/90 h-12 text-lg rounded-xl mt-2 text-primary-foreground" 
                                     onClick={handleRegisterPlatform}
                                     disabled={loading || !businessId || !name || !email || !phone || !password}
                                 >
@@ -252,16 +252,16 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
 
             {/* Consumer Context: Login/CRM Drawer */}
             {context === "consumer" && isOpen && (
-                <div className="absolute bottom-20 right-0 w-80 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-gray-100 p-6 animate-in slide-in-from-bottom-10 fade-in duration-300">
-                    <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-black">
+                <div className="absolute bottom-20 right-0 w-80 bg-card/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-border p-6 animate-in slide-in-from-bottom-10 fade-in duration-300">
+                    <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
                         <X size={20} />
                     </button>
                     {!customer ? (
                         <div className="space-y-4 pt-2">
-                            <h3 className="font-bold text-lg text-gray-800">
+                            <h3 className="font-bold text-lg text-foreground">
                                 {mode === "login" ? "התחברות אזור אישי" : "הרשמה לאזור אישי"}
                             </h3>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                                 הנתונים שלך נשמרים בצורה מאובטחת.
                             </p>
 
@@ -281,7 +281,7 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
                                 <Input placeholder="סיסמה" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
                                 
                                 <Button 
-                                    className="w-full bg-indigo-600 hover:bg-indigo-700" 
+                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" 
                                     onClick={mode === "login" ? handleLoginConsumer : handleRegisterConsumer}
                                     disabled={loading}
                                 >
@@ -291,7 +291,7 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
 
                             <div className="text-center text-sm pt-2">
                                 <button 
-                                    className="text-indigo-600 hover:underline"
+                                    className="text-primary hover:underline"
                                     onClick={() => {
                                         setMode(mode === "login" ? "register" : "login");
                                         setError("");
@@ -308,25 +308,25 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
                                     <User className="text-green-600 w-6 h-6" />
                                 </div>
                                 <div className="truncate">
-                                    <h3 className="font-bold text-gray-800 truncate">{customer.name} {customer.lastName}</h3>
-                                    <p className="text-xs text-gray-500 truncate">{customer.phone}</p>
+                                    <h3 className="font-bold text-foreground truncate">{customer.name} {customer.lastName}</h3>
+                                    <p className="text-xs text-muted-foreground truncate">{customer.phone}</p>
                                 </div>
                             </div>
 
                             <div className="space-y-3 pt-2">
-                                <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
-                                    <span className="text-sm text-gray-600 flex items-center gap-1"><CheckCircle className="w-4 h-4 text-indigo-500" /> טיפולים שבוצעו</span>
+                                <div className="flex justify-between items-center bg-muted/50 p-2 rounded">
+                                    <span className="text-sm text-muted-foreground flex items-center gap-1"><CheckCircle className="w-4 h-4 text-primary" /> טיפולים שבוצעו</span>
                                     <span className="font-semibold">{customer.metrics?.totalAppointments || 0}</span>
                                 </div>
                                 <div>
-                                    <span className="text-sm text-gray-600 font-medium mb-1 flex items-center gap-1"><Clock className="w-4 h-4 text-indigo-500" /> היסטוריית טיפולים</span>
+                                    <span className="text-sm text-muted-foreground font-medium mb-1 flex items-center gap-1"><Clock className="w-4 h-4 text-primary" /> היסטוריית טיפולים</span>
                                     <div className="flex flex-wrap gap-1 mt-1">
                                         {(customer.history?.lastTreatments || []).length > 0 ? (
                                             customer.history.lastTreatments.map((t: string, i: number) => (
-                                                <span key={i} className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full">{t}</span>
+                                                <span key={i} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">{t}</span>
                                             ))
                                         ) : (
-                                            <span className="text-xs text-gray-400">אין היסטוריה</span>
+                                            <span className="text-xs text-muted-foreground">אין היסטוריה</span>
                                         )}
                                     </div>
                                 </div>
@@ -351,8 +351,8 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
                         />
                     )}
                     {/* Sidebar container */}
-                    <div className={`fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
-                        <button onClick={() => setIsOpen(false)} className="absolute top-4 left-4 p-2 text-gray-500 hover:bg-gray-100 rounded-full z-[60]">
+                    <div className={`fixed top-0 left-0 h-full w-80 bg-card shadow-2xl z-50 transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
+                        <button onClick={() => setIsOpen(false)} className="absolute top-4 left-4 p-2 text-muted-foreground hover:bg-accent rounded-full z-[60]">
                             <X size={20} />
                         </button>
                         <div className="h-full overflow-y-auto w-full relative z-50">

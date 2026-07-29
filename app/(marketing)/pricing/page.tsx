@@ -159,7 +159,7 @@ export default function PricingPage() {
                                         </Button>
                                     </Link>
                                     {plan.period === "חד פעמי" && (
-                                        <p className="text-xs text-center text-gray-400 mt-2">
+                                        <p className="text-xs text-center text-zinc-300 dark:text-zinc-300 mt-2">
                                             * דורש חשבון Google AI ו-SimplyBook
                                         </p>
                                     )}

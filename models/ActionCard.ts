@@ -13,7 +13,7 @@ export interface IActionCard extends Document {
     };
 
     execution_payload: {
-        action_type: "send_message" | "update_db" | "schedule_event" | "create_campaign" | "cancel_appointment";
+        action_type: "send_message" | "update_db" | "schedule_event" | "create_campaign" | "cancel_appointment" | "missing_info";
         params: Record<string, any>;
     };
 
@@ -48,7 +48,7 @@ const ActionCardSchema = new Schema<IActionCard>(
         execution_payload: {
             action_type: {
                 type: String,
-                enum: ["send_message", "update_db", "schedule_event", "create_campaign", "cancel_appointment"],
+                enum: ["send_message", "update_db", "schedule_event", "create_campaign", "cancel_appointment", "missing_info"],
                 required: true
             },
             params: { type: Schema.Types.Mixed },

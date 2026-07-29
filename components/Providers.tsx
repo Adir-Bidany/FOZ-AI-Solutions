@@ -1,6 +1,7 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
+import { ThemeProvider } from "next-themes";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
@@ -22,5 +23,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         prevPathRef.current = pathname;
     }, [pathname]);
 
-    return <SessionProvider>{children}</SessionProvider>;
+    return (
+        <SessionProvider>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+                {children}
+            </ThemeProvider>
+        </SessionProvider>
+    );
 }

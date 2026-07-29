@@ -9,13 +9,22 @@ import {
     LogOut,
     Sparkles,
     Crown,
-    BarChart3, // For Finance
+    BarChart3,
     Globe,
+    TrendingUp,
+    Menu,
 } from "lucide-react";
 import Link from "next/link";
 import ClientLogo from "@/components/ClientLogo";
 import { signOut } from "next-auth/react";
 import { archiveCurrentSession } from "@/actions/dashboard";
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface SidebarProps {
     client: {
@@ -27,7 +36,14 @@ interface SidebarProps {
     };
 }
 
-export default function Sidebar({ client }: SidebarProps) {
+/** Shared nav content rendered inside both the desktop sidebar and the mobile Sheet */
+function SidebarContent({
+    client,
+    onNavClick,
+}: {
+    client: SidebarProps["client"];
+    onNavClick?: () => void;
+}) {
     const handleLogout = async () => {
         if (client?._id) {
             try {
@@ -40,85 +56,96 @@ export default function Sidebar({ client }: SidebarProps) {
     };
 
     return (
-        <div className="flex flex-col h-full bg-white border-l border-gray-100">
-            <div className="p-6 border-b flex items-center gap-3">
+        <div className="flex flex-col h-full bg-card text-card-foreground">
+            {/* Business identity header */}
+            <div className="p-6 border-b border-border flex items-center gap-3">
                 <div className="w-10 h-10 shrink-0">
                     <ClientLogo src={client.logo || null} businessName={client.businessName} />
                 </div>
-                <span className="font-bold text-lg truncate text-gray-800">
+                <span className="font-bold text-lg truncate text-foreground">
                     {client.businessName}
                 </span>
             </div>
 
+            {/* Navigation links */}
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
-                <Link href="/dashboard">
+                <Link href="/dashboard" onClick={onNavClick}>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 font-medium text-gray-600 hover:bg-purple-50 hover:text-purple-900 h-12 rounded-xl"
+                        className="w-full justify-start gap-3 font-semibold text-foreground hover:bg-primary/10 hover:text-primary h-12 rounded-xl"
                     >
                         <Sparkles size={20} /> המשרד שלי
                     </Button>
                 </Link>
 
-                <Link href="/dashboard/calendar">
+                <Link href="/dashboard/calendar" onClick={onNavClick}>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 rounded-xl"
+                        className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
                     >
                         <Calendar size={20} /> יומן תורים
                     </Button>
                 </Link>
 
-                <Link href="/dashboard/customers">
+                <Link href="/dashboard/customers" onClick={onNavClick}>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 rounded-xl"
+                        className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
                     >
                         <Users size={20} /> לקוחות
                     </Button>
                 </Link>
 
-                <Link href="/dashboard/marketing">
+                <Link href="/dashboard/marketing" onClick={onNavClick}>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 rounded-xl"
+                        className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
                     >
                         <Megaphone size={20} /> שיווק ותוכן
                     </Button>
                 </Link>
 
-                <Link href="/dashboard/finance">
+                <Link href="/dashboard/finance" onClick={onNavClick}>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 rounded-xl"
+                        className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
                     >
                         <BarChart3 size={20} /> ניתוח פיננסי
                     </Button>
                 </Link>
 
-                <Link href="/dashboard/website">
+                <Link href="/dashboard/website" onClick={onNavClick}>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 rounded-xl"
+                        className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
                     >
                         <Globe size={20} /> עמוד נחיתה
                     </Button>
                 </Link>
 
-                <div className="pt-4 mt-4 border-t border-gray-100 space-y-2">
-                    <Link href="/dashboard/settings">
+                <Link href="/dashboard/growth" onClick={onNavClick}>
+                    <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
+                    >
+                        <TrendingUp size={20} /> צמיחה וידע
+                    </Button>
+                </Link>
+
+                <div className="pt-4 mt-4 border-t border-border space-y-2">
+                    <Link href="/dashboard/settings" onClick={onNavClick}>
                         <Button
                             variant="ghost"
-                            className="w-full justify-start gap-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 h-12 rounded-xl"
+                            className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
                         >
                             <Settings size={20} /> הגדרות
                         </Button>
                     </Link>
 
-                    <Link href="/pricing">
+                    <Link href="/pricing" onClick={onNavClick}>
                         <Button
                             variant="ghost"
-                            className="w-full justify-start gap-3 font-medium text-amber-600 hover:text-amber-700 hover:bg-amber-50 h-12 rounded-xl"
+                            className="w-full justify-start gap-3 font-semibold text-primary hover:bg-primary/10 h-12 rounded-xl"
                         >
                             <Crown size={20} /> שדרוג חבילה
                         </Button>
@@ -126,15 +153,51 @@ export default function Sidebar({ client }: SidebarProps) {
                 </div>
             </nav>
 
-            <div className="p-4 border-t bg-gray-50/50">
+            {/* Logout */}
+            <div className="p-4 border-t border-border bg-muted/30">
                 <Button
                     onClick={handleLogout}
                     variant="outline"
-                    className="w-full gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100 bg-white h-10 rounded-xl"
+                    className="w-full gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 border-red-100 dark:border-red-900 bg-card h-10 rounded-xl"
                 >
                     <LogOut size={16} /> התנתקות
                 </Button>
             </div>
+        </div>
+    );
+}
+
+/** Desktop sidebar — hidden on mobile, visible at lg+ */
+export default function Sidebar({ client }: SidebarProps) {
+    return (
+        <aside className="hidden lg:flex flex-col w-64 shrink-0 border-s border-border h-full">
+            <SidebarContent client={client} />
+        </aside>
+    );
+}
+
+/** Mobile hamburger + Sheet drawer — visible only below lg */
+export function MobileSidebarTrigger({ client }: SidebarProps) {
+    return (
+        <div className="lg:hidden">
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 rounded-xl"
+                        aria-label="פתח תפריט ניווט"
+                    >
+                        <Menu size={22} />
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-72 p-0 border-border" dir="rtl">
+                    <SheetHeader className="sr-only">
+                        <SheetTitle>תפריט ניווט</SheetTitle>
+                    </SheetHeader>
+                    <SidebarContent client={client} />
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }

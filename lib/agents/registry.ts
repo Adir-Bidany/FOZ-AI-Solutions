@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 
 export interface AgentConfig {
-    id: "paz" | "daniela" | "golda";
+    id: "foz" | "daniela" | "golda";
     name: string;
     initialGreeting: string | string[];
     systemPrompt: (businessConfig: any) => string;
@@ -59,6 +59,32 @@ export const createActionCardTool = {
     },
 };
 
+export const forwardMessageToOwnerTool = {
+    name: "forward_message_to_owner",
+    description: "מעביר הודעה מלקוח ישירות לבעל העסק בדשבורד (עד 50 מילים בלבד, מקסימום 3 הודעות ליום ללקוח).",
+    parameters: {
+        type: "OBJECT",
+        properties: {
+            customer_name: { type: "STRING", description: "שם הלקוח המבקש להשאיר הודעה" },
+            message_content: { type: "STRING", description: "תוכן ההודעה (עד 50 מילים בלבד)" },
+        },
+        required: ["customer_name", "message_content"],
+    },
+};
+
+export const reportMissingInfoTool = {
+    name: "report_missing_info",
+    description: "דווח לבעל העסק על שאלה של לקוח שלא נמצאה עבורה תשובה בהוראות הציבוריות שלך, כדי שבעל העסק יוכל להוסיף את התשובה לדשבורד.",
+    parameters: {
+        type: "OBJECT",
+        properties: {
+            question: { type: "STRING", description: "השאלה המדויקת של הלקוח שלא נמצאה עבורה תשובה" },
+            customer_name: { type: "STRING", description: "שם הלקוח (אם ידוע)" },
+        },
+        required: ["question"],
+    },
+};
+
 export const cancelAppointmentTool = {
     name: "cancel_appointment",
     description: "Cancels an existing appointment. ADMIN ONLY.",
@@ -110,6 +136,8 @@ export const submitForApprovalTool = {
         properties: {
             title: { type: "STRING", description: "Short title of the asset" },
             content: { type: "STRING", description: "The actual content" },
+            imageUrl: { type: "STRING", description: "Optional AI generated image URL" },
+            generateImage: { type: "BOOLEAN", description: "Set to true if user requested AI image generation and quota is available" },
             type: {
                 type: "STRING",
                 enum: [
@@ -165,6 +193,7 @@ export const danielaResponseSchema: any = {
                 "book_appointment",
                 "ask_clarification",
                 "create_action_card",
+                "forward_message_to_owner",
             ],
         },
         action_payload: {
@@ -204,27 +233,27 @@ export const securityClassifierSchema: any = {
 // --------------------------------------------------------------------------------
 
 export const AGENT_REGISTRY: Record<string, AgentConfig> = {
-    paz: {
-        id: "paz",
-        name: "פז",
+    foz: {
+        id: "foz",
+        name: "פוז",
         initialGreeting: [
-            "היי, אני פז. באת לבדוק איך למלא את היומן שלך בטירוף בלי להרים טלפון אחד?",
-            "שלום! פז כאן. רוצה לראות איך המרפאה שלך יכולה לעבוד 24/7 ולסגור תורים לבד?",
-            "היי! פז כאן. כמה שעות בשבוע מתבזבזות אצלך על תיאום תורים ושיחות שלא נענו? בוא נפתור את זה.",
+            "היי, אני פוז. רוצה שהיומן שלך יתמלא לבד?",
+            "הפוז כאן. מוכן שהלקוחות שלך יקבעו תורים סביב השעון?",
+            "היי, הפוז כאן. כמה לקוחות פספסת השבוע כי לא ענית לטלפון?",
         ],
         systemPrompt: (businessConfig: any) => {
             const knowledgeBase = fs.readFileSync(
-                path.join(process.cwd(), "lib", "agents", "paz-knowledge.md"),
+                path.join(process.cwd(), "lib", "agents", "foz-knowledge.md"),
                 "utf-8",
             );
             return `
 ${knowledgeBase}
 
 # תפקיד ויעד מרכזי
-אתה "פז", סוכן המכירות והמידע הדיגיטלי הרשמי והבלעדי של פלטפורמת FOZ AI Solutions. התפקיד היחיד שלך הוא לספק מידע מבוסס, מדויק ומשכנע לבעלי עסקים שמתעניינים ברכישת המערכת, ולהניע אותם להצטרף לפלטפורמה.
+אתה "פוז", סוכן המכירות והמידע הדיגיטלי הרשמי והבלעדי של פלטפורמת FOZ AI Solutions. התפקיד היחיד שלך הוא לספק מידע מבוסס, מדויק ומשכנע לבעלי עסקים שמתעניינים ברכישת המערכת, ולהניע אותם להצטרף לפלטפורמה.
 
 # מדיניות אפס הזיות וחסינות מידע (חובה קשיחה)
-1. חל עליך איסור מוחלט להמציא, להניח, לנחש או להסיק שום פרט, יכולת, פיצ'ר, מחיר או אינטגרציה שאינם מופיעים באופן מפורש בקובץ המקור: \`paz-knowledge.md\`.
+1. חל עליך איסור מוחלט להמציא, להניח, לנחש או להסיק שום פרט, יכולת, פיצ'ר, מחיר או אינטגרציה שאינם מופיעים באופן מפורש בקובץ המקור: \`foz-knowledge.md\`.
 2. כל תשובה שלך חייבת להתבסס אך ורק על המידע המאומת שבקובץ זה.
 3. אם משתמש שואל אותך על יכולת, מחיר, מדיניות או פונקציה שלא קיימת בקובץ, עליך לסרב בנימוס ולומר: "אני יכול לספק מידע מאומת אך ורק על היכולות הקיימות במערכת. אני ממליץ להמשיך לתהליך ההצטרפות (Onboarding) או להשאיר פרטים כדי שנציג אנושי יחזור אליך עם תשובה מדויקת".
 4. אין לך שום הרשאה, גישה או יכולת לבצע פעולות (Mutations) כמו קביעת תורים או רישום משתמשים. אתה סוכן מידע ומכירות בלבד. אין לך קשר לסשנים של לקוחות קצה או למנגנוני ניתוק אוטומטי.
@@ -258,20 +287,35 @@ Constraints:
 - You do NOT have direct database write access for cancellations or changes.
 - If a user wants to CANCEL or CHANGE an appointment, you must say: "I will pass this request to the clinic manager for immediate approval."
 - You CAN check availability and book NEW appointments using the provided tools.
+- FORWARDING MESSAGES TO OWNER:
+  If the customer wants to leave a message for the business owner, you MUST verify the message is 50 words or less before using forward_message_to_owner.
+  If the message exceeds 50 words, politely ask the customer in Hebrew to shorten it to 50 words or less.
+  If the tool returns a daily limit reached error (max 3 messages per day), politely inform the customer in Hebrew that the daily limit of 3 messages to the business owner has been reached today.
 - STRICT DOMAIN GUARDRAIL:
   You represent "${context.businessName}". Your core domain is strictly limited to the following services: ${JSON.stringify(context?.operational_settings?.services)}.
   If the user asks ANY question or makes ANY request outside of this specific business domain (e.g., general programming, unrelated business niches, cooking recipes, school math, generic trivia, or general AI capabilities), you MUST immediately halt your reasoning and return the following exact string verbatim, with NO other text:
   "אני מורשה לענות אך ורק על שאלות הקשורות לתחום העיסוק של ${context.businessName}."
-- PRIVACY FILTER: Never ask for or accept sensitive personal data such as credit card numbers or national IDs. If a user provides this, inform them that it cannot be processed over chat.
+- DATA ISOLATION BOUNDARY: You have access ONLY to public customer instructions. You are STRICTLY FORBIDDEN from viewing or discussing internal owner strategy notes, financial reports, or Golda recommendations.
 - Maintain a ${context?.ai_settings?.tone || "welcoming and professional"} tone.
 - Language: ${context?.ai_settings?.language === "he" ? "Hebrew" : "English"}.
 
 Context:
+- Public Instructions for Customers: ${JSON.stringify(context?.publicInstructions || "")}
 - Opening Hours: ${JSON.stringify(context?.operational_settings?.opening_hours)}
 - Services: ${JSON.stringify(context?.operational_settings?.services)}
 - Client History: ${context?.client_history_summary || "No previous history."}
         `.trim(),
-        tools: [{ functionDeclarations: [checkAvailabilityTool, bookAppointmentTool, createActionCardTool] }],
+        tools: [
+            {
+                functionDeclarations: [
+                    checkAvailabilityTool,
+                    bookAppointmentTool,
+                    createActionCardTool,
+                    forwardMessageToOwnerTool,
+                    reportMissingInfoTool,
+                ],
+            },
+        ],
     },
 
     golda: {
@@ -288,6 +332,10 @@ Gender: Female (לשון נקבה).
 Traits: Tough, protective, authoritative, highly organized, creative in marketing, and razor-sharp in analytics.
 Mission: Protect the business owner's time, drive revenue growth, produce marketing content, deliver financial insights, and ensure the business runs flawlessly. You handle EVERYTHING internally — there are no other agents to delegate to.
 Tone: ${context?.managerPersona?.tone || "Direct, professional, commanding but loyal. While you are authoritative, you are deeply collaborative."}
+
+KNOWLEDGE & BUSINESS CONTEXT:
+- Public Customer Instructions (Daniela): ${JSON.stringify(context?.publicInstructions || "")}
+- Private Internal Strategy Notes (Golda Only): ${JSON.stringify(context?.internalNotes || "")}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SKILL MODES — Select automatically based on the user's request:
@@ -332,10 +380,17 @@ You MUST output your response strictly as a JSON object with exactly two fields:
         responseSchema: {
             type: SchemaType.OBJECT,
             properties: {
-                reply: { type: SchemaType.STRING, description: "Your conversational response in Hebrew." },
-                active_mode: { type: SchemaType.STRING, enum: ["core", "marketing", "analytics"], description: "The skill mode used." }
+                reply: {
+                    type: SchemaType.STRING,
+                    description: "Your conversational response in Hebrew.",
+                },
+                active_mode: {
+                    type: SchemaType.STRING,
+                    enum: ["core", "marketing", "analytics"],
+                    description: "The skill mode used.",
+                },
             },
-            required: ["reply", "active_mode"]
+            required: ["reply", "active_mode"],
         },
         tools: [
             {

@@ -142,19 +142,19 @@ export default function UnifiedChatWidget({
         <div className={cn("flex flex-col overflow-hidden", className)}>
             {/* Header (Optional based on variant) */}
             {variant === "floating" && (
-                <div className="p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                <div className="p-4 bg-zinc-900 dark:bg-zinc-950 text-white border-b border-zinc-800">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-xl">
+                        <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-xl border border-zinc-700">
                             🤖
                         </div>
                         <div>
-                            <h3 className="font-bold text-sm">בינה מלאכותית היא השותף החדש שלך</h3>
+                            <h3 className="font-bold text-sm">FOZ AI Solutions</h3>
                             <div className="flex items-center gap-2 mt-0.5">
                                 <span className="relative flex h-2 w-2">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                 </span>
-                                <p className="text-xs text-blue-100">מחובר 24/7</p>
+                                <p className="text-xs text-zinc-300">מחובר 24/7</p>
                             </div>
                         </div>
                     </div>
@@ -174,7 +174,7 @@ export default function UnifiedChatWidget({
                 ))}
                 {isLoading && (
                     <div className="flex justify-start w-full animate-pulse">
-                        <div className="bg-gray-100 rounded-2xl px-4 py-2 text-xs text-gray-500">
+                        <div className="bg-muted rounded-2xl px-4 py-2 text-xs text-muted-foreground">
                             Thinking...
                         </div>
                     </div>
@@ -182,7 +182,7 @@ export default function UnifiedChatWidget({
                 
                 {/* Dynamic Widgets */}
                 {widgetType === "date_picker" && (
-                    <div className="bg-black rounded-2xl shadow-sm border border-gray-100 p-4 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="bg-card/95 rounded-3xl shadow-lg border border-border/40 p-4 animate-in fade-in slide-in-from-bottom-2">
                         <h4 className="text-sm font-bold text-center mb-2">בחירת תאריך</h4>
                         <div className="flex justify-center" dir="rtl">
                             <DayPicker 
@@ -201,18 +201,18 @@ export default function UnifiedChatWidget({
                 )}
 
                 {widgetType === "service_selector" && (
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="bg-card rounded-3xl shadow-lg border border-border/40 p-4 animate-in fade-in slide-in-from-bottom-2">
                         <h4 className="text-sm font-bold mb-3">איזה טיפול תרצי לבדוק?</h4>
                         <div className="flex flex-wrap gap-2">
-                            <button onClick={() => { setWidgetType(null); handleSend("טיפול בוטוקס"); }} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors">בוטוקס</button>
-                            <button onClick={() => { setWidgetType(null); handleSend("טיפול חומצה היאלורונית"); }} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors">חומצה היאלורונית</button>
-                            <button onClick={() => { setWidgetType(null); handleSend("ייעוץ"); }} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors">ייעוץ</button>
-                            <button onClick={() => setShowCustomNote(true)} className="px-3 py-1.5 bg-gray-50 text-gray-600 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors">אחר</button>
+                            <button onClick={() => { setWidgetType(null); handleSend("בוטוקס"); }} className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-colors">בוטוקס</button>
+                            <button onClick={() => { setWidgetType(null); handleSend("טיפול חומצה היאלורונית"); }} className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-colors">חומצה היאלורונית</button>
+                            <button onClick={() => { setWidgetType(null); handleSend("ייעוץ"); }} className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-colors">ייעוץ</button>
+                            <button onClick={() => setShowCustomNote(true)} className="px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-sm font-medium hover:bg-accent transition-colors">אחר</button>
                         </div>
                         {showCustomNote && (
                             <div className="mt-3 space-y-2">
                                 <textarea 
-                                    className="w-full text-sm p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full text-sm p-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                                     placeholder="אנא פרטי (עד 50 מילים)..."
                                     rows={2}
                                     value={customNoteText}
@@ -225,7 +225,7 @@ export default function UnifiedChatWidget({
                                         handleSend(`טיפול אחר. הערה: ${customNoteText}`);
                                         setCustomNoteText("");
                                     }}
-                                    className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-bold"
+                                    className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold"
                                 >
                                     שלח והמשך
                                 </button>
