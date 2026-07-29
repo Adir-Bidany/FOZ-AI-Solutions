@@ -38,9 +38,9 @@ export function ChatBubble({ role, content, mode, avatarUrl }: ChatBubbleProps) 
         <div className={containerClass}>
             {/* Avatar for bot */}
             {!isUser && (
-                <Avatar className="w-8 h-8 mt-1 border border-border shrink-0">
-                    <AvatarImage src={avatarUrl || "/favicon.ico"} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold">P</AvatarFallback>
+                <Avatar className="w-8 h-8 mt-1 border border-border shrink-0 bg-background">
+                    <AvatarImage src={avatarUrl && avatarUrl !== "/favicon.ico" ? avatarUrl : "/logo.png"} className="object-contain p-0.5" />
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold">F</AvatarFallback>
                 </Avatar>
             )}
 
