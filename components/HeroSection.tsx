@@ -1,9 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import UnifiedChatWidget from "@/components/chat/UnifiedChatWidget";
 import { motion } from "framer-motion";
 
@@ -254,16 +251,6 @@ export default function HeroSection() {
                         וקבלו אתר אינטרנט, דשבורד ניהול וסוכנים חכמים מוכנים ב-5 דקות!
                     </p>
 
-                    <div className="flex flex-row flex-wrap gap-4 mt-4">
-                        <Link href="/onboarding">
-                            <Button
-                                size="lg"
-                                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 py-6 text-lg gap-2 transition-all shadow-md"
-                            >
-                                הקם עסק אוטונומי ב-5 דק' 🚀
-                            </Button>
-                        </Link>
-                    </div>
                 </div>
 
                 {/* Left Side: 3D Chat */}
