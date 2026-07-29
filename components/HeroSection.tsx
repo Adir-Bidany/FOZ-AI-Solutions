@@ -216,7 +216,7 @@ export default function HeroSection() {
         >
             <div className="container mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
                 {/* Right Side: Text */}
-                <div className="flex flex-col gap-6 text-right order-2 lg:order-1">
+                <div className="flex flex-col gap-6 text-center lg:text-right items-center lg:items-start order-2 lg:order-1">
                     <h1
                         className="text-3xl md:text-5xl lg:text-7xl font-bold leading-tight tracking-tight select-none"
                     >

@@ -50,7 +50,7 @@ export default function Home() {
                                 borderColor: "border-blue-500/30"
                             }
                         ].map((agent, idx) => (
-                            <div key={idx} className={`p-8 rounded-3xl bg-card text-card-foreground border ${agent.borderColor} shadow-sm hover:scale-[1.02] transition-transform`}>
+                            <div key={idx} className={`p-8 rounded-3xl bg-card text-card-foreground border ${agent.borderColor} shadow-sm hover:scale-[1.02] transition-transform text-center md:text-right`}>
                               
                                 <h3 className="text-2xl font-bold text-foreground mb-1">{agent.name}</h3>
                                 <div className="text-sm text-purple-500 dark:text-purple-400 mb-3 font-semibold">{agent.role}</div>

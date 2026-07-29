@@ -71,8 +71,8 @@ export default function LoginPage() {
 
                 {/* Login Card */}
                 <Card className="bg-card/90 backdrop-blur-xl border border-border shadow-xl dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] rounded-3xl overflow-hidden transition-all duration-500">
-                    <CardHeader className="text-right pb-4 pt-6 px-6 sm:px-8 border-b border-border/40 bg-muted/20">
-                        <div className="flex items-center gap-2 mb-1">
+                    <CardHeader className="text-center sm:text-right pb-4 pt-6 px-6 sm:px-8 border-b border-border/40 bg-muted/20">
+                        <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
                             <Sparkles className="w-4 h-4 text-primary" />
                             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">כניסה למערכת</span>
                         </div>
