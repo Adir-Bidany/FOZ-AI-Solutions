@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { Link as LinkIcon, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,12 +27,13 @@ interface GlobalHeaderProps {
     };
     /** Mobile hamburger trigger injected from the server layout */
     mobileSidebarTrigger?: React.ReactNode;
+    /** Business slug passed from the server layout (replaces useSession) */
+    sessionBusinessId?: string;
 }
 
-export default function GlobalHeader({ clientData, mobileSidebarTrigger }: GlobalHeaderProps) {
+export default function GlobalHeader({ clientData, mobileSidebarTrigger, sessionBusinessId }: GlobalHeaderProps) {
     const pathname = usePathname();
     const router = useRouter();
-    const { data: session } = useSession();
 
     const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
     const [adminPassword, setAdminPassword] = useState("");
@@ -47,7 +47,7 @@ export default function GlobalHeader({ clientData, mobileSidebarTrigger }: Globa
         return null;
     }
 
-    const clientSlug = clientData?.slug || session?.user?.businessId || "demo";
+    const clientSlug = clientData?.slug || sessionBusinessId || "demo";
     const businessName = clientData?.businessName || "העסק שלי";
     const businessLogo = clientData?.logo || (clientData as any)?.landing_page_data?.hero_image_url || null;
 

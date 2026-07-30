@@ -54,6 +54,7 @@ export default async function DashboardLayout({
             <GlobalHeader
                 clientData={serializedClient}
                 mobileSidebarTrigger={<MobileSidebarTrigger client={serializedClient} />}
+                sessionBusinessId={serializedClient._id?.toString() || undefined}
             />
 
             {/* Content row: main area + desktop sidebar */}
