@@ -1,6 +1,4 @@
 import { SchemaType } from "@google/generative-ai";
-import fs from "fs";
-import path from "path";
 
 export interface AgentConfig {
     id: "foz" | "daniela" | "golda";
@@ -243,6 +241,12 @@ export const AGENT_REGISTRY: Record<string, AgentConfig> = {
             "היי, פחות טרטורים, יותר זמן פנוי ויותר כסף בכיס. תשאלו אותי הכל או פשוט מספר טלפון ואצור איתך קשר",
         ],
         systemPrompt: (businessConfig: any) => {
+            // Dynamic require keeps Node.js built-ins out of Turbopack's
+            // static module graph analysis, preventing chunk-eval context errors.
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const fs = require("fs") as typeof import("fs");
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const path = require("path") as typeof import("path");
             const knowledgeBase = fs.readFileSync(
                 path.join(process.cwd(), "lib", "agents", "foz-knowledge.md"),
                 "utf-8",
