@@ -49,7 +49,7 @@ export default async function DashboardLayout({
     // --- END LOGIC ---
 
     return (
-        <div className="flex flex-col h-screen bg-background text-foreground w-full overflow-hidden" dir="rtl">
+        <div suppressHydrationWarning className="flex flex-col h-screen bg-background text-foreground w-full overflow-hidden" dir="rtl">
             {/* Pass mobile trigger so GlobalHeader can render the hamburger on mobile */}
             <GlobalHeader
                 clientData={serializedClient}
@@ -59,8 +59,8 @@ export default async function DashboardLayout({
 
             {/* Content row: main area + desktop sidebar */}
             {/* flex-1 min-h-0 removes the hardcoded calc(100vh-5rem) that mismatched the actual header height */}
-            <div className="flex flex-1 min-h-0 overflow-hidden w-full">
-                <main className="w-full h-full overflow-y-auto custom-scrollbar flex flex-col">
+            <div suppressHydrationWarning className="flex flex-1 min-h-0 overflow-hidden w-full">
+                <main suppressHydrationWarning className="w-full h-full overflow-y-auto custom-scrollbar flex flex-col">
                     <div className="flex-1 w-full relative">{children}</div>
                 </main>
 
