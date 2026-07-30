@@ -100,14 +100,14 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
     };
 
     return (
-        <div className={`bg-card/90 backdrop-blur-md rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] border border-border/60 dark:border-white/10 overflow-hidden flex flex-col h-[400px] md:h-[550px] xl:h-full transition-all duration-500 ${getModeStyles(lastMessageMode)}`}>
+        <div className={`bg-card/90 backdrop-blur-md rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] border border-border/60 dark:border-white/10 overflow-hidden flex flex-col h-[450px] md:h-[500px] max-w-3xl w-full mx-auto transition-all duration-500 ${getModeStyles(lastMessageMode)}`}>
             {/* Header */}
             <div className="p-6 border-b border-border/40 bg-transparent shrink-0 flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-bold text-foreground mb-1">
-                        חדר המצב (Agent Room)
+                       גולדה
                     </h2>
-                    <p className="text-sm text-muted-foreground me-10">גולדה - רמטכ"לית, שיווק ופיננסים</p>
+                   
                 </div>
 
                 <Button
@@ -134,18 +134,9 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                                 טוען היסטוריה...
                             </div>
                         ) : messages.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-40 text-gray-400 space-y-2 mt-10">
-                                <div
-                                    className={`w-12 h-12 rounded-full ${currentAgent.bg} flex items-center justify-center`}
-                                >
-                                    <currentAgent.icon
-                                        size={20}
-                                        className={currentAgent.color}
-                                    />
-                                </div>
-                                <p>עדיין אין הודעות עם {currentAgent.name}.</p>
-                                <p className="text-xs">
-                                    התחילי שיחה כדי לקבל עזרה וייעוץ.
+                            <div className="flex items-center justify-center h-40 text-muted-foreground text-center">
+                                <p className="text-sm font-medium">
+                                    התחילי שיחה כדי לקבל עזרה וייעוץ
                                 </p>
                             </div>
                         ) : (

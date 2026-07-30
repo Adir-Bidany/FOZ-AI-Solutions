@@ -83,7 +83,7 @@ export default async function ClientDashboard() {
             </div>
 
             {/* ZONE B: Agent Room */}
-            <div className="w-full h-auto xl:h-[650px] flex flex-col space-y-4">
+            <div className="w-full flex justify-center mb-8">
                 <AgentRoom businessId={business._id.toString()} />
             </div>
 

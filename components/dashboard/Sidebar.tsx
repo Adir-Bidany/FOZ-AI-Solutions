@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Calendar,
@@ -178,18 +179,36 @@ export default function Sidebar({ client }: SidebarProps) {
 
 /** Mobile hamburger + Sheet drawer — visible only below lg */
 export function MobileSidebarTrigger({ client }: SidebarProps) {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const triggerButton = (
+        <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 rounded-xl"
+            aria-label="פתח תפריט ניווט"
+        >
+            <Menu size={22} />
+        </Button>
+    );
+
+    if (!mounted) {
+        return (
+            <div className="lg:hidden">
+                {triggerButton}
+            </div>
+        );
+    }
+
     return (
         <div className="lg:hidden">
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-10 w-10 rounded-xl"
-                        aria-label="פתח תפריט ניווט"
-                    >
-                        <Menu size={22} />
-                    </Button>
+                    {triggerButton}
                 </SheetTrigger>
                 <SheetContent side="right" className="w-72 p-0 border-border" dir="rtl">
                     <SheetHeader className="sr-only">

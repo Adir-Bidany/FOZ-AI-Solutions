@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Dialog,
     DialogContent,
@@ -36,6 +36,11 @@ export default function ActionsDialog({ pendingCards: initialCards, pendingCount
     const [cards, setCards] = useState<ActionItem[]>(initialCards);
     const [open, setOpen] = useState(false);
     const [loadingId, setLoadingId] = useState<string | null>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const pendingList = cards.filter((c) => c.status === "pending");
     const count = pendingList.length;
@@ -58,33 +63,41 @@ export default function ActionsDialog({ pendingCards: initialCards, pendingCount
         }
     };
 
+    const cardMarkup = (
+        <Card className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-card rounded-2xl overflow-hidden group cursor-pointer border border-transparent hover:border-primary/20">
+            <CardContent className="p-6 flex flex-col justify-between h-full">
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                        פעולות להיום
+                    </p>
+                    <div className="flex items-baseline gap-3">
+                        <h3 className="text-3xl font-extrabold text-foreground tracking-tight">
+                            {count > 0 ? `${count} ממתינות` : "אין משימות"}
+                        </h3>
+                        {count > 0 && (
+                            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                {count}
+                            </span>
+                        )}
+                    </div>
+                </div>
+                <div className="mt-4">
+                    <span className="text-xs font-medium text-primary hover:underline">
+                        לחץ לצפייה בפרטים
+                    </span>
+                </div>
+            </CardContent>
+        </Card>
+    );
+
+    if (!mounted) {
+        return cardMarkup;
+    }
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Card className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-card rounded-2xl overflow-hidden group cursor-pointer border border-transparent hover:border-primary/20">
-                    <CardContent className="p-6 flex flex-col justify-between h-full">
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                                פעולות להיום
-                            </p>
-                            <div className="flex items-baseline gap-3">
-                                <h3 className="text-3xl font-extrabold text-foreground tracking-tight">
-                                    {count > 0 ? `${count} ממתינות` : "אין משימות"}
-                                </h3>
-                                {count > 0 && (
-                                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                                        {count}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                        <div className="mt-4">
-                            <span className="text-xs font-medium text-primary hover:underline">
-                                לחץ לצפייה בפרטים
-                            </span>
-                        </div>
-                    </CardContent>
-                </Card>
+                {cardMarkup}
             </DialogTrigger>
 
             <DialogContent className="max-w-xl max-h-[85dvh] overflow-y-auto custom-scrollbar" dir="rtl">

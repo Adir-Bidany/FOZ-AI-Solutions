@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import DanielaAvatar from "@/components/DanielaAvatar";
 import UnifiedChatWidget from "@/components/chat/UnifiedChatWidget";
 import BrandingAnchor from "@/components/BrandingAnchor";
 import { getClientBySlug } from "@/services/client-service";
@@ -18,7 +17,6 @@ import {
 import DanielaHeader from "@/components/DanielaHeader";
 import ClientLogo from "@/components/ClientLogo";
 import ThemeToggle from "@/components/ThemeToggle";
-import { BACKGROUND_PRESETS } from "@/lib/background-presets";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -54,53 +52,13 @@ export default async function ClientPage({
 
     const { landing_page_data, phone, address } = clientData;
     const heroTitle = landing_page_data?.hero_title || clientData.businessName;
-    const heroSubtitle =
-        landing_page_data?.hero_subtitle || "המומחים לאסתטיקה ויופי";
-    const heroImage = landing_page_data?.hero_image_url || clientData.logo;
-    const description = landing_page_data?.about_text || heroSubtitle;
-
-    // Background & Theme Logic
-    const savedId = landing_page_data?.background_style || "misty-rose";
-    const customImage = landing_page_data?.custom_background_image;
-    const preset =
-        BACKGROUND_PRESETS.find((p) => p.id === savedId) ||
-        BACKGROUND_PRESETS[0];
-
-    // Default Theme Colors (fallback to preset or defaults)
-    let themeTextColor = preset.themeTextColor || "#374151";
-    let themeAccentColor = preset.themeAccentColor || "#be185d";
-
-    // Define Style
-    let pageStyle: React.CSSProperties = {
-        color: themeTextColor,
-        transition: "all 0.5s ease",
-    };
-
-    if (savedId === "custom" && customImage) {
-        // Logic for Custom Image: Force White Text + Dark Overlay
-        themeTextColor = "#ffffff";
-        pageStyle = {
-            ...pageStyle,
-            color: themeTextColor,
-            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${customImage})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-            backgroundAttachment: "fixed",
-        };
-    } else if (preset) {
-        pageStyle = {
-            ...pageStyle,
-            background: preset.cssValue,
-            backgroundSize: preset.backgroundSize || "cover",
-            backgroundRepeat: "no-repeat",
-        };
-    }
+    const heroSubtitle = landing_page_data?.hero_subtitle || "";
+    const heroImage = clientData.logo || landing_page_data?.hero_image_url || null;
+    const description = landing_page_data?.hero_subtitle || landing_page_data?.about_text || "";
 
     return (
         <div
-            className="min-h-screen flex items-center justify-center p-4 lg:p-8 transition-all duration-500 relative"
-            style={pageStyle}
+            className="min-h-screen flex items-center justify-center p-4 lg:p-8 bg-background text-foreground transition-colors duration-300 relative"
             dir="rtl"
         >
             {/* Public Page Floating Theme Toggle */}
@@ -132,9 +90,6 @@ export default async function ClientPage({
                         </div>
                     </div>
 
-                    {/* Standalone Avatar */}
-                    <DanielaAvatar />
-
                     {/* Optional Action Buttons / Info */}
                     <div className="flex flex-wrap gap-4 pt-4">
                         {phone && (
@@ -144,7 +99,7 @@ export default async function ClientPage({
                             >
                                 <Phone
                                     size={16}
-                                    style={{ color: themeAccentColor }}
+                                    className="text-primary"
                                 />
                                 <span className="text-sm font-medium">
                                     {phone}
@@ -155,7 +110,7 @@ export default async function ClientPage({
                             <div className="flex items-center gap-2 px-4 py-2 bg-card/90 border border-border/80 rounded-full text-foreground shadow-sm backdrop-blur-md">
                                 <MapPin
                                     size={16}
-                                    style={{ color: themeAccentColor }}
+                                    className="text-primary"
                                 />
                                 <span className="text-sm font-medium">
                                     {address}
@@ -167,9 +122,9 @@ export default async function ClientPage({
 
                 {/* === COLUMN 2: THE CHAT WIDGET === */}
                 <div className="w-full flex justify-center lg:justify-end">
-                    <div className="w-full max-w-md h-[75dvh] min-h-[380px] bg-[#0B0E14] rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] overflow-hidden relative flex flex-col border border-transparent dark:border-white/10">
+                    <div className="w-full max-w-md h-[75dvh] min-h-[380px] bg-card/90 backdrop-blur-xl rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] overflow-hidden relative flex flex-col border border-border/60 dark:border-white/10">
                         {/* The Header */}
-                        <DanielaHeader businessName={clientData.businessName} />
+                        <DanielaHeader businessName={clientData.businessName} logoUrl={heroImage} />
 
                         {/* The Chat Body */}
                         <div className="flex-1 relative bg-transparent flex flex-col overflow-hidden min-h-0">

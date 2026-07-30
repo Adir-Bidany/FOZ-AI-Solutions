@@ -49,7 +49,7 @@ export default function GlobalHeader({ clientData, mobileSidebarTrigger }: Globa
 
     const clientSlug = clientData?.slug || session?.user?.businessId || "demo";
     const businessName = clientData?.businessName || "העסק שלי";
-    const businessLogo = clientData?.logo || null;
+    const businessLogo = clientData?.logo || (clientData as any)?.landing_page_data?.hero_image_url || null;
 
     const handleAdminLogin = (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,7 +87,7 @@ export default function GlobalHeader({ clientData, mobileSidebarTrigger }: Globa
                         ) : (
                             /* DASHBOARD: Business Owner's Logo & Name on the RIGHT (RTL Start) */
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 shrink-0">
+                                <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 flex items-center justify-center rounded-xl overflow-hidden bg-muted/20 border border-border/40 p-0.5">
                                     <ClientLogo src={businessLogo} businessName={businessName} />
                                 </div>
                                 <span className="font-bold text-lg md:text-xl truncate text-foreground">
@@ -123,7 +123,7 @@ export default function GlobalHeader({ clientData, mobileSidebarTrigger }: Globa
                                         size="sm"
                                         className="h-10 gap-2 rounded-xl border-border text-xs md:text-sm font-medium px-4"
                                     >
-                                        <LinkIcon size={16} /> <span className="hidden sm:inline">צפה באתר שלי</span>
+                                        <LinkIcon size={16} /> <span className="hidden sm:inline">עמוד נחיתה</span>
                                     </Button>
                                 </Link>
 

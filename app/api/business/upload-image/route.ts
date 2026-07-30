@@ -37,19 +37,12 @@ export async function POST(req: Request) {
             );
         }
 
-        // Map targetField to actual schema path
-        // Currently only supporting 'hero_image' mapping to 'landing_page_data.hero_image_url'
-        let schemaPath = "";
-        if (targetField === "hero_image") {
-            schemaPath = "landing_page_data.hero_image_url";
-
-            // Ensure landing_page_data exists
+        if (targetField === "hero_image" || targetField === "logo") {
+            business.logo = image;
             if (!business.landing_page_data) {
                 business.landing_page_data = {};
             }
             business.landing_page_data.hero_image_url = image;
-        } else if (targetField === "logo") {
-            business.logo = image;
         } else {
             return NextResponse.json(
                 { success: false, error: "Invalid target field" },
