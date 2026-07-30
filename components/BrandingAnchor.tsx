@@ -14,7 +14,12 @@ interface BrandingAnchorProps {
 }
 
 export default function BrandingAnchor({ context, businessData, children }: BrandingAnchorProps) {
+    const [mounted, setMounted] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Platform Context State
     const [showRegisterModal, setShowRegisterModal] = useState(false);
@@ -62,8 +67,26 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
             };
 
             window.addEventListener("consumer-force-logout", handleForceLogout);
-            return () => window.removeEventListener("consumer-force-logout", handleForceLogout);
+            return () => {
+                window.removeEventListener("consumer-force-logout", handleForceLogout);
+            };
         }
+    }, [context]);
+
+    // Dedicated listener for chat-triggered auth drawer open — registered immediately,
+    // independently of consumer data loading to avoid any mount race condition.
+    useEffect(() => {
+        if (context !== "consumer") return;
+
+        const handleOpenAuthDrawer = () => {
+            console.log("[BrandingAnchor] open-auth-drawer event received → opening drawer");
+            setIsOpen(true);
+        };
+
+        window.addEventListener("open-auth-drawer", handleOpenAuthDrawer);
+        return () => {
+            window.removeEventListener("open-auth-drawer", handleOpenAuthDrawer);
+        };
     }, [context]);
 
     const handleRegisterPlatform = async () => {
@@ -144,6 +167,8 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
     };
 
     // --- Render Logic ---
+    if (!mounted) return null;
+
     let ringClass = "border-transparent";
     if (context === "consumer") {
         ringClass = customer ? "border-green-500" : "border-red-500";
@@ -154,7 +179,7 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
             {/* The Floating Action Button (Anchor) */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`relative w-16 h-16 rounded-full overflow-hidden shadow-2xl transition-transform hover:scale-105 border-4 ${ringClass} ring-4 ring-[#FCE7F3] bg-card flex items-center justify-center cursor-pointer ${!isOpen ? "animate-pulse" : ""}`}
+                className={`relative w-16 h-16 rounded-full overflow-hidden shadow-2xl transition-transform hover:scale-105 border-4 ${ringClass} ring-4 ring-[#FCE7F3] dark:ring-purple-950/40 bg-card flex items-center justify-center cursor-pointer ${!isOpen ? "animate-pulse" : ""}`}
             >
                 {isFozLogo ? (
                     <Image src="/logo.png" alt="FOZ AI" width={40} height={40} className="object-contain" />

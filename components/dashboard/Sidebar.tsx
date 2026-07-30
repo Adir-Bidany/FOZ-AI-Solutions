@@ -106,15 +106,6 @@ function SidebarContent({
                     </Button>
                 </Link>
 
-                <Link href="/dashboard/finance" onClick={onNavClick}>
-                    <Button
-                        variant="ghost"
-                        className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
-                    >
-                        <BarChart3 size={20} /> ניתוח פיננסי
-                    </Button>
-                </Link>
-
                 <Link href="/dashboard/website" onClick={onNavClick}>
                     <Button
                         variant="ghost"

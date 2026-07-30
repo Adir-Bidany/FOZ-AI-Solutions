@@ -97,8 +97,8 @@ export default function GlobalHeader({ clientData, mobileSidebarTrigger }: Globa
                         )}
                     </div>
 
-                    {/* --- LEFT SIDE (RTL End): Secondary Brand / Actions / Theme Toggle --- */}
-                    <div className="flex items-center gap-3 md:gap-5 shrink-0">
+                    {/* --- LEFT SIDE (RTL End): Actions / Divider / Theme Toggle --- */}
+                    <div className="flex items-center gap-3 md:gap-4 shrink-0">
                         {!isDashboard && (
                             <Button
                                 variant="ghost"
@@ -116,29 +116,18 @@ export default function GlobalHeader({ clientData, mobileSidebarTrigger }: Globa
                         )}
 
                         {isDashboard && (
-                            <>
-                                <Link href={`/c/${clientSlug}`} target="_blank">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-10 gap-2 rounded-xl border-border text-xs md:text-sm font-medium px-4"
-                                    >
-                                        <LinkIcon size={16} /> <span className="hidden sm:inline">עמוד נחיתה</span>
-                                    </Button>
-                                </Link>
-
-                                <Link href="/" className="hover:opacity-90 transition-opacity hidden md:flex items-center border-s border-border ps-4 ms-1">
-                                    <div className="relative w-48 h-14">
-                                        <Image
-                                            src="/logo.png"
-                                            alt="FOZ AI Solutions"
-                                            fill
-                                            className="object-contain object-left"
-                                        />
-                                    </div>
-                                </Link>
-                            </>
+                            <Link href={`/c/${clientSlug}`} target="_blank">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-10 gap-2 rounded-xl border-border text-xs md:text-sm font-medium px-4 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                                >
+                                    <LinkIcon size={16} /> <span className="hidden sm:inline">עמוד נחיתה</span>
+                                </Button>
+                            </Link>
                         )}
+
+                        <div className="h-6 w-px bg-border/80 hidden sm:block" />
 
                         <ThemeToggle />
 

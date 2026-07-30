@@ -5,6 +5,7 @@ import { fetchInternalChat, sendInternalMessage, archiveCurrentSession } from "@
 import { Sparkles, Send, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface AgentRoomProps {
     businessId: string;
@@ -140,22 +141,39 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                                 </p>
                             </div>
                         ) : (
-                            messages.map((msg, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                                >
+                            messages.map((msg, idx) => {
+                                const isUser = msg.role === "user";
+                                return (
                                     <div
-                                        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm leading-relaxed ${
-                                            msg.role === "user"
-                                                ? "bg-primary text-primary-foreground rounded-br-none"
-                                                : "bg-card border border-border text-foreground rounded-bl-none"
-                                        }`}
+                                        key={idx}
+                                        className={`flex w-full gap-2.5 items-start ${isUser ? "justify-start" : "justify-end"}`}
+                                        dir="rtl"
                                     >
-                                        {msg.parts[0].text}
+                                        {/* Avatar Logo on the RIGHT side of the bubble */}
+                                        <Avatar className={`w-8 h-8 mt-0.5 shrink-0 bg-background overflow-hidden ${
+                                            isUser
+                                                ? "border-2 border-blue-500 ring-2 ring-blue-500/30"
+                                                : "border-2 border-yellow-400 ring-2 ring-yellow-400/30"
+                                        }`}>
+                                            <AvatarImage src="/logo.png" className="object-cover" />
+                                            <AvatarFallback className={`font-bold text-xs ${isUser ? "bg-blue-500/10 text-blue-500" : "bg-yellow-400/10 text-yellow-600"}`}>
+                                                {isUser ? "U" : "ג"}
+                                            </AvatarFallback>
+                                        </Avatar>
+
+                                        {/* Message Bubble */}
+                                        <div
+                                            className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm leading-relaxed ${
+                                                isUser
+                                                    ? "bg-primary text-primary-foreground rounded-tr-sm"
+                                                    : "bg-card border border-border text-foreground rounded-tl-sm"
+                                            }`}
+                                        >
+                                            {msg.parts[0].text}
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 </div>

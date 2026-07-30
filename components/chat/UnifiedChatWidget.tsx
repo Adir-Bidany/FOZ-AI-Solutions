@@ -107,6 +107,12 @@ export default function UnifiedChatWidget({
                 
                 if (data._system_action === "force_logout") {
                     window.dispatchEvent(new Event("consumer-force-logout"));
+                } else if (data._system_action === "trigger_auth_drawer") {
+                    // Defer by one tick to ensure BrandingAnchor's useEffect listener is always mounted
+                    setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent("open-auth-drawer", { bubbles: true }));
+                    }, 50);
+                    setWidgetType(null);
                 } else if (data._system_action === "show_date_picker") {
                     setWidgetType("date_picker");
                 } else if (data._system_action === "show_services") {

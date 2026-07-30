@@ -58,80 +58,74 @@ export default async function ClientPage({
 
     return (
         <div
-            className="min-h-screen flex items-center justify-center p-4 lg:p-8 bg-background text-foreground transition-colors duration-300 relative"
+            className="min-h-screen flex flex-col items-center justify-between bg-background text-foreground transition-colors duration-300 relative"
             dir="rtl"
+            suppressHydrationWarning
         >
-            {/* Public Page Floating Theme Toggle */}
-            <div className="fixed top-6 left-6 z-50">
-                <ThemeToggle />
-            </div>
-
-            <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
-                {/* === COLUMN 1: BUSINESS INFO === */}
-                <div className="flex flex-col justify-start space-y-6 lg:pt-8">
-                    {/* Header Row: Logo & Text */}
-                    <div className="flex flex-row flex-wrap items-center gap-4">
-                        {/* Logo / Hero Image */}
-                        <div className="relative w-20 h-20 sm:w-28 sm:h-28 shrink-0">
-                            <ClientLogo
-                                src={heroImage}
-                                businessName={clientData.businessName}
-                            />
+            {/* --- TOP HEADER BAR (Dashboard Header Style) --- */}
+            <header suppressHydrationWarning className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border transition-all text-foreground shrink-0 mb-8 md:mb-12">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 h-20 md:h-24 flex items-center justify-between">
+                    {/* Right Side (RTL Start): Logo + Business Name */}
+                    <div className="flex items-center gap-3 shrink-0">
+                        <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 flex items-center justify-center rounded-xl overflow-hidden bg-muted/20 border border-border/40 p-0.5">
+                            <ClientLogo src={heroImage} businessName={clientData.businessName} />
                         </div>
-
-                        {/* Business Name & Description */}
-                        <div className="space-y-2">
-                            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
-                                {heroTitle}
-                            </h1>
-                            <p className="text-lg leading-relaxed max-w-lg opacity-90">
-                                {description}
-                            </p>
-                        </div>
+                        <span className="font-bold text-lg md:text-xl truncate text-foreground">
+                            {clientData.businessName}
+                        </span>
                     </div>
 
-                    {/* Optional Action Buttons / Info */}
-                    <div className="flex flex-wrap gap-4 pt-4">
-                        {phone && (
-                            <a
-                                href={`tel:${phone}`}
-                                className="flex items-center gap-2 px-4 py-2 bg-card/90 border border-border/80 rounded-full text-foreground hover:bg-accent transition-colors shadow-sm backdrop-blur-md"
-                            >
-                                <Phone
-                                    size={16}
-                                    className="text-primary"
-                                />
-                                <span className="text-sm font-medium">
-                                    {phone}
-                                </span>
-                            </a>
-                        )}
-                        {address && (
-                            <div className="flex items-center gap-2 px-4 py-2 bg-card/90 border border-border/80 rounded-full text-foreground shadow-sm backdrop-blur-md">
-                                <MapPin
-                                    size={16}
-                                    className="text-primary"
-                                />
-                                <span className="text-sm font-medium">
-                                    {address}
-                                </span>
-                            </div>
-                        )}
+                    {/* Left Side (RTL End): Divider + Theme Toggle */}
+                    <div className="flex items-center gap-3 md:gap-4 shrink-0">
+                        <div className="h-6 w-px bg-border/80 hidden sm:block" />
+                        <ThemeToggle />
                     </div>
                 </div>
+            </header>
 
-                {/* === COLUMN 2: THE CHAT WIDGET === */}
+            {/* --- MAIN CONTENT SECTION --- */}
+            <main suppressHydrationWarning className="w-full max-w-6xl flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+                {/* Right Column (Desktop) / Top Section (Mobile): Title + Subtitle */}
+                <div className="flex flex-col justify-start text-center lg:text-right items-center lg:items-start space-y-4 lg:pt-2">
+                    <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-foreground tracking-tight">
+                        {heroTitle}
+                    </h1>
+                    {description && (
+                        <p className="text-lg md:text-xl leading-relaxed max-w-xl text-muted-foreground">
+                            {description}
+                        </p>
+                    )}
+
+                    {/* Contact Chips */}
+                    {(phone || address) && (
+                        <div className="flex flex-wrap justify-center lg:justify-start gap-3 pt-2">
+                            {phone && (
+                                <a
+                                    href={`tel:${phone}`}
+                                    className="flex items-center gap-2 px-4 py-2 bg-card/90 border border-border/80 rounded-full text-foreground hover:bg-accent transition-colors shadow-sm backdrop-blur-md"
+                                >
+                                    <Phone size={16} className="text-primary" />
+                                    <span className="text-sm font-medium">{phone}</span>
+                                </a>
+                            )}
+                            {address && (
+                                <div className="flex items-center gap-2 px-4 py-2 bg-card/90 border border-border/80 rounded-full text-foreground shadow-sm backdrop-blur-md">
+                                    <MapPin size={16} className="text-primary" />
+                                    <span className="text-sm font-medium">{address}</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Left Column (Desktop) / Bottom Section (Mobile): Daniela's Chat Window */}
                 <div className="w-full flex justify-center lg:justify-end">
-                    <div className="w-full max-w-md h-[75dvh] min-h-[380px] bg-card/90 backdrop-blur-xl rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] overflow-hidden relative flex flex-col border border-border/60 dark:border-white/10">
+                    <div className="w-full max-w-md h-[70dvh] min-h-[420px] bg-card/90 backdrop-blur-xl rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] overflow-hidden relative flex flex-col border border-border/60 dark:border-white/10">
                         {/* The Header */}
                         <DanielaHeader businessName={clientData.businessName} logoUrl={heroImage} />
 
                         {/* The Chat Body */}
                         <div className="flex-1 relative bg-transparent flex flex-col overflow-hidden min-h-0">
-                            <BrandingAnchor
-                                context="consumer"
-                                businessData={clientData}
-                            />
                             <UnifiedChatWidget
                                 key={clientData._id.toString()}
                                 mode="public"
@@ -140,7 +134,7 @@ export default async function ClientPage({
                                 initialMessages={[
                                     {
                                         role: "assistant",
-                                        content: `היי! אני דניאלה, העוזרת החכמה של ${clientData.businessName}. איך אני יכולה לעזור לך היום? ✨`,
+                                        content: `היי! אני דניאלה, העוזרת החכמה של ${clientData.businessName}. איך אני יכולה לעזור לך היום?`,
                                     },
                                 ]}
                                 className="w-full h-full"
@@ -148,7 +142,13 @@ export default async function ClientPage({
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
+
+            {/* Root-level Floating Navigation / Consumer Personal Area Anchor */}
+            <BrandingAnchor
+                context="consumer"
+                businessData={clientData}
+            />
         </div>
     );
 }

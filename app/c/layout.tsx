@@ -6,6 +6,6 @@ export default function ClientSiteLayout({
     return (
         // ה-div הזה עוטף את כל אתרי הלקוחות.
         // מכיוון שלא שמנו פה Header או Footer, הם יהיו נקיים לגמרי.
-        <div className="min-h-screen bg-white">{children}</div>
+        <div suppressHydrationWarning className="min-h-screen bg-background text-foreground">{children}</div>
     );
 }

@@ -228,15 +228,23 @@ export async function POST(req: NextRequest) {
         // --- END FIREWALL ---
 
         // 3. Prepare Context & Prompt
-        let clientHistorySummary = "No previous history.";
-        if (agentPersona === "daniela" && customer) {
+        const isVerifiedCustomer = customer && (customer.isApproved === true || customer.isApproved === undefined);
+        const customerAuthStatus = isVerifiedCustomer
+            ? "VERIFIED_CUSTOMER (לקוח מאושר ומחובר)"
+            : customer
+            ? "PENDING_APPROVAL (משתמש ממתין לאישור מנהל עסק)"
+            : "GUEST (אורח לא מחובר)";
+
+        let clientHistorySummary = "אין גישה להיסטוריית לקוח לפני אימות ואישור מנהל.";
+        if (agentPersona === "daniela" && isVerifiedCustomer) {
             clientHistorySummary = `Customer Name: ${customer.name} ${customer.lastName || ""}. Total Appointments: ${customer.metrics?.totalAppointments || 0}. Recent Treatments: ${(customer.history?.lastTreatments || []).join(", ")}`;
         }
 
         const promptFn = AGENT_REGISTRY[agentPersona]?.systemPrompt || AGENT_REGISTRY["daniela"].systemPrompt;
         const systemPrompt = promptFn({
             ...business,
-            client_history_summary: clientHistorySummary
+            client_history_summary: clientHistorySummary,
+            customer_auth_status: customerAuthStatus
         });
         
         let finalSystemPrompt = systemPrompt;
@@ -254,9 +262,9 @@ export async function POST(req: NextRequest) {
 1. MANDATORY FIRST STEP: If the user wants to book an appointment or check availability, you MUST start by asking for the date. Set "action_type" to "check_availability" or "book_appointment", and set your "conversational_reply" to exactly "אנא בחרי תאריך:". DO NOT ask for the service type first.
 2. When you need the user to select a date, time, or service, keep your text response EXTREMELY short. DO NOT hallucinate available slots. Delegate the actual selection to the UI widgets by calling the appropriate function or setting the correct action_type.`;
 
-            // --- AI GUARDRAILS (B2B2C Migration) ---
-            if (!customerId) {
-                finalSystemPrompt += `\n\n[SECURITY ENFORCEMENT]: You are speaking to an unauthenticated guest. You CANNOT access their profile, book appointments, or cancel appointments. If they attempt to book or cancel an appointment, you MUST gracefully instruct them to log in via the profile widget first.`;
+            // --- AI GUARDRAILS (B2B2C Security) ---
+            if (!isVerifiedCustomer) {
+                finalSystemPrompt += `\n\n[SECURITY ENFORCEMENT]: You are speaking to an unauthenticated or pending guest (${customerAuthStatus}). You CANNOT access their profile, book appointments, or cancel appointments. If they express intent to log in, register, book, cancel, or access profile data, you MUST set "action_type" to "trigger_auth_drawer" and set "conversational_reply" to exactly "בחלונית שנפתחה תוכל להירשם/להיכנס למערכת".`;
             }
         }
 
@@ -281,10 +289,10 @@ MARKETING POST CREATION BEHAVIORAL RULES:
         const tools = AGENT_REGISTRY[agentPersona]?.tools;
         let responseSchema = AGENT_REGISTRY[agentPersona]?.responseSchema;
 
-        // Dynamically strip mutation actions from schema for unauthenticated users
-        if (agentPersona === "daniela" && !customerId && responseSchema?.properties?.action_type) {
+        // Dynamically strip mutation actions from schema for unauthenticated / pending users
+        if (agentPersona === "daniela" && !isVerifiedCustomer && responseSchema?.properties?.action_type) {
             responseSchema = JSON.parse(JSON.stringify(responseSchema));
-            responseSchema.properties.action_type.enum = ["none", "check_availability", "ask_clarification"];
+            responseSchema.properties.action_type.enum = ["none", "check_availability", "ask_clarification", "trigger_auth_drawer"];
         }
 
         let systemAction: string | undefined = undefined;
@@ -469,16 +477,21 @@ MARKETING POST CREATION BEHAVIORAL RULES:
                 }
             }
 
-            // Routing Logic Interceptor for Booking Intents without function calls
+            // Routing Logic Interceptor for Auth Triggers & Booking Intents without function calls
             if (!systemAction) {
                 const action = parsedJson?.action_type;
-                const isBookingIntent = action === "book_appointment" || action === "check_availability";
-                const isAskingForDate = responseText && (responseText.includes("בחרי תאריך") || responseText.includes("בחר תאריך"));
+                if (action === "trigger_auth_drawer") {
+                    systemAction = "trigger_auth_drawer";
+                    responseText = "בחלונית שנפתחה תוכל להירשם/להיכנס למערכת";
+                } else {
+                    const isBookingIntent = action === "book_appointment" || action === "check_availability";
+                    const isAskingForDate = responseText && (responseText.includes("בחרי תאריך") || responseText.includes("בחר תאריך"));
 
-                if (isBookingIntent || isAskingForDate) {
-                    systemAction = "show_date_picker";
-                    if (!responseText || responseText.includes("איזה") || responseText.includes("שירות")) {
-                        responseText = "אנא בחרי תאריך:";
+                    if (isBookingIntent || isAskingForDate) {
+                        systemAction = "show_date_picker";
+                        if (!responseText || responseText.includes("איזה") || responseText.includes("שירות")) {
+                            responseText = "אנא בחרי תאריך:";
+                        }
                     }
                 }
             }
