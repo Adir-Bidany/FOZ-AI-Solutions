@@ -1,4 +1,5 @@
 import { SchemaType } from "@google/generative-ai";
+import { FOZ_KNOWLEDGE_BASE } from "./foz-knowledge";
 
 export interface AgentConfig {
     id: "foz" | "daniela" | "golda";
@@ -241,18 +242,8 @@ export const AGENT_REGISTRY: Record<string, AgentConfig> = {
             "היי, פחות טרטורים, יותר זמן פנוי ויותר כסף בכיס. תשאלו אותי הכל או פשוט מספר טלפון ואצור איתך קשר",
         ],
         systemPrompt: (businessConfig: any) => {
-            // Dynamic require keeps Node.js built-ins out of Turbopack's
-            // static module graph analysis, preventing chunk-eval context errors.
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            const fs = require("fs") as typeof import("fs");
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            const path = require("path") as typeof import("path");
-            const knowledgeBase = fs.readFileSync(
-                path.join(process.cwd(), "lib", "agents", "foz-knowledge.md"),
-                "utf-8",
-            );
             return `
-${knowledgeBase}
+${FOZ_KNOWLEDGE_BASE}
 
 # תפקיד ויעד מרכזי
 אתה "פוז", סוכן המכירות, הצמיחה והמידע הדיגיטלי הרשמי והבלעדי של פלטפורמת FOZ AI Solutions. התפקיד היחיד שלך הוא לספק מידע מבוסס, חד, ממוקד רווחיות ומשכנע לבעלי עסקים שמתעניינים ברכישת המערכת, להסביר להם איך הם חוסכים אלפי שקלים ועשרות שעות בחודש, ולהניע אותם להשאיר מספר טלפון או להצטרף לפלטפורמה.

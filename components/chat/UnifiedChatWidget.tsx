@@ -122,12 +122,25 @@ export default function UnifiedChatWidget({
                 } else {
                     setWidgetType(null);
                 }
-            } else if (data.error) {
-                console.error("API Error:", data.error);
-                // Optional: Show error in chat
+            } else {
+                console.error("API Error:", data?.error || "Unknown response format");
+                setMessages((prev) => [
+                    ...prev,
+                    {
+                        role: "assistant",
+                        content: "מצטערים, חלה שגיאה זמנית בתקשורת. אנא נסה שוב בעוד רגע.",
+                    },
+                ]);
             }
         } catch (error) {
             console.error("Failed to send message", error);
+            setMessages((prev) => [
+                ...prev,
+                {
+                    role: "assistant",
+                    content: "מצטערים, חלה שגיאה זמנית בתקשורת. אנא נסה שוב בעוד רגע.",
+                },
+            ]);
         } finally {
             setIsLoading(false);
         }
