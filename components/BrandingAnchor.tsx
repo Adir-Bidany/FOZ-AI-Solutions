@@ -179,7 +179,7 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
             {/* The Floating Action Button (Anchor) */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`relative w-16 h-16 rounded-full overflow-hidden shadow-2xl transition-transform hover:scale-105 border-4 ${ringClass} ring-4 ring-[#FCE7F3] dark:ring-purple-950/40 bg-card flex items-center justify-center cursor-pointer ${!isOpen ? "animate-pulse" : ""}`}
+                className={`relative w-16 h-16 rounded-full overflow-hidden shadow-2xl transition-transform hover:scale-105 border-4 ${ringClass} ring-4 ring-zinc-900/20 dark:ring-white/40 bg-zinc-950 dark:bg-white flex items-center justify-center cursor-pointer ${!isOpen ? "animate-pulse" : ""}`}
             >
                 {isFozLogo ? (
                     <Image src="/logo.png" alt="FOZ AI" width={40} height={40} className="object-contain" />
