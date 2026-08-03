@@ -12,6 +12,7 @@ import {
     Crown,
     Globe,
     TrendingUp,
+    Bot,
 } from "lucide-react";
 import Link from "next/link";
 import ClientLogo from "@/components/ClientLogo";
@@ -47,6 +48,11 @@ export function SidebarContent({
         await signOut({ callbackUrl: "/login" });
     };
 
+    const handleOpenGolda = () => {
+        window.dispatchEvent(new CustomEvent("open-golda-modal"));
+        onNavClick?.();
+    };
+
     return (
         <div className="flex flex-col h-full bg-card text-card-foreground">
             {/* Business identity header */}
@@ -69,6 +75,23 @@ export function SidebarContent({
                         <Sparkles size={20} /> המשרד שלי
                     </Button>
                 </Link>
+
+                <Link href="/dashboard/v2" onClick={onNavClick}>
+                    <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-3 font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 h-12 rounded-xl border border-purple-500/20 bg-purple-500/5"
+                    >
+                        <Sparkles size={20} className="text-purple-500" /> המשרד שלי 2
+                    </Button>
+                </Link>
+
+                <Button
+                    variant="ghost"
+                    onClick={handleOpenGolda}
+                    className="w-full justify-start gap-3 font-semibold text-foreground hover:bg-purple-500/10 hover:text-purple-600 h-12 rounded-xl"
+                >
+                    <Bot size={20} className="text-purple-500" /> שיחה עם גולדה
+                </Button>
 
                 <Link href="/dashboard/calendar" onClick={onNavClick}>
                     <Button

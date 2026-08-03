@@ -5,17 +5,57 @@ import { connectToDatabase } from "@/lib/db";
 import Business from "@/models/Business";
 import AgentInsight from "@/models/AgentInsight";
 import { createGeminiInstance, extractJsonFromText } from "@/lib/utils/ai-helpers";
+import { v2 as cloudinary } from "cloudinary";
 
-function isSameCalendarDay(date1?: Date | null, date2?: Date): boolean {
-    if (!date1 || !date2) return false;
-    const d1 = new Date(date1);
-    const d2 = new Date(date2);
-    return (
-        d1.getFullYear() === d2.getFullYear() &&
-        d1.getMonth() === d2.getMonth() &&
-        d1.getDate() === d2.getDate()
-    );
+// ─── Cloudinary Configuration ──────────────────────────────────────────────
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true,
+});
+
+/**
+ * Uploads an image (URL or base64) to Cloudinary and returns the permanent secure_url.
+ */
+async function uploadToCloudinary(
+    imageSource: string,
+    folder: string = "foz-marketing"
+): Promise<string> {
+    const result = await cloudinary.uploader.upload(imageSource, {
+        folder,
+        resource_type: "image",
+        quality: "auto:best",
+        fetch_format: "auto",
+    });
+    return result.secure_url;
 }
+
+/**
+ * Generates an AI image based on an English visual prompt,
+ * uploads it to Cloudinary, and returns the Cloudinary secure_url.
+ */
+async function generateAndUploadImage(englishPrompt: string): Promise<string> {
+    const cleanPrompt = encodeURIComponent(
+        `${englishPrompt}, professional photography, high quality, 4k, minimal aesthetic`
+    );
+
+    // Primary AI image generation endpoint (Pollinations AI)
+    const primaryUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=1080&height=1080&nologo=true`;
+    
+    // High-quality fallback stock image for aesthetic clinics / businesses
+    const fallbackUrl = `https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1080&q=80`;
+
+    try {
+        console.log("[Marketing Generation] Uploading AI generated image to Cloudinary...");
+        return await uploadToCloudinary(primaryUrl);
+    } catch (err: any) {
+        console.warn("[Marketing Generation] Primary image upload failed, trying fallback:", err?.message || err);
+        return await uploadToCloudinary(fallbackUrl);
+    }
+}
+
+// ─── GET: Quota Status (No limit) ──────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
     try {
@@ -24,22 +64,17 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        await connectToDatabase();
-        const business = await Business.findOne({ ownerEmail: session.user.email }).lean();
-        if (!business) {
-            return NextResponse.json({ error: "Business not found" }, { status: 404 });
-        }
-
-        const isQuotaUsed = isSameCalendarDay(business.lastImageGeneratedAt, new Date());
         return NextResponse.json({
-            canGenerateImage: !isQuotaUsed,
-            lastImageGeneratedAt: business.lastImageGeneratedAt || null,
+            canGenerateImage: true,
+            lastImageGeneratedAt: null,
         });
     } catch (error: any) {
         console.error("[Marketing API GET Error]:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
+
+// ─── POST: Generate Post Text + Image ──────────────────────────────────────
 
 export async function POST(req: NextRequest) {
     try {
@@ -57,29 +92,18 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Business not found" }, { status: 404 });
         }
 
-        const now = new Date();
-        const quotaUsedToday = isSameCalendarDay(business.lastImageGeneratedAt, now);
+        // ── 1. Generate Post Content via Gemini ────────────────────────────
+        const systemInstruction = `You are Golda, a digital marketing expert for the business "${business.businessName}".
+Create a compelling, professional Hebrew social media marketing post.
 
-        // 1. Quota Enforcement for Image Generation
-        if (includeImage && quotaUsedToday) {
-            return NextResponse.json(
-                {
-                    error: "DAILY_IMAGE_QUOTA_REACHED",
-                    message: "נוצלה מכסת התמונות היומית (תמונה 1 ביום בלבד). ניתן לנסות שוב מחר.",
-                },
-                { status: 429 }
-            );
-        }
-
-        // 2. Generate Marketing Post Text using Gemini AI
-        const systemInstruction = `אתה גולדה (Golda), מומחית השיווק הדיגיטלי והתוכן של FOZ AI Solutions עבור העסק "${business.businessName}". 
-צור פוסט שיווקי מושך, מקצועי ואיכותי בעברית לרשתות החברתיות.
-החזר תמיד תשובת JSON קבילה במבנה המדויק הבא בלבד:
+You MUST return ONLY a valid JSON object in this exact structure — no prose, no markdown fences:
 {
-  "title": "כותרת קצרה ומושכת לפוסט",
-  "content": "תוכן הפוסט המלא עם אימוג׳ים מתאימים, קריאה לפעולה והאשטאגים",
-  "imageVisualPrompt": "תיאור באנגלית קצרה וממוקדת עבור מחולל תמונות AI שמציג את הקונספט הויזואלי של הפוסט"
-}`;
+  "title": "Short, catchy post title in Hebrew",
+  "content": "Full post content in Hebrew with emojis, call-to-action, and hashtags",
+  "imageVisualPrompt": "A concise image description IN ENGLISH ONLY for an AI image generator. Must be English. Example: 'Elegant spa treatment room with soft lighting, white towels, and rose petals on a wooden table, professional photography, warm tones'"
+}
+
+CRITICAL RULE: The value of "imageVisualPrompt" field must ALWAYS be written in English, regardless of what language the user wrote in.`;
 
         const model = createGeminiInstance({
             systemInstruction,
@@ -87,56 +111,51 @@ export async function POST(req: NextRequest) {
         });
 
         const userPrompt = prompt.trim()
-            ? `צור פוסט שיווקי בנושא: ${prompt}`
-            : `צור פוסט שיווקי מוביל ומזמין עבור העסק ${business.businessName}`;
+            ? `Create a marketing post about: ${prompt}`
+            : `Create a compelling marketing post for the business ${business.businessName}`;
 
         const result = await model.generateContent(userPrompt);
         const responseText = result.response.text();
-        const parsed = extractJsonFromText(responseText) || {
-            title: `פוסט שיווקי עבור ${business.businessName}`,
-            content: responseText,
-            imageVisualPrompt: `Luxury modern aesthetic post for ${business.businessName}`,
-        };
 
-        let generatedImageUrl: string | undefined = undefined;
+        const parsed = extractJsonFromText(responseText);
 
-        // 3. If Image Requested & Quota Allowed: Generate AI Image with Verification & Fallback
-        if (includeImage) {
-            const visualPrompt = parsed.imageVisualPrompt || `Professional high-end photo for ${business.businessName}`;
-            const cleanPrompt = encodeURIComponent(
-                `${visualPrompt}, minimal aesthetic, highly detailed, professional photography`
-            );
-            
-            const primaryUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?model=flux&width=1080&height=1080&nologo=true`;
-            const fallbackUrl = `https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1080&q=80`;
-
-            try {
-                // Verify image server returns valid HTTP 200 with image content-type
-                const testRes = await fetch(primaryUrl, { method: "HEAD", signal: AbortSignal.timeout(5000) });
-                const contentType = testRes.headers.get("content-type") || "";
-                
-                if (testRes.ok && contentType.startsWith("image/")) {
-                    generatedImageUrl = primaryUrl;
-                } else {
-                    generatedImageUrl = fallbackUrl;
-                }
-            } catch (e) {
-                console.warn("[Marketing Generation] Pollinations verification failed, using fallback image:", e);
-                generatedImageUrl = fallbackUrl;
-            }
-
-            // Update business daily quota timestamp
-            business.lastImageGeneratedAt = now;
-            await business.save();
+        if (!parsed) {
+            console.warn("[Marketing Generation] JSON extraction failed. Raw Gemini response:", responseText.substring(0, 500));
         }
 
-        // 4. Save Marketing Insight to Database
+        const postData = parsed || {
+            title: `פוסט שיווקי עבור ${business.businessName}`,
+            content: responseText,
+            imageVisualPrompt: `Luxury modern professional business aesthetic for ${business.businessName}, clean minimalist design, premium photography`,
+        };
+
+        // Enforce English prompt guard
+        const isLikelyHebrew = (str: string) => /[\u0590-\u05FF]/.test(str);
+        if (isLikelyHebrew(postData.imageVisualPrompt || "")) {
+            console.warn("[Marketing Generation] imageVisualPrompt was returned in Hebrew — using safe English fallback.");
+            postData.imageVisualPrompt = `Professional modern business marketing image for ${business.businessName}, elegant design, high quality photography`;
+        }
+
+        // ── 2. Generate Image & Upload to Cloudinary ───────────────────────
+        let generatedImageUrl: string | undefined = undefined;
+
+        if (includeImage) {
+            try {
+                generatedImageUrl = await generateAndUploadImage(postData.imageVisualPrompt);
+                console.log("[Marketing Generation] Successfully stored Cloudinary URL:", generatedImageUrl);
+            } catch (imgError: any) {
+                console.error("[Marketing Generation] Image upload failed:", imgError?.message || imgError);
+                generatedImageUrl = undefined;
+            }
+        }
+
+        // ── 3. Save Post to DB ─────────────────────────────────────────────
         const newInsight = await AgentInsight.create({
             businessId: business._id,
             agentName: "Golda",
             type: "social_post",
-            title: parsed.title,
-            content: parsed.content,
+            title: postData.title,
+            content: postData.content,
             imageUrl: generatedImageUrl,
             status: "approved",
         });
@@ -144,8 +163,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             success: true,
             insight: JSON.parse(JSON.stringify(newInsight)),
-            canGenerateImage: !includeImage ? !quotaUsedToday : false,
+            canGenerateImage: true,
+            imageGenerated: !!generatedImageUrl,
         });
+
     } catch (error: any) {
         console.error("[Marketing API POST Error]:", error);
         return NextResponse.json(
