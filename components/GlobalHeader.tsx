@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -37,6 +37,17 @@ export default function GlobalHeader({ clientData, sessionBusinessId }: GlobalHe
     const [adminPassword, setAdminPassword] = useState("");
     const [adminError, setAdminError] = useState<string | null>(null);
 
+    // Live Clock & Date State
+    const [currentTime, setCurrentTime] = useState(new Date());
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        setCurrentTime(new Date());
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
     const isDashboard = pathname?.startsWith("/dashboard");
     const isClientSite = pathname?.startsWith("/c/");
 
@@ -61,6 +72,23 @@ export default function GlobalHeader({ clientData, sessionBusinessId }: GlobalHe
             setAdminError("סיסמה שגויה");
         }
     };
+
+    const timeString = mounted
+        ? currentTime.toLocaleTimeString("he-IL", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: false,
+          })
+        : "00:00:00";
+
+    const dateString = mounted
+        ? currentTime.toLocaleDateString("he-IL", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+          })
+        : "";
 
     return (
         <>
@@ -95,7 +123,7 @@ export default function GlobalHeader({ clientData, sessionBusinessId }: GlobalHe
                         )}
                     </div>
 
-                    {/* --- LEFT SIDE (RTL End): Actions / Divider / Theme Toggle --- */}
+                    {/* --- LEFT SIDE (RTL End): Actions / Live Clock / Landing Page / Theme Toggle --- */}
                     <div className="flex items-center gap-3 md:gap-4 shrink-0">
                         {!isDashboard && (
                             <Button
@@ -114,15 +142,24 @@ export default function GlobalHeader({ clientData, sessionBusinessId }: GlobalHe
                         )}
 
                         {isDashboard && (
-                            <Link href={`/c/${clientSlug}`} target="_blank">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-10 gap-2 rounded-xl border-border text-xs md:text-sm font-medium px-4 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                                >
-                                    <LinkIcon size={16} /> <span className="hidden sm:inline">עמוד נחיתה</span>
-                                </Button>
-                            </Link>
+                            <>
+                                {/* Global Live Date & Clock Pill */}
+                                <div className="hidden sm:flex items-center gap-2.5 bg-muted/40 border border-border px-3.5 py-1.5 rounded-xl text-xs shadow-sm">
+                                    <span className="font-medium text-muted-foreground">{mounted ? dateString : ""}</span>
+                                    <span className="h-3 w-px bg-border" />
+                                    <span className="font-mono font-bold text-foreground tabular-nums">{mounted ? timeString : "00:00:00"}</span>
+                                </div>
+
+                                <Link href={`/c/${clientSlug}`} target="_blank">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-10 gap-2 rounded-xl border-border text-xs md:text-sm font-medium px-4 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                                    >
+                                        <LinkIcon size={16} /> <span className="hidden sm:inline">עמוד נחיתה</span>
+                                    </Button>
+                                </Link>
+                            </>
                         )}
 
                         <div className="h-6 w-px bg-border/80 hidden sm:block" />

@@ -6,7 +6,6 @@ import {
     Sparkles,
     ImageIcon,
     Loader2,
-    Image as ImageLucide,
     AlertCircle,
     CheckCircle2,
     Facebook,
@@ -53,10 +52,6 @@ export default function MarketingContentHub({
     const [includeImage, setIncludeImage] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
 
-    // Quota State
-    const [canGenerateImage, setCanGenerateImage] = useState<boolean>(true);
-    const [isCheckingQuota, setIsCheckingQuota] = useState(true);
-
     // Guide Modal State
     const [isGuideOpen, setIsGuideOpen] = useState(false);
     const [isDisconnecting, setIsDisconnecting] = useState(false);
@@ -78,27 +73,6 @@ export default function MarketingContentHub({
             toast.error((errCode && errMap[errCode]) || "תקלה בחיבור לחשבון Meta.");
             window.history.replaceState({}, document.title, window.location.pathname);
         }
-    }, []);
-
-    // Fetch initial quota status on mount
-    useEffect(() => {
-        const checkQuota = async () => {
-            try {
-                const res = await fetch("/api/marketing/generate");
-                if (res.ok) {
-                    const data = await res.json();
-                    setCanGenerateImage(data.canGenerateImage);
-                    if (!data.canGenerateImage) {
-                        setIncludeImage(false);
-                    }
-                }
-            } catch (err) {
-                console.error("Failed to check image quota", err);
-            } finally {
-                setIsCheckingQuota(false);
-            }
-        };
-        checkQuota();
     }, []);
 
     const handleConnectMeta = () => {
@@ -125,15 +99,9 @@ export default function MarketingContentHub({
         }
     };
 
-
     const handleGeneratePost = async (e: React.FormEvent) => {
         e.preventDefault();
         if (isGenerating) return;
-
-        if (includeImage && !canGenerateImage) {
-            toast.error("נוצלה מכסת התמונות היומית. נסה שוב מחר.");
-            return;
-        }
 
         setIsGenerating(true);
         try {
@@ -142,29 +110,21 @@ export default function MarketingContentHub({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     prompt: promptText,
-                    includeImage: includeImage && canGenerateImage,
+                    includeImage,
                 }),
             });
 
             const data = await res.json();
 
             if (!res.ok) {
-                if (data.error === "DAILY_IMAGE_QUOTA_REACHED") {
-                    setCanGenerateImage(false);
-                    setIncludeImage(false);
-                    toast.error(data.message || "נוצלה מכסת התמונות היומית.");
-                } else {
-                    toast.error(data.error || "תקלה מחולל הפוסטים.");
-                }
+                toast.error(data.error || "תקלה במחולל הפוסטים.");
                 return;
             }
 
             if (data.success && data.insight) {
                 setInsightsList((prev) => [data.insight, ...prev]);
                 setPromptText("");
-                if (includeImage) {
-                    setCanGenerateImage(false);
-                    setIncludeImage(false);
+                if (includeImage && data.imageGenerated) {
                     toast.success("פוסט שיווקי + תמונת AI יוצרו בהצלחה!");
                 } else {
                     toast.success("פוסט שיווקי נוצר בהצלחה!");
@@ -275,17 +235,6 @@ export default function MarketingContentHub({
                             <p className="text-xs text-muted-foreground">צור פוסטים שיווקיים ותמונות AI בלחיצת כפתור</p>
                         </div>
                     </div>
-
-                    {/* Daily Quota Badge */}
-                    <div className="flex items-center gap-2 self-start sm:self-auto bg-muted/60 px-3 py-1.5 rounded-full border border-border text-xs">
-                        <ImageLucide className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span className="font-semibold text-foreground">מכסת תמונות יומיות:</span>
-                        {canGenerateImage ? (
-                            <span className="text-emerald-600 font-bold dark:text-emerald-400">1 / 1 זמינה</span>
-                        ) : (
-                            <span className="text-amber-600 font-bold dark:text-amber-400">0 / 1 (נוצלה להיום)</span>
-                        )}
-                    </div>
                 </div>
 
                 <form onSubmit={handleGeneratePost} className="space-y-4">
@@ -315,33 +264,20 @@ export default function MarketingContentHub({
                         </Button>
                     </div>
 
-                    {/* Include AI Image Toggle & Tooltip */}
+                    {/* Include AI Image Toggle */}
                     <div className="flex items-center justify-between pt-2">
                         <div className="flex items-center gap-3">
                             <Switch
                                 id="include-image"
-                                checked={includeImage && canGenerateImage}
-                                onCheckedChange={(checked: boolean) => {
-                                    if (canGenerateImage) {
-                                        setIncludeImage(checked);
-                                    } else {
-                                        toast.error("נוצלה מכסת התמונות היומית (תמונה 1 ביום בלבד). נסה שוב מחר.");
-                                    }
-                                }}
-                                disabled={!canGenerateImage || isGenerating}
+                                checked={includeImage}
+                                onCheckedChange={(checked: boolean) => setIncludeImage(checked)}
+                                disabled={isGenerating}
                             />
-                            <Label htmlFor="include-image" className={`text-sm font-medium flex items-center gap-2 ${!canGenerateImage ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
+                            <Label htmlFor="include-image" className="text-sm font-medium flex items-center gap-2 cursor-pointer">
                                 <ImageIcon className="w-4 h-4 text-primary" />
                                 כלול תמונת AI מותאמת אישית (Imagen 3)
                             </Label>
                         </div>
-
-                        {!canGenerateImage && (
-                            <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-900/50">
-                                <AlertCircle className="w-3.5 h-3.5" />
-                                <span>נוצלה מכסת התמונות היומית. נסה שוב מחר.</span>
-                            </div>
-                        )}
                     </div>
                 </form>
             </div>
