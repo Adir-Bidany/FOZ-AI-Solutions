@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, CheckCircle, Archive, Lock, ChevronDown } from "lucide-react";
+import { Copy, CheckCircle, Trash2, Lock, ChevronDown, Download, Loader2, Facebook, Instagram } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -16,13 +16,80 @@ interface InsightCardProps {
     date: string;
     agentName: "Golda";
     status?: string;
+    onDeleted?: (id: string) => void;
 }
 
-export default function InsightCard({ id, title, content, imageUrl, type, date, agentName, status = "approved" }: InsightCardProps) {
+export default function InsightCard({ id, title, content, imageUrl, type, date, agentName, status = "approved", onDeleted }: InsightCardProps) {
     const [copied, setCopied] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
-    const [isArchiving, setIsArchiving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [isPublishingFb, setIsPublishingFb] = useState(false);
+    const [isPublishingIg, setIsPublishingIg] = useState(false);
     const router = useRouter();
+
+    const handlePublishToSocial = async (platform: "facebook" | "instagram") => {
+        if (platform === "facebook") setIsPublishingFb(true);
+        if (platform === "instagram") setIsPublishingIg(true);
+
+        try {
+            const res = await fetch("/api/marketing/publish", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ insightId: id, platform }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                if (data.error === "NOT_CONNECTED") {
+                    toast.error("חשבון Meta אינו מחובר. לחץ על 'התחבר לחשבון Meta' בראש העמוד.");
+                } else {
+                    toast.error(data.error || data.message || `תקלה בפרסום ל-${platform}`);
+                }
+                return;
+            }
+
+            if (data.success) {
+                const platformName = platform === "facebook" ? "פייסבוק" : "אינסטגרם";
+                toast.success(`הפוסט פורסם בהצלחה בעמוד ה-${platformName}!`);
+            }
+        } catch (error) {
+            console.error(`Publish error (${platform}):`, error);
+            toast.error("תקלה בחיבור לשרת הפרסום.");
+        } finally {
+            if (platform === "facebook") setIsPublishingFb(false);
+            if (platform === "instagram") setIsPublishingIg(false);
+        }
+    };
+
+    const handleDownloadImage = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!imageUrl || isDownloading) return;
+
+        setIsDownloading(true);
+        try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            
+            const link = document.createElement("a");
+            link.href = blobUrl;
+            link.download = `golda-post-${id.substring(0, 6)}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
+            
+            toast.success("התמונה הורדה בהצלחה!");
+        } catch (error) {
+            console.error("Failed to download image:", error);
+            // Fallback: open in new tab if blob fetch CORS blocks direct download
+            window.open(imageUrl, "_blank");
+        } finally {
+            setIsDownloading(false);
+        }
+    };
     
     // Aesthetic Split: Violet/Indigo for Marketing assets, Emerald/Teal for Financial assets
     const marketingTypes = ["social_post", "marketing_tip", "campaign_idea"];
@@ -50,21 +117,18 @@ export default function InsightCard({ id, title, content, imageUrl, type, date, 
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleArchive = async () => {
-        setIsArchiving(true);
+    const handleDelete = async () => {
+        if (!confirm("האם אתה בטוח שברצונך למחוק פוסט זה לצמיתות?")) return;
+        setIsDeleting(true);
         try {
-            const res = await fetch(`/api/insights/${id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: "archived" })
-            });
-            if (!res.ok) throw new Error("Failed to archive");
-            toast.success("הוסתר בהצלחה");
-            router.refresh();
+            const res = await fetch(`/api/insights/${id}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Failed to delete");
+            toast.success("הפוסט נמחק בהצלחה.");
+            onDeleted?.(id);
         } catch (error) {
             console.error(error);
-            toast.error("שגיאה בהסתרת התוכן");
-            setIsArchiving(false);
+            toast.error("שגיאה במחיקת הפוסט");
+            setIsDeleting(false);
         }
     };
 
@@ -128,33 +192,84 @@ export default function InsightCard({ id, title, content, imageUrl, type, date, 
                             <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/20">
                                 AI Image
                             </div>
+
+                            <button
+                                onClick={handleDownloadImage}
+                                disabled={isDownloading}
+                                className="absolute bottom-3 left-3 bg-black/70 hover:bg-black/90 text-white text-xs font-semibold px-3 py-1.5 rounded-full border border-white/20 backdrop-blur-md flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                                title="הורד תמונה למחשב"
+                            >
+                                {isDownloading ? (
+                                    <>
+                                        <Loader2 size={12} className="animate-spin" />
+                                        <span>מוריד...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Download size={12} />
+                                        <span>הורד תמונה</span>
+                                    </>
+                                )}
+                            </button>
                         </div>
                     )}
                     <div className="text-foreground whitespace-pre-wrap text-[15px] leading-relaxed" dir="auto">
                         {content}
                     </div>
                 </CardContent>
-                <CardFooter className="bg-white/40 p-4 border-t border-gray-100/50 flex gap-3">
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={handleCopy}
-                        className={`flex-1 rounded-xl shadow-sm bg-white ${btnBorder} ${btnText} ${btnHover} transition-colors`}
-                    >
-                        {copied ? <CheckCircle size={16} className="ml-2" /> : <Copy size={16} className="ml-2" />}
-                        {copied ? "הועתק!" : "העתק תוכן"}
-                    </Button>
-                    
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={handleArchive}
-                        disabled={isArchiving}
-                        className={`rounded-xl text-gray-400 transition-colors px-3 hover:text-red-600 hover:bg-red-50`}
-                        title="הסתר/ארכיון"
-                    >
-                        <Archive size={18} />
-                    </Button>
+                <CardFooter className="bg-muted/30 p-4 border-t border-border flex flex-col gap-2.5">
+                    <div className="flex gap-2 w-full">
+                        <Button
+                            onClick={() => handlePublishToSocial("facebook")}
+                            disabled={isPublishingFb}
+                            size="sm"
+                            className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1.5 shadow-sm"
+                        >
+                            {isPublishingFb ? (
+                                <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                                <Facebook size={14} />
+                            )}
+                            פרסם בפייסבוק
+                        </Button>
+
+                        <Button
+                            onClick={() => handlePublishToSocial("instagram")}
+                            disabled={isPublishingIg}
+                            size="sm"
+                            className="flex-1 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-xs gap-1.5 shadow-sm"
+                        >
+                            {isPublishingIg ? (
+                                <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                                <Instagram size={14} />
+                            )}
+                            פרסם באינסטגרם
+                        </Button>
+                    </div>
+
+                    <div className="flex gap-2 w-full">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={handleCopy}
+                            className={`flex-1 rounded-xl shadow-sm bg-background border-border text-foreground hover:bg-accent text-xs font-semibold`}
+                        >
+                            {copied ? <CheckCircle size={14} className="ml-1.5" /> : <Copy size={14} className="ml-1.5" />}
+                            {copied ? "הועתק!" : "העתק תוכן"}
+                        </Button>
+                        
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className={`rounded-xl text-muted-foreground transition-colors px-3 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40`}
+                            title="מחק פוסט לצמיתות"
+                        >
+                            {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                        </Button>
+                    </div>
                 </CardFooter>
             </div>
         </Card>

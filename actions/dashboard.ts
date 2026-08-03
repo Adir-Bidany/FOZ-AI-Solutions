@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 import Business from "@/models/Business";
 import { cleanAIResponse, extractJsonFromText, mapChatHistory, createGeminiInstance } from "@/lib/utils/ai-helpers";
 import { AGENT_REGISTRY } from "@/lib/agents/registry";
-import PendingAsset from "@/models/PendingAsset";
+
 import AgentInsight from "@/models/AgentInsight";
 import mongoose, { Types } from "mongoose";
 
@@ -366,32 +366,16 @@ The owner's name is ${business?.ownerName || 'the owner'}.\n`;
             for (const call of functionCalls) {
                 if (call.name === "submit_for_approval") {
                     const args = call.args as any;
-                    await PendingAsset.create({
+                    // Auto-approve: write directly to AgentInsight, bypassing the pending queue
+                    await AgentInsight.create({
                         businessId: business._id,
                         agentName: "Golda",
                         type: args.type,
                         title: args.title,
                         content: args.content,
-                        status: "pending"
+                        status: "approved"
                     });
-                    aiResponseText += `\n\n✅ הפוסט/טיפ "${args.title}" נשלח בהצלחה לתור הממתין לאישור!`;
-                } else if (call.name === "approve_asset") {
-                    const args = call.args as any;
-                    const pending = await PendingAsset.findById(args.asset_id);
-                    if (pending) {
-                        await AgentInsight.create({
-                            businessId: pending.businessId,
-                            agentName: pending.agentName,
-                            type: pending.type,
-                            title: pending.title,
-                            content: pending.content,
-                            status: "approved"
-                        });
-                        await PendingAsset.findByIdAndDelete(args.asset_id);
-                        aiResponseText += `\n\n✅ התוכן אושר ופורסם בהצלחה לדשבורד!`;
-                    } else {
-                        aiResponseText += `\n\n❌ לא נמצא תוכן ממתין לאישור עם המזהה שסופק.`;
-                    }
+                    aiResponseText += `\n\n✅ הפוסט/טיפ "${args.title}" פורסם בהצלחה במרכז התוכן השיווקי!`;
                 } else if (call.name === "search_past_conversations") {
                     const args = call.args as any;
                     const searchQuery = args.query || "";
@@ -504,42 +488,4 @@ export async function updateLandingPage(businessId: string, data: any) {
     }
 }
 
-export async function fetchPendingAssets(businessId: string) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.businessId) throw new Error("Unauthorized");
-    if (session.user.businessId !== businessId) throw new Error("Forbidden: Resource ownership mismatch");
 
-    await connectToDatabase();
-    try {
-        const assets = await PendingAsset.find({
-            businessId: businessId,
-            status: "pending"
-        }).sort({ createdAt: -1 }).lean();
-
-        return JSON.parse(JSON.stringify(assets));
-    } catch (error) {
-        console.error("Failed to fetch pending assets:", error);
-        return [];
-    }
-}
-
-export async function deletePendingAsset(assetId: string) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.businessId) throw new Error("Unauthorized");
-
-    await connectToDatabase();
-    try {
-        const asset = await PendingAsset.findById(assetId);
-        if (!asset) throw new Error("Pending asset not found");
-        if (asset.businessId.toString() !== session.user.businessId) {
-            throw new Error("Forbidden: Resource ownership mismatch");
-        }
-
-        await PendingAsset.findByIdAndDelete(assetId);
-        revalidatePath("/dashboard/marketing");
-        return { success: true };
-    } catch (error) {
-        console.error("Failed to delete pending asset:", error);
-        return { success: false, error: "Failed to delete pending asset" };
-    }
-}

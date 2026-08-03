@@ -16,6 +16,15 @@ export interface IBusiness extends Document {
             apiKey?: string;
         };
         whatsapp?: string;
+        meta?: {
+            accessToken?: string;
+            tokenExpiresAt?: Date;
+            facebookPageId?: string;
+            facebookPageName?: string;
+            instagramAccountId?: string;
+            instagramUsername?: string;
+            isConnected?: boolean;
+        };
     };
     ai_settings?: {
         onboarding_status: "new" | "in_progress" | "completed";
@@ -66,6 +75,15 @@ const BusinessSchema = new Schema<IBusiness>(
                 userPassword: { type: String }
             },
             whatsapp: { type: String },
+            meta: {
+                accessToken: { type: String },
+                tokenExpiresAt: { type: Date },
+                facebookPageId: { type: String },
+                facebookPageName: { type: String },
+                instagramAccountId: { type: String },
+                instagramUsername: { type: String },
+                isConnected: { type: Boolean, default: false },
+            },
         },
 
         // --- AI Settings ---

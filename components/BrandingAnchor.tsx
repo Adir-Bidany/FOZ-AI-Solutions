@@ -365,26 +365,24 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
                 </div>
             )}
 
-            {/* Dashboard Context: Sliding Navigation Overlay */}
-            {context === "dashboard" && (
-                <>
-                    {/* Backdrop */}
-                    {isOpen && (
-                        <div 
-                            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[45] animate-in fade-in duration-300" 
-                            onClick={() => setIsOpen(false)} 
-                        />
-                    )}
-                    {/* Sidebar container */}
-                    <div className={`fixed top-0 left-0 h-full w-80 bg-card shadow-2xl z-50 transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
-                        <button onClick={() => setIsOpen(false)} className="absolute top-4 left-4 p-2 text-muted-foreground hover:bg-accent rounded-full z-[60]">
-                            <X size={20} />
-                        </button>
-                        <div className="h-full overflow-y-auto w-full relative z-50">
-                            {children}
-                        </div>
+            {/* Dashboard Context: Floating Navigation Overlay originating from bottom-right button */}
+            {context === "dashboard" && isOpen && (
+                <div className="absolute bottom-20 right-0 w-80 max-h-[85vh] bg-card/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-border flex flex-col animate-in slide-in-from-bottom-10 fade-in duration-300 z-50">
+                    <button 
+                        onClick={() => setIsOpen(false)} 
+                        className="absolute top-4 left-4 p-2 text-muted-foreground hover:text-foreground rounded-full z-10"
+                        aria-label="סגור תפריט"
+                    >
+                        <X size={20} />
+                    </button>
+                    <div className="flex-1 overflow-y-auto min-h-0">
+                        {React.isValidElement(children)
+                            ? React.cloneElement(children as React.ReactElement<any>, {
+                                  onNavClick: () => setIsOpen(false),
+                              })
+                            : children}
                     </div>
-                </>
+                </div>
             )}
         </div>
     );

@@ -100,15 +100,30 @@ export async function POST(req: NextRequest) {
 
         let generatedImageUrl: string | undefined = undefined;
 
-        // 3. If Image Requested & Quota Allowed: Generate AI Image
+        // 3. If Image Requested & Quota Allowed: Generate AI Image with Verification & Fallback
         if (includeImage) {
             const visualPrompt = parsed.imageVisualPrompt || `Professional high-end photo for ${business.businessName}`;
             const cleanPrompt = encodeURIComponent(
-                `${visualPrompt}, minimal aesthetic, highly detailed, 8k resolution, professional photography, studio lighting`
+                `${visualPrompt}, minimal aesthetic, highly detailed, professional photography`
             );
             
-            // Generate AI Image via Pollinations Imagen generator
-            generatedImageUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=1080&height=1080&nologo=true&seed=${Date.now()}`;
+            const primaryUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?model=flux&width=1080&height=1080&nologo=true`;
+            const fallbackUrl = `https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1080&q=80`;
+
+            try {
+                // Verify image server returns valid HTTP 200 with image content-type
+                const testRes = await fetch(primaryUrl, { method: "HEAD", signal: AbortSignal.timeout(5000) });
+                const contentType = testRes.headers.get("content-type") || "";
+                
+                if (testRes.ok && contentType.startsWith("image/")) {
+                    generatedImageUrl = primaryUrl;
+                } else {
+                    generatedImageUrl = fallbackUrl;
+                }
+            } catch (e) {
+                console.warn("[Marketing Generation] Pollinations verification failed, using fallback image:", e);
+                generatedImageUrl = fallbackUrl;
+            }
 
             // Update business daily quota timestamp
             business.lastImageGeneratedAt = now;

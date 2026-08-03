@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import {
     Calendar,
@@ -10,22 +10,13 @@ import {
     LogOut,
     Sparkles,
     Crown,
-    BarChart3,
     Globe,
     TrendingUp,
-    Menu,
 } from "lucide-react";
 import Link from "next/link";
 import ClientLogo from "@/components/ClientLogo";
 import { signOut } from "next-auth/react";
 import { archiveCurrentSession } from "@/actions/dashboard";
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet";
 
 interface SidebarProps {
     client: {
@@ -37,8 +28,8 @@ interface SidebarProps {
     };
 }
 
-/** Shared nav content rendered inside both the desktop sidebar and the mobile Sheet */
-function SidebarContent({
+/** Shared nav content rendered inside both the desktop sidebar and floating BrandingAnchor menu */
+export function SidebarContent({
     client,
     onNavClick,
 }: {
@@ -165,49 +156,5 @@ export default function Sidebar({ client }: SidebarProps) {
         <aside className="hidden lg:flex flex-col w-64 shrink-0 border-s border-border h-full">
             <SidebarContent client={client} />
         </aside>
-    );
-}
-
-/** Mobile hamburger + Sheet drawer — visible only below lg */
-export function MobileSidebarTrigger({ client }: SidebarProps) {
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    const triggerButton = (
-        <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 rounded-xl"
-            aria-label="פתח תפריט ניווט"
-        >
-            <Menu size={22} />
-        </Button>
-    );
-
-    if (!mounted) {
-        return (
-            <div className="lg:hidden">
-                {triggerButton}
-            </div>
-        );
-    }
-
-    return (
-        <div className="lg:hidden">
-            <Sheet>
-                <SheetTrigger asChild>
-                    {triggerButton}
-                </SheetTrigger>
-                <SheetContent side="right" className="w-72 p-0 border-border" dir="rtl">
-                    <SheetHeader className="sr-only">
-                        <SheetTitle>תפריט ניווט</SheetTitle>
-                    </SheetHeader>
-                    <SidebarContent client={client} />
-                </SheetContent>
-            </Sheet>
-        </div>
     );
 }

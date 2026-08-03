@@ -7,7 +7,7 @@ import ChatExternal from "@/models/ChatExternal";
 import Customer from "@/models/Customer";
 import ActionCard from "@/models/ActionCard";
 import AgentInsight from "@/models/AgentInsight";
-import PendingAsset from "@/models/PendingAsset";
+
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { AGENT_REGISTRY, securityClassifierSchema } from "@/lib/agents/registry";
 import { Types } from "mongoose";
@@ -528,47 +528,42 @@ MARKETING POST CREATION BEHAVIORAL RULES:
                                 const isQuotaUsedToday = isSameCalendarDay(business?.lastImageGeneratedAt, new Date());
                                 if (!isQuotaUsedToday) {
                                     const cleanPrompt = encodeURIComponent(
-                                        `${args.title}, luxury aesthetic marketing photo, 8k resolution, professional studio lighting`
+                                        `${args.title}, luxury aesthetic marketing photo, professional studio lighting`
                                     );
-                                    generatedImageUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=1080&height=1080&nologo=true&seed=${Date.now()}`;
+                                    const primaryUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?model=flux&width=1080&height=1080&nologo=true`;
+                                    const fallbackUrl = `https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1080&q=80`;
+
+                                    try {
+                                        const testRes = await fetch(primaryUrl, { method: "HEAD", signal: AbortSignal.timeout(5000) });
+                                        const contentType = testRes.headers.get("content-type") || "";
+                                        
+                                        if (testRes.ok && contentType.startsWith("image/")) {
+                                            generatedImageUrl = primaryUrl;
+                                        } else {
+                                            generatedImageUrl = fallbackUrl;
+                                        }
+                                    } catch (e) {
+                                        console.warn("[Chat Route] Pollinations verification failed, using fallback image:", e);
+                                        generatedImageUrl = fallbackUrl;
+                                    }
                                     
                                     await Business.findByIdAndUpdate(businessId, { lastImageGeneratedAt: new Date() });
                                 }
                             }
 
-                            await PendingAsset.create({
+                            // Write directly to AgentInsight as auto-approved (no pending queue)
+                            await AgentInsight.create({
                                 businessId: new Types.ObjectId(businessId),
                                 agentName: "Golda",
                                 type: args.type,
                                 title: args.title,
                                 content: args.content,
                                 imageUrl: generatedImageUrl,
-                                status: "pending"
+                                status: "approved"
                             });
-                            responseText = `✅ ${args.title} הועבר בהצלחה למרכז התוכן של גולדה לאישור סופי!`;
+                            responseText = `✅ ${args.title} פורסם בהצלחה במרכז התוכן השיווקי!`;
                         } else {
-                            responseText = `Simulation: Asset "${args.title}" submitted to Golda (Demo mode).`;
-                        }
-                    } else if (call.name === "approve_asset") {
-                        const args = call.args as any;
-                        if (businessId !== "demo" && Types.ObjectId.isValid(args.asset_id)) {
-                            const pending = await PendingAsset.findById(args.asset_id);
-                            if (pending) {
-                                await AgentInsight.create({
-                                    businessId: pending.businessId,
-                                    agentName: pending.agentName,
-                                    type: pending.type,
-                                    title: pending.title,
-                                    content: pending.content,
-                                    status: "approved"
-                                });
-                                await PendingAsset.findByIdAndDelete(args.asset_id);
-                                responseText = `✅ The asset has been approved and moved to the production dashboard!`;
-                            } else {
-                                responseText = `❌ Could not find pending asset with that ID.`;
-                            }
-                        } else {
-                            responseText = `Simulation: Asset approved (Demo mode).`;
+                            responseText = `Simulation: Asset "${args.title}" published to Marketing Hub (Demo mode).`;
                         }
                     } else if (call.name === "report_missing_info") {
                         const args = call.args as any;

@@ -25,13 +25,11 @@ interface GlobalHeaderProps {
         ownerName?: string;
         logo?: string;
     };
-    /** Mobile hamburger trigger injected from the server layout */
-    mobileSidebarTrigger?: React.ReactNode;
     /** Business slug passed from the server layout (replaces useSession) */
     sessionBusinessId?: string;
 }
 
-export default function GlobalHeader({ clientData, mobileSidebarTrigger, sessionBusinessId }: GlobalHeaderProps) {
+export default function GlobalHeader({ clientData, sessionBusinessId }: GlobalHeaderProps) {
     const pathname = usePathname();
     const router = useRouter();
 
@@ -130,9 +128,6 @@ export default function GlobalHeader({ clientData, mobileSidebarTrigger, session
                         <div className="h-6 w-px bg-border/80 hidden sm:block" />
 
                         <ThemeToggle />
-
-                        {/* Mobile hamburger — only rendered on dashboard, injected from layout */}
-                        {isDashboard && mobileSidebarTrigger}
                     </div>
                 </div>
             </header>

@@ -3,7 +3,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { connectToDatabase as connectDB } from "@/lib/db";
 import Business from "@/models/Business";
-import Sidebar, { MobileSidebarTrigger } from "@/components/dashboard/Sidebar";
+import { SidebarContent } from "@/components/dashboard/Sidebar";
 import BrandingAnchor from "@/components/BrandingAnchor";
 import GlobalHeader from "@/components/GlobalHeader";
 
@@ -50,22 +50,19 @@ export default async function DashboardLayout({
 
     return (
         <div suppressHydrationWarning className="flex flex-col h-screen bg-background text-foreground w-full overflow-hidden" dir="rtl">
-            {/* Pass mobile trigger so GlobalHeader can render the hamburger on mobile */}
             <GlobalHeader
                 clientData={serializedClient}
-                mobileSidebarTrigger={<MobileSidebarTrigger client={serializedClient} />}
                 sessionBusinessId={serializedClient._id?.toString() || undefined}
             />
 
-            {/* Content row: main area + desktop sidebar */}
-            {/* flex-1 min-h-0 removes the hardcoded calc(100vh-5rem) that mismatched the actual header height */}
+            {/* Content row: full-width main area + floating navigation */}
             <div suppressHydrationWarning className="flex flex-1 min-h-0 overflow-hidden w-full">
                 <main suppressHydrationWarning className="w-full h-full overflow-y-auto custom-scrollbar flex flex-col">
                     <div className="flex-1 w-full relative">{children}</div>
                 </main>
 
                 <BrandingAnchor context="dashboard" businessData={serializedClient}>
-                    <Sidebar client={serializedClient} />
+                    <SidebarContent client={serializedClient} />
                 </BrandingAnchor>
             </div>
         </div>
