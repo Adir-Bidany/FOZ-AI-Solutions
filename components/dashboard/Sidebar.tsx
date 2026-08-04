@@ -15,6 +15,7 @@ import {
     Bot,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import ClientLogo from "@/components/ClientLogo";
 import { signOut } from "next-auth/react";
 import { archiveCurrentSession } from "@/actions/dashboard";
@@ -37,6 +38,8 @@ export function SidebarContent({
     client: SidebarProps["client"];
     onNavClick?: () => void;
 }) {
+    const pathname = usePathname();
+
     const handleLogout = async () => {
         if (client?._id) {
             try {
@@ -51,6 +54,27 @@ export function SidebarContent({
     const handleOpenGolda = () => {
         window.dispatchEvent(new CustomEvent("open-golda-modal"));
         onNavClick?.();
+    };
+
+    const isActive = (href: string) => {
+        if (href === "/dashboard") {
+            return pathname === "/dashboard";
+        }
+        return pathname?.startsWith(href);
+    };
+
+    const getNavItemClass = (href: string, isSpecialV2: boolean = false) => {
+        const active = isActive(href);
+
+        if (isSpecialV2) {
+            return active
+                ? "w-full justify-start gap-3 font-extrabold text-purple-600 dark:text-purple-300 bg-purple-500/20 border border-purple-500/40 shadow-sm h-12 rounded-xl"
+                : "w-full justify-start gap-3 font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 h-12 rounded-xl border border-purple-500/20 bg-purple-500/5";
+        }
+
+        return active
+            ? "w-full justify-start gap-3 font-extrabold text-primary bg-primary/15 border border-primary/20 shadow-sm h-12 rounded-xl"
+            : "w-full justify-start gap-3 font-semibold text-muted-foreground hover:bg-accent hover:text-foreground h-12 rounded-xl";
     };
 
     return (
@@ -70,16 +94,16 @@ export function SidebarContent({
                 <Link href="/dashboard" onClick={onNavClick}>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 font-semibold text-foreground hover:bg-primary/10 hover:text-primary h-12 rounded-xl"
+                        className={getNavItemClass("/dashboard")}
                     >
-                        <Sparkles size={20} /> המשרד שלי
+                        <Sparkles size={20} className={isActive("/dashboard") ? "text-primary" : ""} /> המשרד שלי
                     </Button>
                 </Link>
 
                 <Link href="/dashboard/v2" onClick={onNavClick}>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 h-12 rounded-xl border border-purple-500/20 bg-purple-500/5"
+                        className={getNavItemClass("/dashboard/v2", true)}
                     >
                         <Sparkles size={20} className="text-purple-500" /> המשרד שלי 2
                     </Button>
@@ -96,45 +120,45 @@ export function SidebarContent({
                 <Link href="/dashboard/calendar" onClick={onNavClick}>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
+                        className={getNavItemClass("/dashboard/calendar")}
                     >
-                        <Calendar size={20} /> יומן תורים
+                        <Calendar size={20} className={isActive("/dashboard/calendar") ? "text-primary" : ""} /> יומן תורים
                     </Button>
                 </Link>
 
                 <Link href="/dashboard/customers" onClick={onNavClick}>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
+                        className={getNavItemClass("/dashboard/customers")}
                     >
-                        <Users size={20} /> לקוחות
+                        <Users size={20} className={isActive("/dashboard/customers") ? "text-primary" : ""} /> לקוחות
                     </Button>
                 </Link>
 
                 <Link href="/dashboard/marketing" onClick={onNavClick}>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
+                        className={getNavItemClass("/dashboard/marketing")}
                     >
-                        <Megaphone size={20} /> שיווק ותוכן
+                        <Megaphone size={20} className={isActive("/dashboard/marketing") ? "text-primary" : ""} /> שיווק ותוכן
                     </Button>
                 </Link>
 
                 <Link href="/dashboard/website" onClick={onNavClick}>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
+                        className={getNavItemClass("/dashboard/website")}
                     >
-                        <Globe size={20} /> עמוד נחיתה
+                        <Globe size={20} className={isActive("/dashboard/website") ? "text-primary" : ""} /> עמוד נחיתה
                     </Button>
                 </Link>
 
                 <Link href="/dashboard/growth" onClick={onNavClick}>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
+                        className={getNavItemClass("/dashboard/growth")}
                     >
-                        <TrendingUp size={20} /> צמיחה וידע
+                        <TrendingUp size={20} className={isActive("/dashboard/growth") ? "text-primary" : ""} /> צמיחה וידע
                     </Button>
                 </Link>
 
@@ -142,18 +166,18 @@ export function SidebarContent({
                     <Link href="/dashboard/settings" onClick={onNavClick}>
                         <Button
                             variant="ghost"
-                            className="w-full justify-start gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground h-12 rounded-xl"
+                            className={getNavItemClass("/dashboard/settings")}
                         >
-                            <Settings size={20} /> הגדרות
+                            <Settings size={20} className={isActive("/dashboard/settings") ? "text-primary" : ""} /> הגדרות
                         </Button>
                     </Link>
 
                     <Link href="/pricing" onClick={onNavClick}>
                         <Button
                             variant="ghost"
-                            className="w-full justify-start gap-3 font-semibold text-primary hover:bg-primary/10 h-12 rounded-xl"
+                            className={getNavItemClass("/pricing")}
                         >
-                            <Crown size={20} /> שדרוג חבילה
+                            <Crown size={20} className={isActive("/pricing") ? "text-primary" : ""} /> שדרוג חבילה
                         </Button>
                     </Link>
                 </div>
