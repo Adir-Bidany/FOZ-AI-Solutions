@@ -50,8 +50,6 @@ export async function GET(req: Request) {
                 publicInstructions: business.publicInstructions || "",
                 internalNotes: business.internalNotes || "",
 
-                persona: business.ai_settings?.manager_name === "David" ? "david" : "golda",
-
                 // Integrations
                 apiKeys: {
                     companyLogin: apiKeys.simplybook?.companyLogin || "",
@@ -106,18 +104,6 @@ export async function POST(req: Request) {
         if (body.description !== undefined) {
             if (!business.landing_page_data) business.landing_page_data = {};
             business.landing_page_data.about_text = body.description;
-        }
-
-        // Update Persona
-        if (body.persona) {
-            if (!business.ai_settings) business.ai_settings = {};
-            if (body.persona === "david") {
-                business.ai_settings.manager_name = "David";
-                business.ai_settings.manager_gender = "male";
-            } else {
-                business.ai_settings.manager_name = "Golda";
-                business.ai_settings.manager_gender = "female";
-            }
         }
 
         await business.save();

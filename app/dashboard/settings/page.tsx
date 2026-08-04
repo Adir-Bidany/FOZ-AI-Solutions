@@ -13,22 +13,9 @@ import {
     CardDescription,
 } from "@/components/ui/card";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
     Loader2,
     Save,
-    User,
     Building2,
-    Phone,
-    FileText,
-    Calendar,
-    AlertCircle,
-    CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,7 +27,6 @@ export default function SettingsPage() {
         phone: "",
         address: "",
         description: "",
-        persona: "golda",
     });
 
     // Fetch data on mount
@@ -56,7 +42,6 @@ export default function SettingsPage() {
                         phone: result.data.phone || "",
                         address: result.data.address || "",
                         description: result.data.description || "",
-                        persona: result.data.persona || "golda",
                     });
                 }
             } catch (error) {
@@ -92,18 +77,18 @@ export default function SettingsPage() {
     return (
         <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-8" dir="rtl">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-3xl font-bold text-foreground">
                     הגדרות פרופיל
                 </h1>
-                <p className="text-gray-500 mt-1">
+                <p className="text-muted-foreground mt-1">
                     ניהול פרטי העסק והעדפות אישיות
                 </p>
             </div>
 
-            <Card className="border-none shadow-sm bg-white rounded-2xl overflow-hidden">
-                <CardHeader className="border-b border-gray-50 pb-4">
+            <Card className="bg-card border-border shadow-sm rounded-3xl overflow-hidden">
+                <CardHeader className="border-b border-border/60 pb-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">
+                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
                             <Building2 size={20} />
                         </div>
                         <div>
@@ -185,53 +170,11 @@ export default function SettingsPage() {
                 </CardContent>
             </Card>
 
-            <Card className="border-none shadow-sm bg-white rounded-2xl overflow-hidden">
-                <CardHeader className="border-b border-gray-50 pb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
-                            <User size={20} />
-                        </div>
-                        <div>
-                            <CardTitle>הגדרות פרסונה (AI Manager)</CardTitle>
-                            <CardDescription>
-                                בחרי את סגנון הניהול של המנהל הדיגיטלי שלך
-                            </CardDescription>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-6">
-                    <div className="space-y-2 max-w-md">
-                        <Label>בחר מנהל</Label>
-                        <Select
-                            value={formData.persona}
-                            onValueChange={(value) =>
-                                setFormData({ ...formData, persona: value })
-                            }
-                        >
-                            <SelectTrigger className="h-10 rounded-xl">
-                                <SelectValue placeholder="בחר פרסונה" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="golda">
-                                    גולדה (אסרטיבית ומנוסה)
-                                </SelectItem>
-                                <SelectItem value="david">
-                                    דוד (אנליטי ורגוע)
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <p className="text-sm text-gray-500 mt-2">
-                            * השינוי ישפיע על אופן התקשורת של הבוט בחדר המצב.
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
-
             <div className="flex justify-end">
                 <Button
                     onClick={handleSave}
                     disabled={isLoading}
-                    className="h-12 px-8 rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-md gap-2"
+                    className="h-12 px-8 rounded-2xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 shadow-sm gap-2"
                 >
                     {isLoading ? (
                         <Loader2 className="animate-spin" />

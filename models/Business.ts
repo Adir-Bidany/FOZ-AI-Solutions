@@ -30,8 +30,6 @@ export interface IBusiness extends Document {
         onboarding_status: "new" | "in_progress" | "completed";
         tone: string;
         language: string;
-        manager_name?: string;
-        manager_gender?: "female" | "male";
     };
     operational_settings?: {
         opening_hours: Map<string, string>;
@@ -94,8 +92,6 @@ const BusinessSchema = new Schema<IBusiness>(
             },
             tone: { type: String, default: "Professional" },
             language: { type: String, default: "he" },
-            manager_name: { type: String, default: "Golda" },
-            manager_gender: { type: String, enum: ["female", "male"], default: "female" },
         },
 
         // --- Operational ---
