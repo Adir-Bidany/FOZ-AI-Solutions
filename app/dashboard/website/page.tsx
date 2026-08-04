@@ -30,7 +30,6 @@ export default function WebsiteEditorPage() {
         hero_title: "",
         hero_subtitle: "",
         hero_image_url: "",
-        features: "",
     });
 
     // Load initial data
@@ -45,9 +44,6 @@ export default function WebsiteEditorPage() {
                         hero_title: result.data.hero_title || "",
                         hero_subtitle: result.data.hero_subtitle || "",
                         hero_image_url: result.data.hero_image_url || result.data.logo || "",
-                        features: Array.isArray(result.data.features)
-                            ? result.data.features.join("\n")
-                            : result.data.features || "",
                     });
                 }
             } catch (error) {
@@ -118,21 +114,12 @@ export default function WebsiteEditorPage() {
         setIsLoading(true);
 
         try {
-            // Convert features string back to array
-            const dataToSave = {
-                ...formData,
-                features: formData.features
-                    .split("\n")
-                    .map((f) => f.trim())
-                    .filter((f) => f !== ""),
-            };
-
             const res = await fetch("/api/business/website", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(dataToSave),
+                body: JSON.stringify(formData),
             });
 
             const result = await res.json();
@@ -269,35 +256,7 @@ export default function WebsiteEditorPage() {
                         </div>
                     </CardContent>
                 </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>יתרונות ושירותים</CardTitle>
-                        <CardDescription>
-                            רשימת היתרונות שמופיעה מתחת לכותרת. כל שורה תופיע
-                            כיתרון נפרד עם וי.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2">
-                            <Label htmlFor="features">
-                                רשימת יתרונות (כל יתרון בשורה חדשה)
-                            </Label>
-                            <Textarea
-                                id="features"
-                                name="features"
-                                value={formData.features}
-                                onChange={handleChange}
-                                placeholder={
-                                    "חומרים טבעיים בלבד\nחניה חינם בשפע\nזמינות גבוהה"
-                                }
-                                rows={6}
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
-
         </div>
     );
 }

@@ -158,7 +158,7 @@ export function SidebarContent({
                         variant="ghost"
                         className={getNavItemClass("/dashboard/growth")}
                     >
-                        <TrendingUp size={20} className={isActive("/dashboard/growth") ? "text-primary" : ""} /> צמיחה וידע
+                        <TrendingUp size={20} className={isActive("/dashboard/growth") ? "text-primary" : ""} />מידע ללקוח
                     </Button>
                 </Link>
 
@@ -168,7 +168,7 @@ export function SidebarContent({
                             variant="ghost"
                             className={getNavItemClass("/dashboard/settings")}
                         >
-                            <Settings size={20} className={isActive("/dashboard/settings") ? "text-primary" : ""} /> הגדרות
+                            <Settings size={20} className={isActive("/dashboard/settings") ? "text-primary" : ""} /> הגדרות העסק
                         </Button>
                     </Link>
 

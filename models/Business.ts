@@ -43,7 +43,6 @@ export interface IBusiness extends Document {
         hero_subtitle?: string;
         hero_image_url?: string;
         about_text?: string;
-        features?: string[];
     };
     subscriptionStatus: "active" | "trial" | "expired";
     lastImageGeneratedAt?: Date;
@@ -112,7 +111,6 @@ const BusinessSchema = new Schema<IBusiness>(
             hero_subtitle: { type: String, default: "" },
             hero_image_url: { type: String, default: "" },
             about_text: { type: String, default: "" },
-            features: { type: [String], default: [] },
         },
 
         subscriptionStatus: {
