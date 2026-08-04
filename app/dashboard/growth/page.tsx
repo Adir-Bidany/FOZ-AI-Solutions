@@ -166,7 +166,7 @@ export default function GrowthPage() {
                 <div className="space-y-8">
                     {/* === SECTION 0: MISSING INFO QUEUE ("מידע שחסר לדניאלה") === */}
                     <Card className="bg-card/90 border-border shadow-sm rounded-3xl overflow-hidden backdrop-blur-xl">
-                        <CardHeader className="border-b border-border/60 bg-primary/5 pb-4">
+                        <CardHeader className="border-b border-border/60 pb-4">
                             <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
                                     <HelpCircle className="w-5 h-5 text-primary" />
@@ -230,12 +230,12 @@ export default function GrowthPage() {
                     <form onSubmit={handleSave} className="space-y-8">
                         {/* SECTION 1: DANIELA PUBLIC KNOWLEDGE */}
                         <Card className="bg-card border-border shadow-sm rounded-3xl overflow-hidden">
-                            <CardHeader className="border-b border-border/60 bg-muted/30 pb-4">
+                            <CardHeader className="border-b border-border/60 pb-4">
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
                                       
                                         <CardTitle className="text-lg font-bold text-foreground">
-                                           מידע על העסק
+                                           מידע על העסק(ללקוחות)
                                         </CardTitle>
                                     </div>
                                 </div>
@@ -265,7 +265,7 @@ export default function GrowthPage() {
 
                         {/* SECTION 2: GOLDA INTERNAL KNOWLEDGE */}
                         <Card className="bg-card border-border shadow-sm rounded-3xl overflow-hidden">
-                            <CardHeader className="border-b border-border/60 bg-muted/30 pb-4">
+                            <CardHeader className="border-b border-border/60 pb-4">
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
                                         <Lock className="w-5 h-5 text-amber-500" />
