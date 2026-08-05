@@ -577,4 +577,68 @@ export async function updateLandingPage(businessId: string, data: any) {
     }
 }
 
+export async function fetchLeads(businessId: string) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.businessId) throw new Error("Unauthorized");
+    if (session.user.businessId !== businessId) throw new Error("Forbidden: Resource ownership mismatch");
+
+    await connectToDatabase();
+    try {
+        const leads = await ActionCard.find({
+            business_id: businessId,
+            $or: [
+                { "execution_payload.action_type": "send_message" },
+                { "execution_payload.action_type": "lead_capture" },
+                { source_agent: "foz" },
+                { source_agent: "receptionist" }
+            ]
+        }).sort({ created_at: -1 }).lean();
+
+        return JSON.parse(JSON.stringify(leads));
+    } catch (error) {
+        console.error("Failed to fetch leads:", error);
+        return [];
+    }
+}
+
+export async function deleteActionCardPermanently(cardId: string) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.businessId) throw new Error("Unauthorized");
+
+    await connectToDatabase();
+    try {
+        const card = await ActionCard.findById(cardId);
+        if (!card) throw new Error("Card not found");
+        if (card.business_id.toString() !== session.user.businessId) throw new Error("Forbidden");
+
+        await ActionCard.findByIdAndDelete(cardId);
+        try { revalidatePath("/dashboard"); revalidatePath("/dashboard/v2"); } catch (e) {}
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete card permanently:", error);
+        return { success: false, error: "Failed to delete card" };
+    }
+}
+
+export async function markLeadAsHandled(cardId: string) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.businessId) throw new Error("Unauthorized");
+
+    await connectToDatabase();
+    try {
+        const card = await ActionCard.findById(cardId);
+        if (!card) throw new Error("Card not found");
+        if (card.business_id.toString() !== session.user.businessId) throw new Error("Forbidden");
+
+        card.status = "completed";
+        await card.save();
+
+        try { revalidatePath("/dashboard"); revalidatePath("/dashboard/v2"); } catch (e) {}
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to mark lead as handled:", error);
+        return { success: false, error: "Failed to update lead status" };
+    }
+}
+
 
