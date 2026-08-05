@@ -107,14 +107,12 @@ export default function V2HeroMetrics() {
         <section id="v2-hero-metrics" aria-label="מדדים מרכזיים">
             {/* Section header */}
             <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center border border-border">
-                    <TrendingUp className="w-5 h-5 text-muted-foreground" />
-                </div>
+
                 <div>
                     <h2 className="text-xl font-extrabold text-foreground tracking-tight leading-none">
                         מדדים מרכזיים
                     </h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">Key Performance Metrics</p>
+                  
                 </div>
             </div>
 

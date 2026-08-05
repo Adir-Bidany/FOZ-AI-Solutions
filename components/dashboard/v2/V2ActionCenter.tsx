@@ -241,6 +241,78 @@ function getPriorityKey(card: ActionCard): PriorityKey {
     return "normal";
 }
 
+// ─── The 4 Main Topic Stacks Metadata ──────────────────────────────────────────
+
+export interface TopicStackConfig {
+    id: "urgent" | "marketing" | "calendar" | "experience";
+    title: string;
+    description: string;
+    borderColor: string;
+    badgeBg: string;
+    accentColor: string;
+    icon: React.ComponentType<{ className?: string }>;
+}
+
+const TOPIC_STACKS: TopicStackConfig[] = [
+    {
+        id: "urgent",
+        title: "התראות דחופות ופניות לקוחות",
+        description: "מקרים המצריכים מענה אנושי, התראות ביטולים ונושאים במיקוד דחוף",
+        borderColor: "border-r-red-500",
+        badgeBg: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+        accentColor: "text-red-500",
+        icon: ShieldAlert,
+    },
+    {
+        id: "marketing",
+        title: "שיווק וצמיחה עסקית",
+        description: "אישור תכנים שיווקיים, קמפיין התעוררות ופעילויות גידול",
+        borderColor: "border-r-purple-500",
+        badgeBg: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+        accentColor: "text-purple-500",
+        icon: Sparkles,
+    },
+    {
+        id: "calendar",
+        title: "יומן, תורים ומילוי חלונות",
+        description: "מילוי תורים מבוטלים (Flash-Fill), ייעול סדר היום וניצול חלונות",
+        borderColor: "border-r-amber-500",
+        badgeBg: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+        accentColor: "text-amber-500",
+        icon: Zap,
+    },
+    {
+        id: "experience",
+        title: "שדרוגים וחווית לקוח",
+        description: "הצעות שדרוג להיום (Upsell), מעקב טיפולי וימי הולדת",
+        borderColor: "border-r-emerald-500",
+        badgeBg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+        accentColor: "text-emerald-500",
+        icon: TrendingUp,
+    },
+];
+
+function getCardTopicStackId(card: ActionCard): string {
+    const type = card.actionType?.toLowerCase() || "";
+    const priority = card.priority?.toLowerCase() || "";
+
+    if (priority === "urgent" || type === "human_escalation" || type === "noshow_risk" || type === "missing_info") {
+        return "urgent";
+    }
+    if (type === "marketing_approval" || type === "winback_campaign" || type === "create_campaign" || card.source_agent?.toLowerCase().includes("marketing")) {
+        return "marketing";
+    }
+    if (type === "flash_fill" || type === "calendar_tetris" || type === "cancel_appointment" || type === "schedule_event" || card.source_agent?.toLowerCase().includes("calendar")) {
+        return "calendar";
+    }
+    if (type === "upsell_crosssell" || type === "vip_care" || type === "send_message" || card.source_agent?.toLowerCase().includes("upsell")) {
+        return "experience";
+    }
+
+    if (priority === "high") return "calendar";
+    return "experience";
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function V2ActionCenter({
@@ -255,6 +327,21 @@ export default function V2ActionCenter({
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
+    // Collapsible Topic Stacks state (all open by default)
+    const [expandedStacks, setExpandedStacks] = useState<Record<string, boolean>>({
+        urgent: true,
+        marketing: true,
+        calendar: true,
+        experience: true,
+    });
+
+    const toggleStack = (stackId: string) => {
+        setExpandedStacks((prev) => ({
+            ...prev,
+            [stackId]: !prev[stackId],
+        }));
+    };
+
     const pendingCards = cards.filter((c) => c.status === "pending");
 
     const updateCards = (newCards: ActionCard[]) => {
@@ -266,7 +353,6 @@ export default function V2ActionCenter({
         setProcessingId(cardId);
         startTransition(async () => {
             try {
-                // If it's a real card from DB, run server action
                 if (!cardId.startsWith("mock-")) {
                     await approveActionCard(cardId);
                 }
@@ -301,11 +387,8 @@ export default function V2ActionCenter({
         <section id="v2-action-center" aria-label="מרכז הפעולות">
 
             {/* ── Section Header ── */}
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-sm">
-                        <Zap className="w-5 h-5 text-primary" />
-                    </div>
                     <div>
                         <div className="flex items-center gap-2">
                             <h2 className="text-xl font-extrabold text-foreground tracking-tight leading-none">
@@ -322,105 +405,157 @@ export default function V2ActionCenter({
                                 <HelpCircle className="w-4 h-4 text-purple-500" />
                             </button>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">Agent Action Center</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            מקבצי משימות לפי נושאים בעסק — לחצ/י על קטגוריה להרחבה וצפייה
+                        </p>
                     </div>
                 </div>
-
-                {pendingCards.length > 0 && (
-                    <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                            {pendingCards.length} ממתינות לטיפולך
-                        </span>
-                    </div>
-                )}
             </div>
 
-            {/* ── Action Cards Grid ── */}
+            {/* ── Topic Stacks View ── */}
             {pendingCards.length === 0 ? (
                 <EmptyActionCenter />
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {pendingCards.map((card) => {
-                        const priorityKey = getPriorityKey(card);
-                        const priority = PRIORITY_CONFIG[priorityKey];
-                        const PriorityIcon = priority.icon;
-                        const isProcessingThis = processingId === card._id && isPending;
-
-                        const formattedTime = card.created_at
-                            ? new Date(card.created_at).toLocaleTimeString("he-IL", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                              })
-                            : "עכשיו";
+                <div className="space-y-4">
+                    {TOPIC_STACKS.map((topic) => {
+                        const TopicIcon = topic.icon;
+                        const stackCards = pendingCards.filter((c) => getCardTopicStackId(c) === topic.id);
+                        const isExpanded = expandedStacks[topic.id] ?? true;
 
                         return (
-                            <div
-                                key={card._id}
-                                className={`
-                                    group relative bg-card rounded-2xl border border-border border-r-4 ${priority.borderColor}
-                                    shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col p-5 gap-4
-                                    ${isProcessingThis ? "opacity-50 scale-[0.98] pointer-events-none" : "hover:-translate-y-0.5"}
-                                `}
-                            >
-                                {/* ── Card Top: Badges + Time ── */}
-                                <div className="flex items-start justify-between gap-2 flex-wrap">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                        {/* Priority badge */}
-                                        <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${priority.badgeBg}`}>
-                                            <PriorityIcon className="w-3 h-3" />
-                                            {priority.label}
-                                        </span>
-
-                                        {/* Agent source chip */}
-                                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
-                                            <Sparkles className="w-3 h-3 text-purple-500" />
-                                            {card.source_agent || "גולדה"}
-                                        </span>
-                                    </div>
-
-                                    {/* Timestamp */}
-                                    <div className="flex items-center gap-1 text-[11px] text-muted-foreground shrink-0 font-mono">
-                                        <Clock className="w-3 h-3" />
-                                        <span>{formattedTime}</span>
-                                    </div>
-                                </div>
-
-                                {/* ── Card Body ── */}
-                                <div className="flex-1">
-                                    <h3 className="text-base font-bold text-foreground leading-snug mb-2">
-                                        {card.display_content.title}
-                                    </h3>
-                                    <p className="text-xs text-muted-foreground leading-relaxed bg-muted/30 rounded-xl p-3 border border-border/50">
-                                        {card.display_content.description}
-                                    </p>
-
-                                    {/* Highlight Metric Tag */}
-                                    {card.display_content.highlightMetric && (
-                                        <div className="mt-3 inline-flex items-center gap-1 text-xs font-extrabold px-3 py-1 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                                            <span>✨ {card.display_content.highlightMetric}</span>
+                            <div key={topic.id} className="space-y-3">
+                                {/* ── Topic Stack Parent Folder Card ── */}
+                                <div
+                                    onClick={() => toggleStack(topic.id)}
+                                    className={`
+                                        group bg-card rounded-2xl border border-border border-r-4 ${topic.borderColor}
+                                        p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer
+                                        flex items-center justify-between gap-4 select-none
+                                    `}
+                                >
+                                    <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 ${topic.badgeBg}`}>
+                                            <TopicIcon className="w-5 h-5" />
                                         </div>
-                                    )}
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <h3 className="text-base font-bold text-foreground leading-snug">
+                                                    {topic.title}
+                                                </h3>
+                                                <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border ${stackCards.length > 0 ? topic.badgeBg : "bg-muted text-muted-foreground border-border"}`}>
+                                                    {stackCards.length > 0 ? `${stackCards.length} משימות` : "אין משימות"}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                                {topic.description}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors hidden sm:inline-block">
+                                            {isExpanded ? "הסתר משימות" : "הצג משימות"}
+                                        </span>
+                                        <div className="w-8 h-8 rounded-lg bg-muted/50 group-hover:bg-muted flex items-center justify-center transition-colors">
+                                            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} />
+                                        </div>
+                                    </div>
                                 </div>
 
-                                {/* ── Card Actions ── */}
-                                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/40">
-                                    <button
-                                        onClick={() => handleDismiss(card._id)}
-                                        disabled={isProcessingThis}
-                                        className="text-xs font-semibold text-muted-foreground hover:text-destructive px-3 py-1.5 rounded-xl hover:bg-destructive/10 border border-transparent hover:border-destructive/20 transition-all"
-                                    >
-                                        התעלם
-                                    </button>
-                                    <button
-                                        onClick={() => handleApprove(card._id)}
-                                        disabled={isProcessingThis}
-                                        className="flex items-center gap-1.5 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 px-4 py-1.5 rounded-xl shadow-sm transition-all hover:shadow-md"
-                                    >
-                                        <CheckCircle2 className="w-3.5 h-3.5" />
-                                        {isProcessingThis ? "מעבד..." : card.primaryAction?.label || "אישור"}
-                                    </button>
-                                </div>
+                                {/* ── Stack Content Grid (Individual Action Cards) ── */}
+                                {isExpanded && (
+                                    <div className="pt-1 ps-2 md:ps-4 border-s-2 border-border/50">
+                                        {stackCards.length === 0 ? (
+                                            <div className="p-4 rounded-2xl bg-muted/20 border border-dashed border-border text-center">
+                                                <p className="text-xs text-muted-foreground font-medium">
+                                                    אין משימות ממתינות בקטגוריה זו כרגע
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                {stackCards.map((card) => {
+                                                    const priorityKey = getPriorityKey(card);
+                                                    const priority = PRIORITY_CONFIG[priorityKey];
+                                                    const PriorityIcon = priority.icon;
+                                                    const isProcessingThis = processingId === card._id && isPending;
+
+                                                    const formattedTime = card.created_at
+                                                        ? new Date(card.created_at).toLocaleTimeString("he-IL", {
+                                                              hour: "2-digit",
+                                                              minute: "2-digit",
+                                                          })
+                                                        : "עכשיו";
+
+                                                    return (
+                                                        <div
+                                                            key={card._id}
+                                                            className={`
+                                                                group relative bg-card rounded-2xl border border-border border-r-4 ${priority.borderColor}
+                                                                shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col p-5 gap-4
+                                                                ${isProcessingThis ? "opacity-50 scale-[0.98] pointer-events-none" : "hover:-translate-y-0.5"}
+                                                            `}
+                                                        >
+                                                            {/* ── Card Top: Badges + Time ── */}
+                                                            <div className="flex items-start justify-between gap-2 flex-wrap">
+                                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                                    <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${priority.badgeBg}`}>
+                                                                        <PriorityIcon className="w-3 h-3" />
+                                                                        {priority.label}
+                                                                    </span>
+
+                                                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                                                                        <Sparkles className="w-3 h-3 text-purple-500" />
+                                                                        {card.source_agent || "גולדה"}
+                                                                    </span>
+                                                                </div>
+
+                                                                <div className="flex items-center gap-1 text-[11px] text-muted-foreground shrink-0 font-mono">
+                                                                    <Clock className="w-3 h-3" />
+                                                                    <span>{formattedTime}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* ── Card Body ── */}
+                                                            <div className="flex-1">
+                                                                <h4 className="text-base font-bold text-foreground leading-snug mb-2">
+                                                                    {card.display_content.title}
+                                                                </h4>
+                                                                <p className="text-xs text-muted-foreground leading-relaxed bg-muted/30 rounded-xl p-3 border border-border/50">
+                                                                    {card.display_content.description}
+                                                                </p>
+
+                                                                {card.display_content.highlightMetric && (
+                                                                    <div className="mt-3 inline-flex items-center gap-1 text-xs font-extrabold px-3 py-1 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                                                                        <span>✨ {card.display_content.highlightMetric}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* ── Card Actions ── */}
+                                                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/40">
+                                                                <button
+                                                                    onClick={() => handleDismiss(card._id)}
+                                                                    disabled={isProcessingThis}
+                                                                    className="text-xs font-semibold text-muted-foreground hover:text-destructive px-3 py-1.5 rounded-xl hover:bg-destructive/10 border border-transparent hover:border-destructive/20 transition-all"
+                                                                >
+                                                                    התעלם
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleApprove(card._id)}
+                                                                    disabled={isProcessingThis}
+                                                                    className="flex items-center gap-1.5 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 px-4 py-1.5 rounded-xl shadow-sm transition-all hover:shadow-md"
+                                                                >
+                                                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                                                    {isProcessingThis ? "מעבד..." : card.primaryAction?.label || "אישור"}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         );
                     })}
@@ -431,18 +566,11 @@ export default function V2ActionCenter({
             <Dialog open={isInfoModalOpen} onOpenChange={setIsInfoModalOpen}>
                 <DialogContent className="sm:max-w-2xl text-right rounded-3xl p-6 bg-card text-foreground border border-border" dir="rtl">
                     <DialogHeader className="text-right pb-3 border-b border-border">
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-500">
-                                <Zap className="w-4 h-4" />
-                            </div>
-                            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-muted border border-border text-muted-foreground">
-                                מדריך מרכז הפעולות
-                            </span>
-                        </div>
-                        <DialogTitle className="text-xl font-extrabold text-foreground">
+
+                        <DialogTitle dir="rtl"className="text-xl font-extrabold text-foreground text-right">
                             8 הפעולות האוטומטיות של גולדה
                         </DialogTitle>
-                        <DialogDescription className="text-xs text-muted-foreground mt-1">
+                        <DialogDescription dir="rtl" className="text-xs text-muted-foreground mt-1 text-right">
                             גולדה סורקת את העסק 24/7 ומכינה עבורך משימות מוכנות לביצוע בלחיצת כפתור אחת
                         </DialogDescription>
                     </DialogHeader>

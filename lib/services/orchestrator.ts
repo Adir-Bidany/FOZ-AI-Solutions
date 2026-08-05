@@ -89,6 +89,5 @@ export async function processSessionSummary(sessionId: string) {
     }
 
     // 4. Non-urgent session — Golda now handles marketing & analytics directly.
-    // Specialist distribution to MichalDataStore / RoiDataStore has been deprecated.
     console.log(`[Orchestrator] Non-urgent. Orchestration complete for session: ${sessionId}`);
 }

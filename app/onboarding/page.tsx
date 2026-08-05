@@ -6,28 +6,11 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, UploadCloud, Users, Send } from "lucide-react";
+import { Loader2, UploadCloud, Send } from "lucide-react";
 import { toast } from "sonner";
 import { signIn } from "next-auth/react";
 
-const PERSONAS = [
-    {
-        id: "golda",
-        name: "גולדה",
-        promptValue: "Assertive, Protective, Chief of Staff",
-        avatar: "/avatars/golda.png",
-        description: "רמטכ\"לית העסק. קשוחה, מגוננת, מנהלת יומן בצורה אבסולוטית."
-    },
-    {
-        id: "david",
-        name: "דוד",
-        promptValue: "Tactical, Strategic, Operations Manager",
-        avatar: "/avatars/david.png",
-        description: "מנהל תפעול. טקטי, ממוקד מטרה, קר רוח ותכליתי."
-    }
-];
-
-type Field = "businessName" | "ownerName" | "phone" | "niche" | "logo" | "persona" | "email" | "password" | "submitting" | "done";
+type Field = "businessName" | "ownerName" | "phone" | "niche" | "logo" | "email" | "password" | "submitting" | "done";
 
 type Message = {
     id: string;
@@ -107,8 +90,8 @@ export default function CinematicOnboarding() {
                     setMessages(prev => [...prev, { id: `msg-${Date.now()}`, sender: "user", text: "הלוגו הועלה בהצלחה" }]);
                     setIsUploadingLogo(false);
                     setTimeout(() => {
-                        addAgentMessage("מצוין, הלוגו נשמר. עכשיו, מי תהיה מנהלת ה-AI שלך שמייצגת אותך מול לקוחות?");
-                        setCurrentField("persona");
+                        addAgentMessage("מצוין, הלוגו נשמר. עכשיו בואי נגדיר פרטי גישה. מהו האימייל שלך?");
+                        setCurrentField("email");
                     }, 600);
                 }
             } catch (error) {
@@ -223,7 +206,7 @@ export default function CinematicOnboarding() {
         }
     };
 
-    const handleOptionSelect = (option: { label: string, value: string }, type: "niche" | "persona") => {
+    const handleOptionSelect = (option: { label: string, value: string }, type: "niche") => {
         setMessages(prev => [...prev, { id: `msg-${Date.now()}`, sender: "user", text: option.label }]);
         
         if (type === "niche") {
@@ -231,12 +214,6 @@ export default function CinematicOnboarding() {
             setTimeout(() => {
                 addAgentMessage("הבנתי. יש לך לוגו לעסק שתרצי שיופיע באתר ובצ'אט?");
                 setCurrentField("logo");
-            }, 600);
-        } else if (type === "persona") {
-            setFormData(prev => ({ ...prev, tone: option.value }));
-            setTimeout(() => {
-                addAgentMessage("בחירה מצוינת. עכשיו בואי נגדיר פרטי גישה. מהו האימייל שלך?");
-                setCurrentField("email");
             }, 600);
         }
     };
@@ -277,31 +254,6 @@ export default function CinematicOnboarding() {
             );
         }
 
-        if (currentField === "persona") {
-            return (
-                <motion.div 
-                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                    className="flex flex-col gap-3 p-4"
-                >
-                    {PERSONAS.map(p => (
-                        <div 
-                            key={p.id}
-                            onClick={() => handleOptionSelect({ label: p.name, value: p.promptValue }, "persona")}
-                            className="p-3 rounded-2xl border border-zinc-800 bg-zinc-900/80 hover:bg-zinc-800 cursor-pointer flex items-center gap-3 transition-colors"
-                        >
-                            <div className="w-10 h-10 bg-zinc-950 rounded-full flex items-center justify-center border border-zinc-800 shrink-0">
-                                <Users size={20} className="text-zinc-300" />
-                            </div>
-                            <div>
-                                <span className="text-zinc-100 font-medium block">{p.name}</span>
-                                <span className="text-xs text-zinc-300">{p.description}</span>
-                            </div>
-                        </div>
-                    ))}
-                </motion.div>
-            );
-        }
-
         if (currentField === "logo") {
             return (
                 <motion.div 
@@ -327,8 +279,8 @@ export default function CinematicOnboarding() {
                         onClick={() => {
                             setMessages(prev => [...prev, { id: `msg-${Date.now()}`, sender: "user", text: "אין לי לוגו כרגע" }]);
                             setTimeout(() => {
-                                addAgentMessage("אין בעיה, נמשיך הלאה. מי תהיה מנהלת ה-AI שלך שמייצגת אותך מול לקוחות?");
-                                setCurrentField("persona");
+                                addAgentMessage("אין בעיה, נמשיך הלאה. עכשיו בואי נגדיר פרטי גישה. מהו האימייל שלך?");
+                                setCurrentField("email");
                             }, 600);
                         }}
                     >

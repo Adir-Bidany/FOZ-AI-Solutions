@@ -72,11 +72,6 @@ export async function POST(req: Request) {
                     "landing_page_data.hero_title": body.hero_title,
                     "landing_page_data.hero_subtitle": body.hero_subtitle,
                     "landing_page_data.hero_image_url": logoToSave,
-                    // "landing_page_data.about_text": body.about_text, // REMOVED: Managed by Settings page, do not overwrite
-                    "landing_page_data.features": body.features,
-                    "landing_page_data.primary_color": body.primary_color,
-                    "landing_page_data.background_style": body.background_style,
-                    "landing_page_data.custom_background_image": body.custom_background_image
                 }
             },
             { new: true }

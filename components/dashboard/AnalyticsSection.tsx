@@ -40,33 +40,29 @@ export default function AnalyticsSection() {
 
     return (
         <div className="mt-12 space-y-6">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <TrendingUp size={24} className="text-purple-600" />
-                דוחות ותנועה
-            </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Card 1: Lifetime Stats */}
-                <Card className="border-none shadow-sm bg-white rounded-2xl">
+                <Card className="border-none shadow-sm bg-card rounded-2xl">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
                             סה״כ שיחות (מאז ומעולם)
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-gray-900">
+                        <div className="text-3xl font-bold text-foreground">
                             {data ? data.lifetimeCount : "..."}
                         </div>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                             כל השיחות שהוגדרו כלידים
                         </p>
                     </CardContent>
                 </Card>
 
                 {/* Card 2: Date Picker Filter */}
-                <Card className="border-none shadow-sm bg-white rounded-2xl">
+                <Card className="border-none shadow-sm bg-card rounded-2xl">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
                             סינון לפי תאריך
                         </CardTitle>
                     </CardHeader>
@@ -98,8 +94,8 @@ export default function AnalyticsSection() {
                             </PopoverContent>
                         </Popover>
                         <div className="mt-4 flex justify-between items-center">
-                            <span className="text-sm text-gray-500">שיחות ביום זה:</span>
-                            <span className="font-bold text-lg">
+                            <span className="text-sm text-muted-foreground">שיחות ביום זה:</span>
+                            <span className="font-bold text-lg text-foreground">
                                 {data ? data.dailyCount : "..."}
                             </span>
                         </div>
@@ -107,19 +103,19 @@ export default function AnalyticsSection() {
                 </Card>
 
                 {/* Card 3: Export */}
-                <Card className="border-none shadow-sm bg-white rounded-2xl">
+                <Card className="border-none shadow-sm bg-card rounded-2xl">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
                             ייצוא נתונים
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col justify-between h-[calc(100%-3rem)]">
-                        <p className="text-sm text-gray-400 mb-4">
+                        <p className="text-sm text-muted-foreground mb-4">
                             הורדת דוח מרוכז של נתוני השיחות לקובץ CSV.
                         </p>
                         <Button
                             onClick={handleExport}
-                            className="w-full h-10 rounded-xl bg-gray-900 text-white hover:bg-gray-800 gap-2"
+                            className="w-full h-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
                         >
                             <Download size={16} /> הורד דוח
                         </Button>

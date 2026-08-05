@@ -117,7 +117,7 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                     variant="outline"
                     size="sm"
                     className="gap-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 border-border"
-                    title="ארכוב השיחה הנוכחית ופתיחת שיחה חדשה"
+                    title="שמירת השיחה הנוכחית ופתיחת שיחה חדשה"
                 >
                     <RotateCcw size={14} className={isArchiving ? "animate-spin" : ""} /> שיחה חדשה
                 </Button>
@@ -137,7 +137,7 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                         ) : messages.length === 0 ? (
                             <div className="flex items-center justify-center h-40 text-muted-foreground text-center">
                                 <p className="text-sm font-medium">
-                                    התחילי שיחה כדי לקבל עזרה וייעוץ
+                                    התחיל/י שיחה כדי לקבל עזרה וייעוץ
                                 </p>
                             </div>
                         ) : (

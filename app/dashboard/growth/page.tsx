@@ -140,9 +140,6 @@ export default function GrowthPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/90 backdrop-blur-xl p-6 rounded-3xl border border-border shadow-sm">
                 <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-2xl text-primary shrink-0">
-                        <Sparkles className="w-7 h-7" />
-                    </div>
                     <div>
                         <h1 className="text-2xl font-bold text-foreground">צמיחה, ידע והפרדת מידע</h1>
                         <p className="text-sm text-muted-foreground mt-0.5">
@@ -169,20 +166,17 @@ export default function GrowthPage() {
                 <div className="space-y-8">
                     {/* === SECTION 0: MISSING INFO QUEUE ("מידע שחסר לדניאלה") === */}
                     <Card className="bg-card/90 border-border shadow-sm rounded-3xl overflow-hidden backdrop-blur-xl">
-                        <CardHeader className="border-b border-border/60 bg-primary/5 pb-4">
+                        <CardHeader className="border-b border-border/60 pb-4">
                             <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
                                     <HelpCircle className="w-5 h-5 text-primary" />
                                     <CardTitle className="text-lg font-bold text-foreground">
-                                        מידע שחסר לדניאלה (תור שאלות ללא מענה)
+                                        מידע שחסר לדניאלה 
                                     </CardTitle>
                                 </div>
-                                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
-                                    {missingInfoCards.length} שאלות ממתינות לתשובה
-                                </span>
                             </div>
                             <CardDescription className="text-muted-foreground text-xs pt-1">
-                                שאלות שללקוחות שאלו בצ'אט הציבורי ולדניאלה לא הייתה תשובה עבורן. הוספת תשובה תזין את המידע ישירות לדניאלה!
+                                שאלות שלקוחות שאלו בצ'אט הציבורי ולדניאלה לא הייתה תשובה עבורן. הוספת תשובה תזין את המידע ישירות לדניאלה!
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="p-6">
@@ -236,17 +230,14 @@ export default function GrowthPage() {
                     <form onSubmit={handleSave} className="space-y-8">
                         {/* SECTION 1: DANIELA PUBLIC KNOWLEDGE */}
                         <Card className="bg-card border-border shadow-sm rounded-3xl overflow-hidden">
-                            <CardHeader className="border-b border-border/60 bg-muted/30 pb-4">
+                            <CardHeader className="border-b border-border/60 pb-4">
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
-                                        <Eye className="w-5 h-5 text-primary" />
+                                      
                                         <CardTitle className="text-lg font-bold text-foreground">
-                                            שדה מידע ללקוחות (מועבר לדניאלה)
+                                           מידע על העסק(ללקוחות)
                                         </CardTitle>
                                     </div>
-                                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                                        גיוס ומתן שירות ללקוחות
-                                    </span>
                                 </div>
                                 <CardDescription className="text-muted-foreground text-xs pt-1">
                                     מידע תפעולי, הוראות הגעה, מדיניות תורים ודגשים שדניאלה תענה לפיהם ללקוחות.
@@ -257,7 +248,7 @@ export default function GrowthPage() {
                                 <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 p-4 rounded-2xl text-xs leading-relaxed font-medium">
                                     <AlertCircle className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
                                     <div>
-                                        <p className="font-bold text-sm mb-0.5">⚠️ שים לב:</p>
+                                        <p className="font-bold text-sm mb-0.5">שים לב:</p>
                                         <p>מידע שייכתב כאן גלוי לכלל הלקוחות שמשוחחים עם דניאלה. אל תכתוב כאן נתונים פיננסיים או אסטרטגיות פנימיות.</p>
                                     </div>
                                 </div>
@@ -274,28 +265,28 @@ export default function GrowthPage() {
 
                         {/* SECTION 2: GOLDA INTERNAL KNOWLEDGE */}
                         <Card className="bg-card border-border shadow-sm rounded-3xl overflow-hidden">
-                            <CardHeader className="border-b border-border/60 bg-muted/30 pb-4">
+                            <CardHeader className="border-b border-border/60 pb-4">
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
                                         <Lock className="w-5 h-5 text-amber-500" />
                                         <CardTitle className="text-lg font-bold text-foreground">
-                                            תובנות שיווקיות וניהוליות (גולדה בלבד)
+                                            תובנות שיווקיות וניהוליות 
                                         </CardTitle>
                                     </div>
                                     <span className="text-xs font-semibold px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                                        🔒 חסוי - מנהל בלבד
+                                         חסוי - מנהל בלבד
                                     </span>
                                 </div>
                                 <CardDescription className="text-muted-foreground text-xs pt-1">
-                                    הערות פנימיות, יתרות תקציב, יעדים עסקיים ואסטרטגיה — נגיש אך ורק לגולדה בדשבורד.
+                                    הערות פנימיות, יתרות תקציב, יעדים עסקיים ואסטרטגיה - נגיש אך ורק לגולדה בדשבורד.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-6 space-y-4">
                                 {/* Explicit Private Badge */}
                                 <div className="flex items-start gap-3 bg-muted/60 border border-border text-foreground p-4 rounded-2xl text-xs leading-relaxed font-medium">
-                                    <ShieldCheck className="w-5 h-5 shrink-0 text-primary mt-0.5" />
+                                    
                                     <div>
-                                        <p className="font-bold text-sm mb-0.5">🔒 מידע פנימי - גולדה בלבד:</p>
+                                        <p className="font-bold text-sm mb-0.5"> מידע פנימי - גולדה בלבד:</p>
                                         <p>מידע זה אינו נגיש לדניאלה בשום אופן ולא ייחשף לעולם ללקוחות קצה. גולדה משתמשת במידע זה בלבד להפקת דוחות ואסטרטגיה.</p>
                                     </div>
                                 </div>

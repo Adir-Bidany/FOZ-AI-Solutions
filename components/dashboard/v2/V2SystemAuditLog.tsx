@@ -150,49 +150,18 @@ export default function V2SystemAuditLog() {
             {/* Section header */}
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center border border-border">
-                        <Bot className="w-5 h-5 text-muted-foreground" />
-                    </div>
                     <div>
                         <h2 className="text-xl font-extrabold text-foreground tracking-tight leading-none">
                             פעילות רקע
                         </h2>
-                        <p className="text-xs text-muted-foreground mt-0.5">System Audit Log — מה שגולדה עשתה בשקט</p>
+                    
                     </div>
-                </div>
-
-                {/* Summary */}
-                <div className="hidden sm:flex items-center gap-3">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        {successCount} הצליחו
-                    </div>
-                    {failCount > 0 && (
-                        <div className="flex items-center gap-1.5 text-xs font-semibold text-red-600 dark:text-red-400">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                            {failCount} נכשלו
-                        </div>
-                    )}
                 </div>
             </div>
 
             {/* Scrollable log container */}
             <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-                {/* Log header bar */}
-                <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/40 border-b border-border/60">
-                    <div className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-red-400/70" />
-                        <span className="w-2.5 h-2.5 rounded-full bg-amber-400/70" />
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/70" />
-                    </div>
-                    <span className="text-[11px] font-mono text-muted-foreground ms-2">
-                        golda.background.log — היום
-                    </span>
-                    <div className="ms-auto flex items-center gap-1 text-[11px] text-muted-foreground">
-                        <Clock className="w-3 h-3" />
-                        <span>{AUDIT_LOG.length} רשומות</span>
-                    </div>
-                </div>
+
 
                 {/* Scrollable entries */}
                 <div
@@ -263,7 +232,7 @@ export default function V2SystemAuditLog() {
                         className="text-[11px] font-semibold text-primary hover:underline"
                         onClick={() => scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" })}
                     >
-                        חזור לראש
+                        חזור לתחילת הרשימה
                     </button>
                 </div>
             </div>

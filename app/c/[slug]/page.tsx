@@ -5,7 +5,6 @@ import { getClientBySlug } from "@/services/client-service";
 import {
     ArrowRight,
     MapPin,
-    Phone,
     Instagram,
     Facebook,
     Globe,
@@ -62,23 +61,23 @@ export default async function ClientPage({
             dir="rtl"
             suppressHydrationWarning
         >
-            {/* --- TOP HEADER BAR (Dashboard Header Style) --- */}
+            {/* --- TOP HEADER BAR --- */}
             <header suppressHydrationWarning className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border transition-all text-foreground shrink-0 mb-8 md:mb-12">
-                <div className="max-w-6xl mx-auto px-4 md:px-6 h-20 md:h-24 flex items-center justify-between">
-                    {/* Right Side (RTL Start): Logo + Business Name */}
-                    <div className="flex items-center gap-3 shrink-0">
-                        <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 flex items-center justify-center rounded-xl overflow-hidden bg-muted/20 border border-border/40 p-0.5">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 min-h-24 md:min-h-28 py-2 flex items-center justify-between relative">
+                    {/* Right Side (RTL Start): Empty spacer / placeholder */}
+                    <div />
+
+                    {/* Centered: Business Name */}
+                    <span className="absolute left-1/2 -translate-x-1/2 font-bold text-lg md:text-xl truncate text-foreground pointer-events-none">
+                        {clientData.businessName}
+                    </span>
+
+                    {/* Left Side (RTL End): Theme Toggle + Logo */}
+                    <div className="flex items-center gap-3 md:gap-4 shrink-0">
+                        <ThemeToggle />
+                        <div className="w-20 h-20 md:w-24 md:h-24 shrink-0 flex items-center justify-center rounded-2xl overflow-hidden bg-muted/20 border border-border/40 p-0.5">
                             <ClientLogo src={heroImage} businessName={clientData.businessName} />
                         </div>
-                        <span className="font-bold text-lg md:text-xl truncate text-foreground">
-                            {clientData.businessName}
-                        </span>
-                    </div>
-
-                    {/* Left Side (RTL End): Divider + Theme Toggle */}
-                    <div className="flex items-center gap-3 md:gap-4 shrink-0">
-                        <div className="h-6 w-px bg-border/80 hidden sm:block" />
-                        <ThemeToggle />
                     </div>
                 </div>
             </header>
@@ -96,24 +95,13 @@ export default async function ClientPage({
                         </p>
                     )}
 
-                    {/* Contact Chips */}
-                    {(phone || address) && (
+                    {/* Contact Chip */}
+                    {address && (
                         <div className="flex flex-wrap justify-center lg:justify-start gap-3 pt-2">
-                            {phone && (
-                                <a
-                                    href={`tel:${phone}`}
-                                    className="flex items-center gap-2 px-4 py-2 bg-card/90 border border-border/80 rounded-full text-foreground hover:bg-accent transition-colors shadow-sm backdrop-blur-md"
-                                >
-                                    <Phone size={16} className="text-primary" />
-                                    <span className="text-sm font-medium">{phone}</span>
-                                </a>
-                            )}
-                            {address && (
-                                <div className="flex items-center gap-2 px-4 py-2 bg-card/90 border border-border/80 rounded-full text-foreground shadow-sm backdrop-blur-md">
-                                    <MapPin size={16} className="text-primary" />
-                                    <span className="text-sm font-medium">{address}</span>
-                                </div>
-                            )}
+                            <div className="flex items-center gap-2 px-4 py-2 bg-card/90 border border-border/80 rounded-full text-foreground shadow-sm backdrop-blur-md">
+                                <MapPin size={16} className="text-primary" />
+                                <span className="text-sm font-medium">{address}</span>
+                            </div>
                         </div>
                     )}
                 </div>

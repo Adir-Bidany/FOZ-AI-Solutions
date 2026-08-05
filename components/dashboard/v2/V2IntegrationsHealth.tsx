@@ -126,14 +126,11 @@ export default function V2IntegrationsHealth() {
             {/* Section header */}
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center border border-border">
-                        <Wifi className="w-5 h-5 text-muted-foreground" />
-                    </div>
                     <div>
                         <h2 className="text-xl font-extrabold text-foreground tracking-tight leading-none">
                             מצב חיבורים
                         </h2>
-                        <p className="text-xs text-muted-foreground mt-0.5">Integrations Health</p>
+                     
                     </div>
                 </div>
 

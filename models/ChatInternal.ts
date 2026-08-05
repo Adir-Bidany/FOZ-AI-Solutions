@@ -8,7 +8,7 @@ export interface IMessage {
 
 export interface IChatInternal extends Document {
     business_id: Types.ObjectId;
-    agent_persona: "golda" | "michal" | "roi";
+    agent_persona: "golda";
     messages: IMessage[];
     status: "active" | "archived";
     createdAt: Date;
@@ -20,7 +20,7 @@ const ChatInternalSchema = new Schema<IChatInternal>(
         business_id: { type: Schema.Types.ObjectId, ref: "Business", required: true, index: true },
         agent_persona: {
             type: String,
-            enum: ["golda", "michal", "roi"],
+            enum: ["golda"],
             required: true
         },
         status: {
