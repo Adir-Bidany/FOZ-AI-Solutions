@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { approveActionCard, dismissActionCard } from "@/actions/dashboard";
+import { approveActionCard, dismissActionCard, updateActionCardContent } from "@/actions/dashboard";
 import {
     Zap,
     CheckCircle2,
@@ -20,6 +20,9 @@ import {
     ShieldAlert,
     ChevronDown,
     ExternalLink,
+    Bookmark,
+    Pencil,
+    Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -198,6 +201,19 @@ const MOCK_ACTION_CARDS: ActionCard[] = [
         },
         created_at: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
     },
+    {
+        _id: "mock-5",
+        source_agent: "management",
+        status: "pending",
+        priority: "normal",
+        actionType: "personal_reminder",
+        display_content: {
+            title: "📌 להתקשר לספק חומרי חיוניות",
+            description: "לבדוק מחירי מארז קולגן חדש ולקבל הצעת מחיר עד יום חמישי",
+            badgeText: "תזכורת אישית",
+        },
+        created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+    },
 ];
 
 // ─── Priority config ──────────────────────────────────────────────────────────
@@ -241,10 +257,10 @@ function getPriorityKey(card: ActionCard): PriorityKey {
     return "normal";
 }
 
-// ─── The 4 Main Topic Stacks Metadata ──────────────────────────────────────────
+// ─── The 5 Main Topic Stacks Metadata ──────────────────────────────────────────
 
 export interface TopicStackConfig {
-    id: "urgent" | "marketing" | "calendar" | "experience";
+    id: "urgent" | "marketing" | "calendar" | "experience" | "reminders";
     title: string;
     description: string;
     borderColor: string;
@@ -290,12 +306,25 @@ const TOPIC_STACKS: TopicStackConfig[] = [
         accentColor: "text-emerald-500",
         icon: TrendingUp,
     },
+    {
+        id: "reminders",
+        title: "תזכורות והערות אישיות",
+        description: "הערות ותזכורות פנימיות שנשמרו ע\"י גולדה לבקשתך",
+        borderColor: "border-r-blue-500",
+        badgeBg: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+        accentColor: "text-blue-500",
+        icon: Bookmark,
+    },
 ];
 
 function getCardTopicStackId(card: ActionCard): string {
     const type = card.actionType?.toLowerCase() || "";
     const priority = card.priority?.toLowerCase() || "";
+    const badge = card.display_content?.badgeText || "";
 
+    if (type === "personal_reminder" || card.source_agent === "management" || badge.includes("תזכורת אישית")) {
+        return "reminders";
+    }
     if (priority === "urgent" || type === "human_escalation" || type === "noshow_risk" || type === "missing_info") {
         return "urgent";
     }
@@ -333,7 +362,14 @@ export default function V2ActionCenter({
         marketing: true,
         calendar: true,
         experience: true,
+        reminders: true,
     });
+
+    // Edit Reminder Modal State
+    const [editingCard, setEditingCard] = useState<ActionCard | null>(null);
+    const [editTitle, setEditTitle] = useState("");
+    const [editDescription, setEditDescription] = useState("");
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
 
     const toggleStack = (stackId: string) => {
         setExpandedStacks((prev) => ({
@@ -381,6 +417,36 @@ export default function V2ActionCenter({
                 setProcessingId(null);
             }
         });
+    };
+
+    const handleOpenEdit = (card: ActionCard) => {
+        setEditingCard(card);
+        setEditTitle(card.display_content.title);
+        setEditDescription(card.display_content.description);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editingCard) return;
+        setIsSavingEdit(true);
+        try {
+            if (!editingCard._id.startsWith("mock-")) {
+                await updateActionCardContent(editingCard._id, editTitle, editDescription);
+            }
+            updateCards(cards.map((c) => c._id === editingCard._id ? {
+                ...c,
+                display_content: {
+                    ...c.display_content,
+                    title: editTitle,
+                    description: editDescription
+                }
+            } : c));
+            toast.success("התזכורת עודכנה בהצלחה ✓");
+            setEditingCard(null);
+        } catch {
+            toast.error("שגיאה בעדכון התזכורת");
+        } finally {
+            setIsSavingEdit(false);
+        }
     };
 
     return (
@@ -478,6 +544,7 @@ export default function V2ActionCenter({
                                                     const priority = PRIORITY_CONFIG[priorityKey];
                                                     const PriorityIcon = priority.icon;
                                                     const isProcessingThis = processingId === card._id && isPending;
+                                                    const isReminder = topic.id === "reminders";
 
                                                     const formattedTime = card.created_at
                                                         ? new Date(card.created_at).toLocaleTimeString("he-IL", {
@@ -533,21 +600,44 @@ export default function V2ActionCenter({
 
                                                             {/* ── Card Actions ── */}
                                                             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/40">
-                                                                <button
-                                                                    onClick={() => handleDismiss(card._id)}
-                                                                    disabled={isProcessingThis}
-                                                                    className="text-xs font-semibold text-muted-foreground hover:text-destructive px-3 py-1.5 rounded-xl hover:bg-destructive/10 border border-transparent hover:border-destructive/20 transition-all"
-                                                                >
-                                                                    התעלם
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleApprove(card._id)}
-                                                                    disabled={isProcessingThis}
-                                                                    className="flex items-center gap-1.5 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 px-4 py-1.5 rounded-xl shadow-sm transition-all hover:shadow-md"
-                                                                >
-                                                                    <CheckCircle2 className="w-3.5 h-3.5" />
-                                                                    {isProcessingThis ? "מעבד..." : card.primaryAction?.label || "אישור"}
-                                                                </button>
+                                                                {isReminder ? (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={() => handleDismiss(card._id)}
+                                                                            disabled={isProcessingThis}
+                                                                            className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-destructive px-3 py-1.5 rounded-xl hover:bg-destructive/10 border border-transparent hover:border-destructive/20 transition-all"
+                                                                        >
+                                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                                            מחק
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleOpenEdit(card)}
+                                                                            disabled={isProcessingThis}
+                                                                            className="flex items-center gap-1.5 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 px-4 py-1.5 rounded-xl shadow-sm transition-all hover:shadow-md"
+                                                                        >
+                                                                            <Pencil className="w-3.5 h-3.5" />
+                                                                            ערוך
+                                                                        </button>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={() => handleDismiss(card._id)}
+                                                                            disabled={isProcessingThis}
+                                                                            className="text-xs font-semibold text-muted-foreground hover:text-destructive px-3 py-1.5 rounded-xl hover:bg-destructive/10 border border-transparent hover:border-destructive/20 transition-all"
+                                                                        >
+                                                                            התעלם
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleApprove(card._id)}
+                                                                            disabled={isProcessingThis}
+                                                                            className="flex items-center gap-1.5 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 px-4 py-1.5 rounded-xl shadow-sm transition-all hover:shadow-md"
+                                                                        >
+                                                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                                                            {isProcessingThis ? "מעבד..." : card.primaryAction?.label || "אישור"}
+                                                                        </button>
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     );
@@ -561,6 +651,57 @@ export default function V2ActionCenter({
                     })}
                 </div>
             )}
+
+            {/* ── Edit Reminder Modal ── */}
+            <Dialog open={!!editingCard} onOpenChange={(open) => !open && setEditingCard(null)}>
+                <DialogContent className="sm:max-w-md text-right rounded-3xl p-6 bg-card text-foreground border border-border" dir="rtl">
+                    <DialogHeader className="text-right pb-3 border-b border-border">
+                        <DialogTitle className="text-xl font-extrabold text-foreground">
+                            עריכת תזכורת אישית
+                        </DialogTitle>
+                        <DialogDescription className="text-xs text-muted-foreground mt-1">
+                            עדכן את כותרת ותוכן התזכורת שנשמרה במרכז הפעולות
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="py-4 space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-foreground">כותרת התזכורת</label>
+                            <input
+                                type="text"
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
+                                className="w-full h-10 px-3.5 rounded-xl bg-muted/40 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-foreground">תוכן/תיאור התזכורת</label>
+                            <textarea
+                                rows={3}
+                                value={editDescription}
+                                onChange={(e) => setEditDescription(e.target.value)}
+                                className="w-full p-3.5 rounded-xl bg-muted/40 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+                        <button
+                            onClick={() => setEditingCard(null)}
+                            className="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted"
+                        >
+                            ביטול
+                        </button>
+                        <button
+                            onClick={handleSaveEdit}
+                            disabled={isSavingEdit || !editTitle.trim()}
+                            className="px-5 py-2 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm"
+                        >
+                            {isSavingEdit ? "שומר..." : "שמור שינויים"}
+                        </button>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* ── Modal: 8 Action Types Explanation ── */}
             <Dialog open={isInfoModalOpen} onOpenChange={setIsInfoModalOpen}>

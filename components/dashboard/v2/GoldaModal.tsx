@@ -22,6 +22,21 @@ interface GoldaModalProps {
     businessId: string;
 }
 
+function parseCleanText(rawText: string): string {
+    if (!rawText) return "";
+    const trimmed = rawText.trim();
+    if (trimmed.startsWith("{") && trimmed.includes('"reply"')) {
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (parsed.reply) return parsed.reply;
+        } catch (_) {
+            const match = trimmed.match(/"reply"\s*:\s*"([\s\S]*?)"\s*,?\s*"(?:active_mode|mode)"/);
+            if (match && match[1]) return match[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
+        }
+    }
+    return rawText;
+}
+
 // ─── Mode styling helpers ─────────────────────────────────────────────────────
 
 type ChatMode = "marketing" | "analytics" | "core";
@@ -323,7 +338,7 @@ export default function GoldaModal({ isOpen, onClose, businessId }: GoldaModalPr
                                                 }
                                             `}
                                         >
-                                            {msg.parts[0].text}
+                                            {parseCleanText(msg.parts[0].text)}
                                         </div>
                                     </div>
                                 );
