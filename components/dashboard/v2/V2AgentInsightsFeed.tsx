@@ -152,25 +152,13 @@ export default function V2AgentInsightsFeed() {
             {/* Section header */}
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-                        <Sparkles className="w-5 h-5 text-purple-500" />
-                    </div>
                     <div>
                         <h2 className="text-xl font-extrabold text-foreground tracking-tight leading-none">
                             תובנות גולדה
                         </h2>
-                        <p className="text-xs text-muted-foreground mt-0.5">Agent Insights Feed</p>
+                     
                     </div>
                 </div>
-
-                {newCount > 0 && (
-                    <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
-                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                            {newCount} חדשות
-                        </span>
-                    </div>
-                )}
             </div>
 
             {/* Insights list */}
