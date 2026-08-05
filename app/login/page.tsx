@@ -71,13 +71,13 @@ export default function LoginPage() {
 
                 {/* Login Card */}
                 <Card className="bg-card/90 backdrop-blur-xl border border-border shadow-xl dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] rounded-3xl overflow-hidden transition-all duration-500">
-                    <CardHeader className="text-center sm:text-right pb-4 pt-6 px-6 sm:px-8 border-b border-border/40 bg-muted/20">
+                    <CardHeader className="text-center py-5 px-6 sm:px-8 border-b border-border/40">
                         <CardTitle className="text-2xl font-bold text-foreground text-center">
                             התחברות למערכת הדשבורד
                         </CardTitle>
                     </CardHeader>
 
-                    <CardContent className="p-6 sm:p-8 space-y-5">
+                    <CardContent className="px-6 pb-3 pt-3 sm:px-8 sm:pb-4 sm:pt-4 space-y-3.5">
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
                                 <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
@@ -122,7 +122,7 @@ export default function LoginPage() {
                             </Button>
                         </form>
 
-                        <div className="pt-4 border-t border-border/60 text-center">
+                        <div className="pt-2 border-t border-border/60 text-center">
                             <p className="text-xs text-muted-foreground">
                                 עדיין אין לך חשבון?{" "}
                                 <Link
