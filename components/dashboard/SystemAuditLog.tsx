@@ -139,7 +139,7 @@ const CATEGORY_CONFIG: Record<
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function V2SystemAuditLog() {
+export default function SystemAuditLog() {
     const scrollRef = useRef<HTMLDivElement>(null);
     const successCount = AUDIT_LOG.filter((l) => l.success).length;
     const failCount = AUDIT_LOG.length - successCount;

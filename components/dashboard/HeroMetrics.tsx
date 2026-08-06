@@ -94,7 +94,7 @@ const TREND_ICON: Record<MetricCard["trend"], React.ElementType> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function V2HeroMetrics() {
+export default function HeroMetrics() {
     const [visible, setVisible] = useState(false);
 
     // Staggered entrance animation

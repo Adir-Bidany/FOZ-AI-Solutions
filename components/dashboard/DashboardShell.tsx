@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import V2ActionCenter from "./V2ActionCenter";
-import V2HeroMetrics from "./V2HeroMetrics";
-import V2IntegrationsHealth from "./V2IntegrationsHealth";
-import V2AgentInsightsFeed from "./V2AgentInsightsFeed";
-import V2SystemAuditLog from "./V2SystemAuditLog";
+import ActionCenter from "./ActionCenter";
+import HeroMetrics from "./HeroMetrics";
+import IntegrationsHealth from "./IntegrationsHealth";
+import AgentInsightsFeed from "./AgentInsightsFeed";
+import SystemAuditLog from "./SystemAuditLog";
 import GoldaModal from "./GoldaModal";
 import LeadManager from "./LeadManager";
+import AnalyticsSection from "./AnalyticsSection";
 
 interface ActionCard {
     _id: string;
@@ -22,19 +23,19 @@ interface ActionCard {
     created_at?: string;
 }
 
-interface DashboardV2ShellProps {
+interface DashboardShellProps {
     businessId: string;
     firstName: string;
     businessName: string;
     initialCards: ActionCard[];
 }
 
-export default function DashboardV2Shell({
+export default function DashboardShell({
     businessId,
     firstName,
     businessName,
     initialCards,
-}: DashboardV2ShellProps) {
+}: DashboardShellProps) {
     const [isGoldaOpen, setIsGoldaOpen] = useState(false);
     const [cards, setCards] = useState<ActionCard[]>(initialCards);
 
@@ -57,7 +58,7 @@ export default function DashboardV2Shell({
                     SECTION 1 — Agent Action Center (מרכז הפעולות)
                     First component on page right below Global Header
                 ══════════════════════════════════════════════ */}
-                <V2ActionCenter
+                <ActionCenter
                     businessId={businessId}
                     initialCards={initialCards}
                     onCardsChange={setCards}
@@ -71,22 +72,27 @@ export default function DashboardV2Shell({
                 {/* ══════════════════════════════════════════════
                     SECTION 2 — Hero Metrics (4 KPI cards)
                 ══════════════════════════════════════════════ */}
-                <V2HeroMetrics />
+                <HeroMetrics />
 
                 {/* ══════════════════════════════════════════════
                     SECTION 3 — Integrations Health
                 ══════════════════════════════════════════════ */}
-                <V2IntegrationsHealth />
+                <IntegrationsHealth />
 
                 {/* ══════════════════════════════════════════════
                     SECTION 4 — Agent Insights Feed
                 ══════════════════════════════════════════════ */}
-                <V2AgentInsightsFeed />
+                <AgentInsightsFeed />
 
                 {/* ══════════════════════════════════════════════
                     SECTION 5 — System Audit Log
                 ══════════════════════════════════════════════ */}
-                <V2SystemAuditLog />
+                <SystemAuditLog />
+
+                {/* ══════════════════════════════════════════════
+                    SECTION 6 — Analytics & CSV Export
+                ══════════════════════════════════════════════ */}
+                <AnalyticsSection />
             </div>
 
             {/* ─── Golda Popup Modal ─── */}

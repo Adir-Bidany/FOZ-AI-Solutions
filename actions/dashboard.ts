@@ -510,7 +510,7 @@ export async function updateActionCardContent(cardId: string, title: string, des
         card.display_content.description = description;
         await card.save();
 
-        try { revalidatePath("/dashboard"); revalidatePath("/dashboard/v2"); } catch (e) {}
+        try { revalidatePath("/dashboard"); } catch (e) {}
         return { success: true };
     } catch (error) {
         console.error("Failed to update action card:", error);
@@ -612,7 +612,7 @@ export async function deleteActionCardPermanently(cardId: string) {
         if (card.business_id.toString() !== session.user.businessId) throw new Error("Forbidden");
 
         await ActionCard.findByIdAndDelete(cardId);
-        try { revalidatePath("/dashboard"); revalidatePath("/dashboard/v2"); } catch (e) {}
+        try { revalidatePath("/dashboard"); } catch (e) {}
         return { success: true };
     } catch (error) {
         console.error("Failed to delete card permanently:", error);
@@ -633,7 +633,7 @@ export async function markLeadAsHandled(cardId: string) {
         card.status = "completed";
         await card.save();
 
-        try { revalidatePath("/dashboard"); revalidatePath("/dashboard/v2"); } catch (e) {}
+        try { revalidatePath("/dashboard"); } catch (e) {}
         return { success: true };
     } catch (error) {
         console.error("Failed to mark lead as handled:", error);

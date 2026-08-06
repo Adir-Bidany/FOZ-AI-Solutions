@@ -110,7 +110,7 @@ const STATUS_CONFIG: Record<
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function V2IntegrationsHealth() {
+export default function IntegrationsHealth() {
     const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
     const handleRefresh = (id: string) => {

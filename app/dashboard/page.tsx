@@ -1,17 +1,17 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { notFound, redirect } from "next/navigation";
-import { connectToDatabase as connectDB } from "@/lib/db";
-import Business from "@/models/Business";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import ActionCardGrid from "@/components/dashboard/ActionCardGrid";
+import { redirect } from "next/navigation";
+import { connectToDatabase as connectDB } from "@/lib/db";
+import Business from "@/models/Business";
 import { fetchActionCards } from "@/actions/dashboard";
-import AnalyticsSection from "@/components/dashboard/AnalyticsSection";
-import AgentRoom from "@/components/dashboard/AgentRoom";
+import DashboardShell from "@/components/dashboard/DashboardShell";
 
-import ActionsDialog from "@/components/dashboard/ActionsDialog";
+export const metadata = {
+    title: "לוח בקרה | FOZ AI Solutions",
+    description: "לוח בקרה מתקדם לניהול העסק והסוכנים",
+};
 
-export default async function ClientDashboard() {
+export default async function DashboardPage() {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
@@ -22,72 +22,34 @@ export default async function ClientDashboard() {
     const business = await Business.findOne({ ownerEmail: session.user.email }).lean();
 
     if (!business) {
-        return notFound();
+        redirect("/onboarding");
     }
 
-    // Fetch Action Cards (Zone A)
-    const actionCards = await fetchActionCards(business._id.toString());
+    // Safely serialize BSON for client boundary
+    const serialized = JSON.parse(JSON.stringify(business));
 
-    // Calculate pending actions count
-    const pendingCount = actionCards.filter((c: any) => c.status === 'pending').length;
+    // Smart name logic — matches existing dashboard/layout.tsx pattern
+    let ownerName = serialized.ownerName || "יקירה";
+    if (["בעלת", "בעלת העסק", "Owner"].includes(ownerName.trim())) {
+        ownerName = "יקירה";
+    }
+    const firstName = ownerName.split(" ")[0];
+
+    // Fix business name if it duplicates owner name
+    let displayBusinessName = serialized.businessName || "העסק שלי";
+    if (displayBusinessName.trim() === serialized.ownerName?.trim()) {
+        displayBusinessName = `העסק של ${firstName}`;
+    }
+
+    // Fetch real action cards for Section 1 — Agent Action Center
+    const actionCards = await fetchActionCards(serialized._id.toString());
 
     return (
-        <div className="p-4 lg:p-8 w-full font-sans">
-            {/* ZONE A: Action Center */}
-            <div className="mb-8">
-                <ActionCardGrid cards={actionCards} />
-            </div>
-
-            {/* סטטיסטיקות */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-10">
-                {/* 1. Clickable Actions for Today Dialog Card */}
-                <ActionsDialog pendingCards={actionCards} pendingCount={pendingCount} />
-
-                {/* 2. Revenue Card */}
-                <Card className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-card rounded-2xl overflow-hidden group">
-                    <CardContent className="p-6 flex flex-col justify-between h-full">
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                                הכנסות החודש
-                            </p>
-                            <h3 className="text-3xl font-extrabold text-foreground tracking-tight">
-                                ₪0
-                            </h3>
-                        </div>
-                        <div className="mt-4">
-                            <span className="text-xs font-medium text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md inline-block border border-border">
-                                התחלה חדשה
-                            </span>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* 3. Appointments Card */}
-                <Card className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-card rounded-2xl overflow-hidden group">
-                    <CardContent className="p-6 flex flex-col justify-between h-full">
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                                תורים עתידיים
-                            </p>
-                            <h3 className="text-3xl font-extrabold text-foreground tracking-tight">
-                                0
-                            </h3>
-                        </div>
-                        <div className="mt-4">
-                            <span className="text-xs font-medium text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md inline-block border border-border">
-                                מחכה ללידים
-                            </span>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* ZONE B: Agent Room */}
-            <div className="w-full flex justify-center mb-8">
-                <AgentRoom businessId={business._id.toString()} />
-            </div>
-
-            <AnalyticsSection />
-        </div>
+        <DashboardShell
+            businessId={serialized._id.toString()}
+            firstName={firstName}
+            businessName={displayBusinessName}
+            initialCards={actionCards}
+        />
     );
 }

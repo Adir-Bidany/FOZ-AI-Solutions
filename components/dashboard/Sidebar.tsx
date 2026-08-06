@@ -63,14 +63,8 @@ export function SidebarContent({
         return pathname?.startsWith(href);
     };
 
-    const getNavItemClass = (href: string, isSpecialV2: boolean = false) => {
+    const getNavItemClass = (href: string) => {
         const active = isActive(href);
-
-        if (isSpecialV2) {
-            return active
-                ? "w-full justify-start gap-3 font-extrabold text-purple-600 dark:text-purple-300 bg-purple-500/20 border border-purple-500/40 shadow-sm h-12 rounded-xl"
-                : "w-full justify-start gap-3 font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 h-12 rounded-xl border border-purple-500/20 bg-purple-500/5";
-        }
 
         return active
             ? "w-full justify-start gap-3 font-extrabold text-primary bg-primary/15 border border-primary/20 shadow-sm h-12 rounded-xl"
@@ -97,15 +91,6 @@ export function SidebarContent({
                         className={getNavItemClass("/dashboard")}
                     >
                         <Sparkles size={20} className={isActive("/dashboard") ? "text-primary" : ""} /> המשרד שלי
-                    </Button>
-                </Link>
-
-                <Link href="/dashboard/v2" onClick={onNavClick}>
-                    <Button
-                        variant="ghost"
-                        className={getNavItemClass("/dashboard/v2", true)}
-                    >
-                        <Sparkles size={20} className="text-purple-500" /> המשרד שלי 2
                     </Button>
                 </Link>
 
