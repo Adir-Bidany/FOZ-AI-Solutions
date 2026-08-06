@@ -588,8 +588,6 @@ export async function fetchLeads(businessId: string) {
             business_id: businessId,
             $or: [
                 { "execution_payload.action_type": "send_message" },
-                { "execution_payload.action_type": "lead_capture" },
-                { source_agent: "foz" },
                 { source_agent: "receptionist" }
             ]
         }).sort({ created_at: -1 }).lean();

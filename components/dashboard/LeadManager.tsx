@@ -35,26 +35,6 @@ interface LeadManagerProps {
 
 const MOCK_LEADS: LeadCard[] = [
     {
-        _id: "lead-mock-1",
-        source_agent: "foz",
-        status: "pending",
-        priority: "high",
-        display_content: {
-            title: "פנייה חדשה מפז (FOZ AI): רועי לוי",
-            description: "מתעניין בחבילת ה-AI לעסק קוסמטיקה. טלפון: 052-9876543, דוא\"ל: roi@clinic.co.il",
-        },
-        execution_payload: {
-            action_type: "lead_capture",
-            params: {
-                customer_name: "רועי לוי",
-                phone: "052-9876543",
-                email: "roi@clinic.co.il",
-                message_content: "רוצה לשמוע עוד על אינטגרציית וואטסאפ ליומן",
-            },
-        },
-        created_at: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-    },
-    {
         _id: "lead-mock-2",
         source_agent: "receptionist",
         status: "pending",
@@ -73,18 +53,9 @@ const MOCK_LEADS: LeadCard[] = [
         },
         created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
     },
-    {
-        _id: "lead-mock-3",
-        source_agent: "foz",
-        status: "completed",
-        priority: "normal",
-        display_content: {
-            title: "פנייה מטופלת: עמית כהן",
-            description: "הושארו פרטים: 050-5554433. נוצר קשר טלפוני והועבר להרשמה.",
-        },
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    },
 ];
+
+
 
 export default function LeadManager({ businessId, initialLeads = [] }: LeadManagerProps) {
     const activeInitial = initialLeads.length > 0 ? initialLeads : MOCK_LEADS;
@@ -138,7 +109,7 @@ export default function LeadManager({ businessId, initialLeads = [] }: LeadManag
                 <div>
                     <h2 className="text-xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
                         <Inbox className="w-5 h-5 text-primary" />
-                        ניהול פניות ולידים (Paz & Daniela)
+                        ניהול פניות ולידים (Daniela)
                     </h2>
                     <p className="text-xs text-muted-foreground mt-1">
                         ריכוז פניות שנאספו ע"י הסוכנים האוטונומיים — מעקב, טיפול ומחיקה
@@ -182,7 +153,7 @@ export default function LeadManager({ businessId, initialLeads = [] }: LeadManag
                             </div>
                             <h3 className="text-base font-bold text-foreground">אין פניות חדשות</h3>
                             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                                כל הפניות והלידים שנאספו ע"י פז ודניאלה חולקו וטופלו!
+                                כל הפניות שנאספו ע"י דניאלה חולקו וטופלו!
                             </p>
                         </div>
                     ) : (
@@ -262,7 +233,7 @@ function LeadCardItem({ lead, isPendingTab, isProcessing, onMarkHandled, onDelet
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                         <Sparkles className="w-3 h-3" />
-                        {lead.source_agent === "foz" ? "פז (FOZ AI)" : "דניאלה (נציגה)"}
+                        {"דניאלה (נציגה)"}
                     </span>
 
                     <span className="inline-flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
