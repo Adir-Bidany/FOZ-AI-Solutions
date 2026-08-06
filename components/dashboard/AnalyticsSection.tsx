@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -14,7 +14,13 @@ import { cn } from "@/lib/utils";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function AnalyticsSection() {
-    const [date, setDate] = useState<Date | undefined>(new Date());
+    const [isMounted, setIsMounted] = useState(false);
+    const [date, setDate] = useState<Date | undefined>(undefined);
+
+    useEffect(() => {
+        setIsMounted(true);
+        setDate(new Date());
+    }, []);
 
     // Fetch stats for selected date (or today if undefined)
     const dateQuery = date ? `?date=${date.toISOString()}` : "";
@@ -67,32 +73,42 @@ export default function AnalyticsSection() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal h-10 rounded-xl",
-                                        !date && "text-muted-foreground"
-                                    )}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {date ? (
-                                        format(date, "PPP", { locale: he })
-                                    ) : (
-                                        <span>בחר תאריך</span>
-                                    )}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={date}
-                                    onSelect={setDate}
-                                    initialFocus
-                                />
-                            </PopoverContent>
-                        </Popover>
+                        {isMounted ? (
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-full justify-start text-left font-normal h-10 rounded-xl",
+                                            !date && "text-muted-foreground"
+                                        )}
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {date ? (
+                                            format(date, "PPP", { locale: he })
+                                        ) : (
+                                            <span>בחר תאריך</span>
+                                        )}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={date}
+                                        onSelect={setDate}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        ) : (
+                            <Button
+                                variant={"outline"}
+                                className="w-full justify-start text-left font-normal h-10 rounded-xl text-muted-foreground"
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                <span>בחר תאריך</span>
+                            </Button>
+                        )}
                         <div className="mt-4 flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">שיחות ביום זה:</span>
                             <span className="font-bold text-lg text-foreground">
