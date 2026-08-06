@@ -7,6 +7,7 @@ import V2IntegrationsHealth from "./V2IntegrationsHealth";
 import V2AgentInsightsFeed from "./V2AgentInsightsFeed";
 import V2SystemAuditLog from "./V2SystemAuditLog";
 import GoldaModal from "./GoldaModal";
+import LeadManager from "./LeadManager";
 
 interface ActionCard {
     _id: string;
@@ -61,6 +62,11 @@ export default function DashboardV2Shell({
                     initialCards={initialCards}
                     onCardsChange={setCards}
                 />
+
+                {/* ══════════════════════════════════════════════
+                    SECTION 1.5 — Lead Manager (ניהול פניות ולידים)
+                ══════════════════════════════════════════════ */}
+                <LeadManager businessId={businessId} />
 
                 {/* ══════════════════════════════════════════════
                     SECTION 2 — Hero Metrics (4 KPI cards)

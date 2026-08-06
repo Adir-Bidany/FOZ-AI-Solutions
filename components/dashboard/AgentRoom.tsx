@@ -7,6 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+function parseCleanText(rawText: string): string {
+    if (!rawText) return "";
+    const trimmed = rawText.trim();
+    if (trimmed.startsWith("{") && trimmed.includes('"reply"')) {
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (parsed.reply) return parsed.reply;
+        } catch (_) {
+            const match = trimmed.match(/"reply"\s*:\s*"([\s\S]*?)"\s*,?\s*"(?:active_mode|mode)"/);
+            if (match && match[1]) return match[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
+        }
+    }
+    return rawText;
+}
+
 interface AgentRoomProps {
     businessId: string;
 }
@@ -169,7 +184,7 @@ export default function AgentRoom({ businessId }: AgentRoomProps) {
                                                     : "bg-card border border-border text-foreground rounded-tl-sm"
                                             }`}
                                         >
-                                            {msg.parts[0].text}
+                                            {parseCleanText(msg.parts[0].text)}
                                         </div>
                                     </div>
                                 );

@@ -161,8 +161,11 @@ export async function POST(req: NextRequest) {
             
             if (containsInjection) {
                 console.warn(`[SECURITY LAYER 1] Static injection attempt blocked for business ${businessId}`);
+                const blockedMessage = agentPersona === "foz"
+                    ? "היי, אני פז ואני כאן כדי לעזור לך להכיר את המערכת שלנו. אשמח לענות על כל שאלה שקשורה לפתרונות ה-AI שלנו לעסק שלך. במה אוכל לעזור בהקשר הזה?"
+                    : "נמצא קלט לא תקין בהודעה. אנא נסה לנסח את השאלה מחדש.";
                 return NextResponse.json({
-                    response: "נמצא קלט לא תקין בהודעה. אנא נסה לנסח את השאלה מחדש.",
+                    response: blockedMessage,
                     sessionId: chat._id
                 }, { status: 400 });
             }
@@ -196,8 +199,11 @@ export async function POST(req: NextRequest) {
 
             if (!isSafe) {
                 console.warn(`[SECURITY LAYER 2] Semantic injection attempt blocked for business ${businessId}`);
+                const blockedMessage = agentPersona === "foz"
+                    ? "היי, אני פז ואני כאן כדי לעזור לך להכיר את המערכת שלנו. אשמח לענות על כל שאלה שקשורה לפתרונות ה-AI שלנו לעסק שלך. במה אוכל לעזור בהקשר הזה?"
+                    : "נמצא קלט לא תקין בהודעה. אנא נסה לנסח את השאלה מחדש.";
                 return NextResponse.json({
-                    response: "נמצא קלט לא תקין בהודעה. אנא נסה לנסח את השאלה מחדש.",
+                    response: blockedMessage,
                     sessionId: chat._id
                 }, { status: 400 });
             }
