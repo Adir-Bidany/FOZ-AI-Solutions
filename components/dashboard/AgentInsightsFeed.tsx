@@ -137,7 +137,7 @@ const TYPE_LABEL: Record<InsightType, string> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function V2AgentInsightsFeed() {
+export default function AgentInsightsFeed() {
     const [dismissed, setDismissed] = useState<Set<string>>(new Set());
     const [expanded, setExpanded] = useState<string | null>(MOCK_INSIGHTS[0]?.id ?? null);
 

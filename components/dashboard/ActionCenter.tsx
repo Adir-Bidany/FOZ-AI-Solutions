@@ -55,7 +55,7 @@ export interface ActionCard {
     created_at?: string;
 }
 
-interface V2ActionCenterProps {
+interface ActionCenterProps {
     businessId: string;
     initialCards: ActionCard[];
     onCardsChange?: (cards: ActionCard[]) => void;
@@ -344,11 +344,11 @@ function getCardTopicStackId(card: ActionCard): string {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function V2ActionCenter({
+export default function ActionCenter({
     businessId,
     initialCards,
     onCardsChange,
-}: V2ActionCenterProps) {
+}: ActionCenterProps) {
     // If no initial real cards, use default strategic mock cards for layout visualization
     const activeInitial = initialCards.length > 0 ? initialCards : MOCK_ACTION_CARDS;
     const [cards, setCards] = useState<ActionCard[]>(activeInitial);
@@ -356,13 +356,13 @@ export default function V2ActionCenter({
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
-    // Collapsible Topic Stacks state (all open by default)
+    // Collapsible Topic Stacks state (all closed by default)
     const [expandedStacks, setExpandedStacks] = useState<Record<string, boolean>>({
-        urgent: true,
-        marketing: true,
-        calendar: true,
-        experience: true,
-        reminders: true,
+        urgent: false,
+        marketing: false,
+        calendar: false,
+        experience: false,
+        reminders: false,
     });
 
     // Edit Reminder Modal State
@@ -486,7 +486,7 @@ export default function V2ActionCenter({
                     {TOPIC_STACKS.map((topic) => {
                         const TopicIcon = topic.icon;
                         const stackCards = pendingCards.filter((c) => getCardTopicStackId(c) === topic.id);
-                        const isExpanded = expandedStacks[topic.id] ?? true;
+                        const isExpanded = expandedStacks[topic.id] ?? false;
 
                         return (
                             <div key={topic.id} className="space-y-3">
