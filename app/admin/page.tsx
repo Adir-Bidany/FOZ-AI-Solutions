@@ -5,16 +5,10 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    Store,
-    UserPlus,
-    LayoutDashboard,
     ShieldCheck,
-    Sparkles,
     ExternalLink,
     LogIn,
-    LayoutTemplate,
     Search,
     Trash2,
     Calendar,
@@ -147,97 +141,6 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                 </div>
-
-                {/* ניווט מהיר - 6 כרטיסים במראה פרימיום */}
-                <section>
-                    <h2 className="text-lg font-bold mb-6 text-foreground flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-purple-400" />
-                        מפת האתר (Development Hub)
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
-                        <Link href="/" target="_blank">
-                            <Card className="bg-card hover:bg-accent/50 border border-border hover:border-purple-500/40 transition-all hover:-translate-y-1 duration-300 cursor-pointer h-full border-t-4 border-t-purple-500 shadow-sm rounded-2xl">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm flex items-center gap-2 text-foreground font-bold">
-                                        <Store className="w-4 h-4 text-purple-400" />
-                                        אתר הבית
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-xs text-muted-foreground">
-                                        שיווק (Public)
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </Link>
-
-                        <Link href="/onboarding" target="_blank">
-                            <Card className="bg-card hover:bg-accent/50 border border-border hover:border-blue-500/40 transition-all hover:-translate-y-1 duration-300 cursor-pointer h-full border-t-4 border-t-blue-500 shadow-sm rounded-2xl">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm flex items-center gap-2 text-foreground font-bold">
-                                        <UserPlus className="w-4 h-4 text-blue-400" />
-                                        הרשמה
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-xs text-muted-foreground">
-                                        טופס הקמה
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </Link>
-
-                        <Link href="/onboarding" target="_blank">
-                            <Card className="bg-card hover:bg-accent/50 border border-border hover:border-pink-500/40 transition-all hover:-translate-y-1 duration-300 cursor-pointer h-full border-t-4 border-t-pink-500 shadow-sm rounded-2xl">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm flex items-center gap-2 text-foreground font-bold">
-                                        <Sparkles className="w-4 h-4 text-pink-400" />
-                                        צ'אט הקמה
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-xs text-muted-foreground">
-                                        ראיון בוט (Setup)
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </Link>
-
-                        <Link href="/dashboard/demo" target="_blank">
-                            <Card className="bg-card hover:bg-accent/50 border border-border hover:border-amber-500/40 transition-all hover:-translate-y-1 duration-300 cursor-pointer h-full border-t-4 border-t-amber-500 shadow-sm rounded-2xl">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm flex items-center gap-2 text-foreground font-bold">
-                                        <LayoutDashboard className="w-4 h-4 text-amber-400" />
-                                        דשבורד
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-xs text-muted-foreground">
-                                        ניהול דמו
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </Link>
-
-                        <div className="opacity-60">
-                            <Card className="h-full bg-card/40 border-dashed border-border rounded-2xl">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground font-medium">
-                                        <ShieldCheck className="w-4 h-4" />
-                                        אדמין
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-xs text-muted-foreground">
-                                        אתה כאן
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
-                </section>
-
-                <hr className="border-border/60" />
 
                 {/* טבלת הלקוחות */}
                 <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden">
