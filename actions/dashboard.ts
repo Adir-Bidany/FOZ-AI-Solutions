@@ -11,6 +11,7 @@ import { cleanAIResponse, extractJsonFromText, mapChatHistory, createGeminiInsta
 import { AGENT_REGISTRY } from "@/lib/agents/registry";
 
 import AgentInsight from "@/models/AgentInsight";
+import ChatExternal from "@/models/ChatExternal";
 import mongoose, { Types } from "mongoose";
 
 export async function fetchActionCards(businessId: string) {
@@ -556,8 +557,82 @@ export async function dismissActionCard(cardId: string) {
     }
 }
 
+// ─── Chat History Actions ───────────────────────────────────────────────────
 
+export interface ChatMessage {
+    role: "user" | "model";
+    text: string;
+    timestamp: string;
+}
 
+export interface ChatSession {
+    sessionId: string;
+    createdAt: string;
+    messages: ChatMessage[];
+}
+
+/**
+ * Fetches all ChatExternal sessions for a specific registered customer.
+ * Returns all sessions merged and sorted chronologically (oldest first per session,
+ * sessions sorted by createdAt ascending for a continuous thread view).
+ */
+export async function fetchCustomerChatHistory(customerId: string): Promise<ChatSession[]> {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.businessId) throw new Error("Unauthorized");
+
+    if (!Types.ObjectId.isValid(customerId)) return [];
+
+    await connectToDatabase();
+    try {
+        const chats = await ChatExternal.find({
+            business_id: new Types.ObjectId(session.user.businessId),
+            customer_id: new Types.ObjectId(customerId),
+        }).sort({ createdAt: 1 }).lean();
+
+        return chats.map((chat: any) => ({
+            sessionId: chat._id.toString(),
+            createdAt: chat.createdAt.toISOString(),
+            messages: (chat.messages || []).map((m: any) => ({
+                role: m.role as "user" | "model",
+                text: m.parts?.[0]?.text ?? "",
+                timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : chat.createdAt.toISOString(),
+            })),
+        }));
+    } catch (error) {
+        console.error("Failed to fetch customer chat history:", error);
+        return [];
+    }
+}
+
+/**
+ * Fetches the latest 50 anonymous/guest ChatExternal sessions (no customer_id).
+ * Returns sorted by createdAt descending (most recent guest first).
+ */
+export async function fetchGuestChats(): Promise<ChatSession[]> {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.businessId) throw new Error("Unauthorized");
+
+    await connectToDatabase();
+    try {
+        const chats = await ChatExternal.find({
+            business_id: new Types.ObjectId(session.user.businessId),
+            customer_id: { $exists: false },
+        }).sort({ createdAt: -1 }).limit(50).lean();
+
+        return chats.map((chat: any) => ({
+            sessionId: chat._id.toString(),
+            createdAt: chat.createdAt.toISOString(),
+            messages: (chat.messages || []).map((m: any) => ({
+                role: m.role as "user" | "model",
+                text: m.parts?.[0]?.text ?? "",
+                timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : chat.createdAt.toISOString(),
+            })),
+        }));
+    } catch (error) {
+        console.error("Failed to fetch guest chats:", error);
+        return [];
+    }
+}
 export async function updateLandingPage(businessId: string, data: any) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.businessId) throw new Error("Unauthorized");

@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Link as LinkIcon, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
     Dialog,
     DialogContent,
@@ -184,8 +185,7 @@ export default function GlobalHeader({ clientData, sessionBusinessId }: GlobalHe
 
                     <form onSubmit={handleAdminLogin} className="space-y-4 mt-2">
                         <div>
-                            <Input
-                                type="password"
+                            <PasswordInput
                                 placeholder="הזן סיסמת מנהל..."
                                 value={adminPassword}
                                 onChange={(e) => {

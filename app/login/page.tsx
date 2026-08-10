@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Lock, Mail, ArrowRight } from "lucide-react";
@@ -97,8 +98,7 @@ export default function LoginPage() {
                                 <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                                     <Lock className="w-3.5 h-3.5 text-muted-foreground" /> סיסמה
                                 </Label>
-                                <Input
-                                    type="password"
+                                <PasswordInput
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}

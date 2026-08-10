@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import {
     Card,
@@ -107,8 +108,7 @@ export default function SimplyBookConnect() {
                     <p className="text-xs text-red-500 font-semibold pb-1">
                         ⚠️ שימו לב: חובה להעתיק את ה-API Key הרגיל, ולא את ה-Secret Key!
                     </p>
-                    <Input
-                        type="password"
+                    <PasswordInput
                         placeholder="הדביקי כאן את המפתח"
                         value={keys.apiKey}
                         autoComplete="new-password"
@@ -134,8 +134,7 @@ export default function SimplyBookConnect() {
 
                 <div className="space-y-2">
                     <Label>סיסמה / מפתח משתמש (User Password)</Label>
-                    <Input
-                        type="password"
+                    <PasswordInput
                         placeholder="הזינו את סיסמת המשתמש או מפתח המשתמש"
                         value={keys.userPassword}
                         autoComplete="new-password"
