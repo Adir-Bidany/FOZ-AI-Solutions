@@ -633,6 +633,43 @@ export async function fetchGuestChats(): Promise<ChatSession[]> {
         return [];
     }
 }
+
+/**
+ * Fetches the latest 50 Paz/FOZ AI ChatExternal sessions (business_id is 000000000000000000000000).
+ * Protected by Admin RBAC verification.
+ */
+export async function fetchPazLeads(): Promise<ChatSession[]> {
+    const session = await getServerSession(authOptions);
+    const isAdminUser = (session?.user as any)?.role === "admin";
+
+    // Allow authenticated admins
+    if (!isAdminUser) {
+        throw new Error("Unauthorized: Admin access required");
+    }
+
+    await connectToDatabase();
+    try {
+        const pazTenantId = new Types.ObjectId("000000000000000000000000");
+        const chats = await ChatExternal.find({
+            business_id: pazTenantId,
+        }).sort({ createdAt: -1 }).limit(50).lean();
+
+        return chats.map((chat: any, idx: number) => ({
+            sessionId: chat._id.toString(),
+            createdAt: chat.createdAt.toISOString(),
+            label: `פנייה ממתעניין #${chats.length - idx}`,
+            messages: (chat.messages || []).map((m: any) => ({
+                role: m.role as "user" | "model",
+                text: m.parts?.[0]?.text ?? "",
+                timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : chat.createdAt.toISOString(),
+            })),
+        }));
+    } catch (error) {
+        console.error("Failed to fetch Paz leads:", error);
+        return [];
+    }
+}
+
 export async function updateLandingPage(businessId: string, data: any) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.businessId) throw new Error("Unauthorized");

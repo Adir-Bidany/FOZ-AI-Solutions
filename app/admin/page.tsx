@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import GlobalHeader from "@/components/GlobalHeader";
+import PazLeadsInbox from "@/components/admin/PazLeadsInbox";
 
 interface Client {
     _id: string;
@@ -345,6 +346,9 @@ export default function AdminDashboard() {
                         </table>
                     </div>
                 </div>
+
+                {/* פניות ולידים של פז (Paz Leads Inbox) */}
+                <PazLeadsInbox />
             </main>
         </div>
     );

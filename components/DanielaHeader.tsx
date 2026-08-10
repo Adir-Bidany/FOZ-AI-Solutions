@@ -15,7 +15,7 @@ export default function DanielaHeader({ businessName, logoUrl }: DanielaHeaderPr
         <div className="bg-card/95 border-b border-border/80 text-foreground p-4 rounded-t-[2.5rem] flex items-center justify-between gap-4 shrink-0" dir="rtl">
             {/* Right Side (RTL Start): Upright Business Logo + Title & Status */}
             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl border border-border/60 bg-muted/20 p-0.5 overflow-hidden shrink-0 flex items-center justify-center">
+                <div className="w-10 h-10 md:w-12 md:h-12 overflow-hidden shrink-0 flex items-center justify-center">
                     <ClientLogo src={logoSrc} businessName={businessName || "העסק שלי"} />
                 </div>
 

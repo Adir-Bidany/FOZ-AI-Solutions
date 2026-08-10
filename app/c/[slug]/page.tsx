@@ -75,7 +75,7 @@ export default async function ClientPage({
                     {/* Left Side (RTL End): Theme Toggle + Logo */}
                     <div className="flex items-center gap-3 md:gap-4 shrink-0">
                         <ThemeToggle />
-                        <div className="w-20 h-20 md:w-24 md:h-24 shrink-0 flex items-center justify-center rounded-2xl overflow-hidden bg-muted/20 border border-border/40 p-0.5">
+                        <div className="w-20 h-20 md:w-24 md:h-24 shrink-0 flex items-center justify-center overflow-hidden">
                             <ClientLogo src={heroImage} businessName={clientData.businessName} />
                         </div>
                     </div>
