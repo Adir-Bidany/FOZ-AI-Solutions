@@ -17,7 +17,22 @@ export async function GET(req: NextRequest) {
         // שליפת כל הלקוחות, ממוינים מהחדש לישן
         const clients = await Business.find({}).sort({ createdAt: -1 }).lean();
 
-        return NextResponse.json({ success: true, clients });
+        const sanitizedClients = clients.map((b: any) => ({
+            _id: b._id.toString(),
+            businessName: b.businessName,
+            ownerName: b.ownerName,
+            email: b.ownerEmail || b.email,
+            slug: b.slug,
+            createdAt: b.createdAt ? new Date(b.createdAt).toISOString() : new Date().toISOString(),
+            integrations: {
+                simplybook: !!(b.api_keys?.simplybook?.companyLogin && b.api_keys?.simplybook?.apiKey),
+                whatsapp: !!(b.api_keys?.whatsapp && b.api_keys.whatsapp.trim().length > 0),
+                facebook: !!(b.api_keys?.meta?.isConnected && b.api_keys?.meta?.facebookPageId),
+                instagram: !!(b.api_keys?.meta?.isConnected && b.api_keys?.meta?.instagramAccountId),
+            },
+        }));
+
+        return NextResponse.json({ success: true, clients: sanitizedClients });
     } catch (error) {
         console.error("Admin API Error:", error);
         return NextResponse.json(

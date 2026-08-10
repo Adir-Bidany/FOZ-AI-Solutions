@@ -17,8 +17,13 @@ import {
     LayoutTemplate,
     Search,
     Trash2,
+    Calendar,
+    MessageSquare,
+    Facebook,
+    Instagram,
 } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import GlobalHeader from "@/components/GlobalHeader";
 import PazLeadsInbox from "@/components/admin/PazLeadsInbox";
 
@@ -29,6 +34,12 @@ interface Client {
     email: string;
     slug: string;
     createdAt: string;
+    integrations?: {
+        simplybook: boolean;
+        whatsapp: boolean;
+        facebook: boolean;
+        instagram: boolean;
+    };
 }
 
 export default function AdminDashboard() {
@@ -282,21 +293,78 @@ export default function AdminDashboard() {
                                             ).toLocaleDateString("he-IL")}
                                         </td>
                                         <td className="p-6">
-                                            <Link
-                                                href={`/c/${client.slug}`}
-                                                target="_blank"
-                                            >
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-8 text-xs bg-background border-border hover:bg-accent text-foreground rounded-xl gap-1.5"
+                                            <div className="flex items-center gap-3">
+                                                <Link
+                                                    href={`/c/${client.slug}`}
+                                                    target="_blank"
                                                 >
-                                                    <ExternalLink
-                                                        size={12}
-                                                    />{" "}
-                                                    אתר חי
-                                                </Button>
-                                            </Link>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 text-xs bg-background border-border hover:bg-accent text-foreground rounded-xl gap-1.5"
+                                                    >
+                                                        <ExternalLink
+                                                            size={12}
+                                                        />{" "}
+                                                        אתר חי
+                                                    </Button>
+                                                </Link>
+
+                                                {/* Integration Status Badges */}
+                                                <div className="flex items-center gap-1.5 px-2 py-1 bg-muted/30 rounded-xl border border-border/40">
+                                                    {/* SimplyBook / Calendar */}
+                                                    <div
+                                                        title={client.integrations?.simplybook ? "SimplyBook: מחובר" : "SimplyBook: לא מחובר"}
+                                                        className={cn(
+                                                            "p-1 rounded-lg transition-colors",
+                                                            client.integrations?.simplybook
+                                                                ? "text-blue-500 bg-blue-500/10"
+                                                                : "text-muted-foreground/30 opacity-40"
+                                                        )}
+                                                    >
+                                                        <Calendar size={14} />
+                                                    </div>
+
+                                                    {/* WhatsApp */}
+                                                    <div
+                                                        title={client.integrations?.whatsapp ? "WhatsApp: מחובר" : "WhatsApp: לא מחובר"}
+                                                        className={cn(
+                                                            "p-1 rounded-lg transition-colors",
+                                                            client.integrations?.whatsapp
+                                                                ? "text-emerald-500 bg-emerald-500/10"
+                                                                : "text-muted-foreground/30 opacity-40"
+                                                        )}
+                                                    >
+                                                        <MessageSquare size={14} />
+                                                    </div>
+
+                                                    {/* Facebook */}
+                                                    <div
+                                                        title={client.integrations?.facebook ? "Facebook: מחובר" : "Facebook: לא מחובר"}
+                                                        className={cn(
+                                                            "p-1 rounded-lg transition-colors",
+                                                            client.integrations?.facebook
+                                                                ? "text-indigo-500 bg-indigo-500/10"
+                                                                : "text-muted-foreground/30 opacity-40"
+                                                        )}
+                                                    >
+                                                        <Facebook size={14} />
+                                                    </div>
+
+                                                    {/* Instagram */}
+                                                    <div
+                                                        title={client.integrations?.instagram ? "Instagram: מחובר" : "Instagram: לא מחובר"}
+                                                        className={cn(
+                                                            "p-1 rounded-lg transition-colors",
+                                                            client.integrations?.instagram
+                                                                ? "text-pink-500 bg-pink-500/10"
+                                                                : "text-muted-foreground/30 opacity-40"
+                                                        )}
+                                                    >
+                                                        <Instagram size={14} />
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td className="p-6">
                                             <div className="flex items-center gap-2">
