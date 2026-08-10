@@ -11,6 +11,7 @@ import { cleanAIResponse, extractJsonFromText, mapChatHistory, createGeminiInsta
 import { AGENT_REGISTRY } from "@/lib/agents/registry";
 
 import AgentInsight from "@/models/AgentInsight";
+import ChatExternal from "@/models/ChatExternal";
 import mongoose, { Types } from "mongoose";
 
 export async function fetchActionCards(businessId: string) {
@@ -556,7 +557,118 @@ export async function dismissActionCard(cardId: string) {
     }
 }
 
+// ─── Chat History Actions ───────────────────────────────────────────────────
 
+export interface ChatMessage {
+    role: "user" | "model";
+    text: string;
+    timestamp: string;
+}
+
+export interface ChatSession {
+    sessionId: string;
+    createdAt: string;
+    messages: ChatMessage[];
+}
+
+/**
+ * Fetches all ChatExternal sessions for a specific registered customer.
+ * Returns all sessions merged and sorted chronologically (oldest first per session,
+ * sessions sorted by createdAt ascending for a continuous thread view).
+ */
+export async function fetchCustomerChatHistory(customerId: string): Promise<ChatSession[]> {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.businessId) throw new Error("Unauthorized");
+
+    if (!Types.ObjectId.isValid(customerId)) return [];
+
+    await connectToDatabase();
+    try {
+        const chats = await ChatExternal.find({
+            business_id: new Types.ObjectId(session.user.businessId),
+            customer_id: new Types.ObjectId(customerId),
+        }).sort({ createdAt: 1 }).lean();
+
+        return chats.map((chat: any) => ({
+            sessionId: chat._id.toString(),
+            createdAt: chat.createdAt.toISOString(),
+            messages: (chat.messages || []).map((m: any) => ({
+                role: m.role as "user" | "model",
+                text: m.parts?.[0]?.text ?? "",
+                timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : chat.createdAt.toISOString(),
+            })),
+        }));
+    } catch (error) {
+        console.error("Failed to fetch customer chat history:", error);
+        return [];
+    }
+}
+
+/**
+ * Fetches the latest 50 anonymous/guest ChatExternal sessions (no customer_id).
+ * Returns sorted by createdAt descending (most recent guest first).
+ */
+export async function fetchGuestChats(): Promise<ChatSession[]> {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.businessId) throw new Error("Unauthorized");
+
+    await connectToDatabase();
+    try {
+        const chats = await ChatExternal.find({
+            business_id: new Types.ObjectId(session.user.businessId),
+            customer_id: { $exists: false },
+        }).sort({ createdAt: -1 }).limit(50).lean();
+
+        return chats.map((chat: any) => ({
+            sessionId: chat._id.toString(),
+            createdAt: chat.createdAt.toISOString(),
+            messages: (chat.messages || []).map((m: any) => ({
+                role: m.role as "user" | "model",
+                text: m.parts?.[0]?.text ?? "",
+                timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : chat.createdAt.toISOString(),
+            })),
+        }));
+    } catch (error) {
+        console.error("Failed to fetch guest chats:", error);
+        return [];
+    }
+}
+
+/**
+ * Fetches the latest 50 Paz/FOZ AI ChatExternal sessions (business_id is 000000000000000000000000).
+ * Protected by Admin RBAC verification.
+ */
+export async function fetchPazLeads(): Promise<ChatSession[]> {
+    const session = await getServerSession(authOptions);
+    const isAdminUser = (session?.user as any)?.role === "admin";
+
+    // Allow authenticated admins
+    if (!isAdminUser) {
+        throw new Error("Unauthorized: Admin access required");
+    }
+
+    await connectToDatabase();
+    try {
+        const pazTenantId = new Types.ObjectId("000000000000000000000000");
+        const chats = await ChatExternal.find({
+            business_id: pazTenantId,
+        }).sort({ createdAt: -1 }).limit(50).lean();
+
+        return chats.map((chat: any, idx: number) => ({
+            sessionId: chat._id.toString(),
+            createdAt: chat.createdAt.toISOString(),
+            label: `פנייה ממתעניין #${chats.length - idx}`,
+            messages: (chat.messages || []).map((m: any) => ({
+                role: m.role as "user" | "model",
+                text: m.parts?.[0]?.text ?? "",
+                timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : chat.createdAt.toISOString(),
+            })),
+        }));
+    } catch (error) {
+        console.error("Failed to fetch Paz leads:", error);
+        return [];
+    }
+}
 
 export async function updateLandingPage(businessId: string, data: any) {
     const session = await getServerSession(authOptions);

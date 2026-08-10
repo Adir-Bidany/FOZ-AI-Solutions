@@ -103,16 +103,19 @@ export default function LeadManager({ businessId, initialLeads = [] }: LeadManag
     };
 
     return (
-        <section id="lead-manager" className="space-y-6" aria-label="ניהול פניות ולידים">
+        <section
+            id="lead-manager"
+            className="space-y-6"
+            aria-label="ניהול פניות ולידים"
+        >
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
-                        <Inbox className="w-5 h-5 text-primary" />
-                        ניהול פניות ולידים (Daniela)
+                        ניהול פניות ולידים
                     </h2>
                     <p className="text-xs text-muted-foreground mt-1">
-                        ריכוז פניות שנאספו ע"י הסוכנים האוטונומיים — מעקב, טיפול ומחיקה
+                        ריכוז פניות שנאספו ע"י דניאלה
                     </p>
                 </div>
             </div>
@@ -151,7 +154,9 @@ export default function LeadManager({ businessId, initialLeads = [] }: LeadManag
                             <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
                                 <CheckCircle2 className="w-6 h-6" />
                             </div>
-                            <h3 className="text-base font-bold text-foreground">אין פניות חדשות</h3>
+                            <h3 className="text-base font-bold text-foreground">
+                                אין פניות חדשות
+                            </h3>
                             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                                 כל הפניות שנאספו ע"י דניאלה חולקו וטופלו!
                             </p>
@@ -163,8 +168,12 @@ export default function LeadManager({ businessId, initialLeads = [] }: LeadManag
                                     key={lead._id}
                                     lead={lead}
                                     isPendingTab={true}
-                                    isProcessing={processingId === lead._id && isPending}
-                                    onMarkHandled={() => handleMarkHandled(lead._id)}
+                                    isProcessing={
+                                        processingId === lead._id && isPending
+                                    }
+                                    onMarkHandled={() =>
+                                        handleMarkHandled(lead._id)
+                                    }
                                     onDelete={() => handleDelete(lead._id)}
                                 />
                             ))}
@@ -176,9 +185,11 @@ export default function LeadManager({ businessId, initialLeads = [] }: LeadManag
                 <TabsContent value="handled" className="mt-4 space-y-4">
                     {handledLeads.length === 0 ? (
                         <div className="p-8 rounded-3xl bg-card border border-dashed border-border text-center space-y-2">
-                            <h3 className="text-base font-bold text-foreground">אין פניות בארכיון</h3>
+                            <h3 className="text-base font-bold text-foreground">
+                                אין פניות בארכיון
+                            </h3>
                             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                                פניות שתסמן כ"טופל" יופיעו כאן למעקב היסטורי.
+                                פניות שיסומנו כ"טופל" יופיעו כאן
                             </p>
                         </div>
                     ) : (
@@ -188,7 +199,9 @@ export default function LeadManager({ businessId, initialLeads = [] }: LeadManag
                                     key={lead._id}
                                     lead={lead}
                                     isPendingTab={false}
-                                    isProcessing={processingId === lead._id && isPending}
+                                    isProcessing={
+                                        processingId === lead._id && isPending
+                                    }
                                     onDelete={() => handleDelete(lead._id)}
                                 />
                             ))}

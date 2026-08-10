@@ -10,6 +10,7 @@ import { DayPicker } from "react-day-picker";
 import "react-day-picker/style.css";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
+import { ShieldCheck, CheckCircle2 } from "lucide-react";
 
 interface Message {
     role: "user" | "assistant" | "model";
@@ -24,6 +25,8 @@ interface UnifiedChatWidgetProps {
     className?: string;
     agentPersona?: string;
 }
+
+type ConsentStatus = "bypassed" | "pending" | "approved" | "rejected";
 
 export default function UnifiedChatWidget({
     mode,
@@ -42,6 +45,26 @@ export default function UnifiedChatWidget({
     const [showCustomNote, setShowCustomNote] = useState(false);
     const [customNoteText, setCustomNoteText] = useState("");
 
+    const [consentStatus, setConsentStatus] = useState<ConsentStatus>("pending");
+
+    // Check hydration for consumer token / admin mode
+    useEffect(() => {
+        if (mode === "admin") {
+            setConsentStatus("bypassed");
+            return;
+        }
+
+        const consumerDataStr = typeof localStorage !== "undefined" ? localStorage.getItem("foz_consumer_data") : null;
+        const hasConsumerToken = typeof document !== "undefined" && document.cookie.includes("consumer_token");
+        const isRegistered = !!(consumerDataStr || hasConsumerToken);
+
+        if (isRegistered) {
+            setConsentStatus("bypassed");
+        } else {
+            setConsentStatus("pending");
+        }
+    }, [mode]);
+
     // Reset state if business context shifts
     useEffect(() => {
         setSessionId(null);
@@ -59,16 +82,16 @@ export default function UnifiedChatWidget({
         return () => window.removeEventListener("security-purge", handlePurge);
     }, [initialMessages]);
 
-    // Fetch dynamic initial greeting if starting empty
+    // Fetch dynamic initial greeting if starting empty (only if consent is bypassed or approved)
     useEffect(() => {
-        if (messages.length === 0 && agentPersona) {
+        if (messages.length === 0 && agentPersona && (consentStatus === "approved" || consentStatus === "bypassed")) {
             getInitialGreeting(agentPersona).then((greeting) => {
                 if (greeting) {
                     setMessages([{ role: "assistant", content: greeting }]);
                 }
             });
         }
-    }, [agentPersona, messages.length]);
+    }, [agentPersona, messages.length, consentStatus]);
 
     const handleSend = async (content: string) => {
         // Add user message
@@ -146,6 +169,23 @@ export default function UnifiedChatWidget({
         }
     };
 
+    const handleApproveConsent = async () => {
+        setConsentStatus("approved");
+        const approvalText = "אני מאשר/ת את תנאי השימוש והפרטיות";
+        await handleSend(approvalText);
+    };
+
+    const handleRejectConsent = () => {
+        setConsentStatus("rejected");
+        setMessages((prev) => [
+            ...prev,
+            {
+                role: "assistant",
+                content: "מכיוון שלא אושרו תנאי השימוש, לא ניתן לקיים שיחה עם הסוכן. במידה ותתחרט/י, ניתן לרענן את העמוד ולנסות שוב.",
+            },
+        ]);
+    };
+
     // Auto-scroll to bottom
     useEffect(() => {
         if (scrollRef.current && scrollRef.current.parentElement) {
@@ -155,7 +195,7 @@ export default function UnifiedChatWidget({
                 behavior: "smooth"
             });
         }
-    }, [messages]);
+    }, [messages, consentStatus]);
 
     return (
         <div className={cn("flex flex-col overflow-hidden", className)}>
@@ -196,6 +236,42 @@ export default function UnifiedChatWidget({
                     </div>
                 )}
                 
+                {/* Guest Consent UI Banner */}
+                {consentStatus === "pending" && (
+                    <div className="bg-card/95 rounded-3xl shadow-lg border border-primary/20 p-5 space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                        <div className="flex items-start gap-3" dir="rtl">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                                <ShieldCheck className="w-4 h-4" />
+                            </div>
+                            <div className="space-y-1.5 text-right">
+                                <h4 className="text-sm font-bold text-foreground">אישור תנאי שימוש ובינה מלאכותית</h4>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    כדי לבחון את פתרונות ה-AI שלנו ולהעניק לך את השירות הטוב ביותר, הצ'אט מופעל באמצעות אינטליגנציה מלאכותית ואיסוף נתונים בכפוף לתנאי השימוש ומדיניות הפרטיות שלנו.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 pt-1" dir="rtl">
+                            <button
+                                type="button"
+                                onClick={handleApproveConsent}
+                                className="flex-1 py-2.5 px-4 bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-sm hover:bg-primary/90 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                אני מאשר/ת
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleRejectConsent}
+                                className="py-2.5 px-4 bg-muted text-muted-foreground font-semibold text-xs rounded-xl hover:bg-destructive/10 hover:text-destructive border border-border transition-all cursor-pointer"
+                            >
+                                לא מאשר/ת
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Dynamic Widgets */}
                 {widgetType === "date_picker" && (
                     <div className="bg-card/95 rounded-3xl shadow-lg border border-border/40 p-4 animate-in fade-in slide-in-from-bottom-2">
@@ -260,6 +336,7 @@ export default function UnifiedChatWidget({
                     isLoading={isLoading}
                     mode={mode}
                     placeholder={mode === "public" ? "שאל אותי כל דבר..." : "Type your message..."}
+                    disabled={consentStatus === "pending" || consentStatus === "rejected"}
                 />
             </div>
         </div>

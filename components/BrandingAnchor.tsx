@@ -6,6 +6,7 @@ import Link from "next/link";
 import { User, LogOut, CheckCircle, Clock, UserPlus, Building, LogIn, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 
 interface BrandingAnchorProps {
     context: "platform" | "consumer" | "dashboard";
@@ -260,7 +261,7 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
                                 </div>
                                 <Input placeholder="טלפון נייד" value={phone} onChange={e => setPhone(e.target.value)} />
                                 <Input placeholder="דוא״ל" type="email" value={email} onChange={e => setEmail(e.target.value)} />
-                                <Input placeholder="סיסמה" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+                                <PasswordInput placeholder="סיסמה" value={password} onChange={e => setPassword(e.target.value)} />
 
                                 <Button 
                                     className="w-full bg-primary hover:bg-primary/90 h-12 text-lg rounded-xl mt-2 text-primary-foreground" 
@@ -303,7 +304,7 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
                                     </>
                                 )}
                                 <Input placeholder="דוא״ל" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                                <Input placeholder="סיסמה" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                                <PasswordInput placeholder="סיסמה" value={password} onChange={(e) => setPassword(e.target.value)} />
                                 
                                 <Button 
                                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" 

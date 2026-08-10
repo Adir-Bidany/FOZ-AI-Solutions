@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Loader2, UploadCloud, Send } from "lucide-react";
 import { toast } from "sonner";
 import { signIn } from "next-auth/react";
@@ -297,20 +298,30 @@ export default function CinematicOnboarding() {
                 onSubmit={handleSend} 
                 className="p-4 flex gap-2 relative"
             >
-                <Input 
-                    autoFocus
-                    type={currentField === "email" ? "email" : currentField === "password" ? "password" : "text"}
-                    value={inputValue}
-                    onChange={e => setInputValue(e.target.value)}
-                    placeholder={
-                        currentField === "businessName" ? "למשל: ביוטי קליניק..." : 
-                        currentField === "ownerName" ? "השם המלא שלך..." : 
-                        currentField === "phone" ? "05X-XXXXXXX..." : 
-                        currentField === "email" ? "admin@mybusiness.com..." :
-                        "הקלידי כאן..."
-                    }
-                    className="bg-zinc-950/80 border-zinc-800 text-zinc-100 placeholder:text-zinc-500 h-12 pr-4 rounded-2xl flex-1 focus-visible:ring-primary font-sans text-sm" 
-                />
+                {currentField === "password" ? (
+                    <PasswordInput
+                        autoFocus
+                        value={inputValue}
+                        onChange={e => setInputValue(e.target.value)}
+                        placeholder="הקלידי כאן..."
+                        className="bg-zinc-950/80 border-zinc-800 text-zinc-100 placeholder:text-zinc-500 h-12 pr-4 rounded-2xl flex-1 focus-visible:ring-primary font-sans text-sm"
+                    />
+                ) : (
+                    <Input 
+                        autoFocus
+                        type={currentField === "email" ? "email" : "text"}
+                        value={inputValue}
+                        onChange={e => setInputValue(e.target.value)}
+                        placeholder={
+                            currentField === "businessName" ? "למשל: ביוטי קליניק..." : 
+                            currentField === "ownerName" ? "השם המלא שלך..." : 
+                            currentField === "phone" ? "05X-XXXXXXX..." : 
+                            currentField === "email" ? "admin@mybusiness.com..." :
+                            "הקלידי כאן..."
+                        }
+                        className="bg-zinc-950/80 border-zinc-800 text-zinc-100 placeholder:text-zinc-500 h-12 pr-4 rounded-2xl flex-1 focus-visible:ring-primary font-sans text-sm" 
+                    />
+                )}
                 <Button 
                     type="submit" 
                     disabled={!inputValue.trim()}

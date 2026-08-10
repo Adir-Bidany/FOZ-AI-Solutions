@@ -5,21 +5,21 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    Store,
-    UserPlus,
-    LayoutDashboard,
     ShieldCheck,
-    Sparkles,
     ExternalLink,
     LogIn,
-    LayoutTemplate,
     Search,
     Trash2,
+    Calendar,
+    MessageSquare,
+    Facebook,
+    Instagram,
 } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import GlobalHeader from "@/components/GlobalHeader";
+import PazLeadsInbox from "@/components/admin/PazLeadsInbox";
 
 interface Client {
     _id: string;
@@ -28,11 +28,19 @@ interface Client {
     email: string;
     slug: string;
     createdAt: string;
+    totalCustomerChats?: number;
+    integrations?: {
+        simplybook: boolean;
+        whatsapp: boolean;
+        facebook: boolean;
+        instagram: boolean;
+    };
 }
 
 export default function AdminDashboard() {
     const router = useRouter();
     const [clients, setClients] = useState<Client[]>([]);
+    const [totalPazLeads, setTotalPazLeads] = useState<number>(0);
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
 
@@ -49,6 +57,9 @@ export default function AdminDashboard() {
             const data = await res.json();
             if (data.success) {
                 setClients(data.clients);
+                if (data.totalPazLeads !== undefined) {
+                    setTotalPazLeads(data.totalPazLeads);
+                }
             }
         } catch (error) {
             console.error("Failed to fetch clients", error);
@@ -124,101 +135,12 @@ export default function AdminDashboard() {
                         <ShieldCheck className="text-purple-500 w-8 h-8" />
                         מרכז שליטה וניהול
                     </h1>
-                    <div className="bg-card border border-border px-4 py-2 rounded-full text-xs md:text-sm font-medium text-muted-foreground shadow-sm">
-                        מחובר כמנהל (Admin)
-                    </div>
-                </div>
-
-                {/* ניווט מהיר - 6 כרטיסים במראה פרימיום */}
-                <section>
-                    <h2 className="text-lg font-bold mb-6 text-foreground flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-purple-400" />
-                        מפת האתר (Development Hub)
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
-                        <Link href="/" target="_blank">
-                            <Card className="bg-card hover:bg-accent/50 border border-border hover:border-purple-500/40 transition-all hover:-translate-y-1 duration-300 cursor-pointer h-full border-t-4 border-t-purple-500 shadow-sm rounded-2xl">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm flex items-center gap-2 text-foreground font-bold">
-                                        <Store className="w-4 h-4 text-purple-400" />
-                                        אתר הבית
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-xs text-muted-foreground">
-                                        שיווק (Public)
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </Link>
-
-                        <Link href="/onboarding" target="_blank">
-                            <Card className="bg-card hover:bg-accent/50 border border-border hover:border-blue-500/40 transition-all hover:-translate-y-1 duration-300 cursor-pointer h-full border-t-4 border-t-blue-500 shadow-sm rounded-2xl">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm flex items-center gap-2 text-foreground font-bold">
-                                        <UserPlus className="w-4 h-4 text-blue-400" />
-                                        הרשמה
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-xs text-muted-foreground">
-                                        טופס הקמה
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </Link>
-
-                        <Link href="/onboarding" target="_blank">
-                            <Card className="bg-card hover:bg-accent/50 border border-border hover:border-pink-500/40 transition-all hover:-translate-y-1 duration-300 cursor-pointer h-full border-t-4 border-t-pink-500 shadow-sm rounded-2xl">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm flex items-center gap-2 text-foreground font-bold">
-                                        <Sparkles className="w-4 h-4 text-pink-400" />
-                                        צ'אט הקמה
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-xs text-muted-foreground">
-                                        ראיון בוט (Setup)
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </Link>
-
-                        <Link href="/dashboard/demo" target="_blank">
-                            <Card className="bg-card hover:bg-accent/50 border border-border hover:border-amber-500/40 transition-all hover:-translate-y-1 duration-300 cursor-pointer h-full border-t-4 border-t-amber-500 shadow-sm rounded-2xl">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm flex items-center gap-2 text-foreground font-bold">
-                                        <LayoutDashboard className="w-4 h-4 text-amber-400" />
-                                        דשבורד
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-xs text-muted-foreground">
-                                        ניהול דמו
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </Link>
-
-                        <div className="opacity-60">
-                            <Card className="h-full bg-card/40 border-dashed border-border rounded-2xl">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground font-medium">
-                                        <ShieldCheck className="w-4 h-4" />
-                                        אדמין
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-xs text-muted-foreground">
-                                        אתה כאן
-                                    </p>
-                                </CardContent>
-                            </Card>
+                    <div className="flex items-center gap-3">
+                        <div className="bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-purple-600/10 border border-purple-500/30 px-4 py-2 rounded-full text-xs md:text-sm font-bold text-foreground shadow-sm flex items-center gap-2">                      
+                            <span>{totalPazLeads} פניות לפז</span>
                         </div>
                     </div>
-                </section>
-
-                <hr className="border-border/60" />
+                </div>
 
                 {/* טבלת הלקוחות */}
                 <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden">
@@ -251,6 +173,9 @@ export default function AdminDashboard() {
                                         תאריך הצטרפות
                                     </th>
                                     <th className="h-12 px-6 align-middle">
+                                        שיחות דניאלה
+                                    </th>
+                                    <th className="h-12 px-6 align-middle">
                                         ממשקים
                                     </th>
                                     <th className="h-12 px-6 align-middle">
@@ -281,21 +206,84 @@ export default function AdminDashboard() {
                                             ).toLocaleDateString("he-IL")}
                                         </td>
                                         <td className="p-6">
-                                            <Link
-                                                href={`/c/${client.slug}`}
-                                                target="_blank"
-                                            >
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-8 text-xs bg-background border-border hover:bg-accent text-foreground rounded-xl gap-1.5"
+                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-500/10 text-violet-600 dark:text-violet-300 font-bold text-xs rounded-full border border-violet-500/20 shadow-xs">
+                                                <MessageSquare className="w-3.5 h-3.5" />
+                                                <span>{client.totalCustomerChats ?? 0} שיחות</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-6">
+                                            <div className="flex items-center gap-3">
+                                                <Link
+                                                    href={`/c/${client.slug}`}
+                                                    target="_blank"
                                                 >
-                                                    <ExternalLink
-                                                        size={12}
-                                                    />{" "}
-                                                    אתר חי
-                                                </Button>
-                                            </Link>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 text-xs bg-background border-border hover:bg-accent text-foreground rounded-xl gap-1.5"
+                                                    >
+                                                        <ExternalLink
+                                                            size={12}
+                                                        />{" "}
+                                                        אתר חי
+                                                    </Button>
+                                                </Link>
+
+                                                {/* Integration Status Badges */}
+                                                <div className="flex items-center gap-1.5 px-2 py-1 bg-muted/30 rounded-xl border border-border/40">
+                                                    {/* SimplyBook / Calendar */}
+                                                    <div
+                                                        title={client.integrations?.simplybook ? "SimplyBook: מחובר" : "SimplyBook: לא מחובר"}
+                                                        className={cn(
+                                                            "p-1 rounded-lg transition-colors",
+                                                            client.integrations?.simplybook
+                                                                ? "text-blue-500 bg-blue-500/10"
+                                                                : "text-muted-foreground/30 opacity-40"
+                                                        )}
+                                                    >
+                                                        <Calendar size={14} />
+                                                    </div>
+
+                                                    {/* WhatsApp */}
+                                                    <div
+                                                        title={client.integrations?.whatsapp ? "WhatsApp: מחובר" : "WhatsApp: לא מחובר"}
+                                                        className={cn(
+                                                            "p-1 rounded-lg transition-colors",
+                                                            client.integrations?.whatsapp
+                                                                ? "text-emerald-500 bg-emerald-500/10"
+                                                                : "text-muted-foreground/30 opacity-40"
+                                                        )}
+                                                    >
+                                                        <MessageSquare size={14} />
+                                                    </div>
+
+                                                    {/* Facebook */}
+                                                    <div
+                                                        title={client.integrations?.facebook ? "Facebook: מחובר" : "Facebook: לא מחובר"}
+                                                        className={cn(
+                                                            "p-1 rounded-lg transition-colors",
+                                                            client.integrations?.facebook
+                                                                ? "text-indigo-500 bg-indigo-500/10"
+                                                                : "text-muted-foreground/30 opacity-40"
+                                                        )}
+                                                    >
+                                                        <Facebook size={14} />
+                                                    </div>
+
+                                                    {/* Instagram */}
+                                                    <div
+                                                        title={client.integrations?.instagram ? "Instagram: מחובר" : "Instagram: לא מחובר"}
+                                                        className={cn(
+                                                            "p-1 rounded-lg transition-colors",
+                                                            client.integrations?.instagram
+                                                                ? "text-pink-500 bg-pink-500/10"
+                                                                : "text-muted-foreground/30 opacity-40"
+                                                        )}
+                                                    >
+                                                        <Instagram size={14} />
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td className="p-6">
                                             <div className="flex items-center gap-2">
@@ -345,6 +333,9 @@ export default function AdminDashboard() {
                         </table>
                     </div>
                 </div>
+
+                {/* פניות ולידים של פז (Paz Leads Inbox) */}
+                <PazLeadsInbox />
             </main>
         </div>
     );

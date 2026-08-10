@@ -131,6 +131,7 @@ export async function POST(req: NextRequest) {
             const tenantId = businessId === "demo" ? new Types.ObjectId("000000000000000000000000") : businessId;
             chat = await ChatExternal.create({
                 business_id: tenantId,
+                customer_id: customerId && Types.ObjectId.isValid(customerId) ? new Types.ObjectId(customerId) : undefined,
                 messages: [],
                 processed_for_insights: false
             });
@@ -141,6 +142,11 @@ export async function POST(req: NextRequest) {
             // Fetch Customer if linked
             if (chat.customer_id) {
                 customer = await Customer.findById(chat.customer_id).lean();
+            }
+
+            // Retroactive linkage: if JWT has a customerId but chat isn't linked yet, link it now
+            if (!chat.customer_id && customerId && Types.ObjectId.isValid(customerId)) {
+                chat.customer_id = new Types.ObjectId(customerId);
             }
         }
 
