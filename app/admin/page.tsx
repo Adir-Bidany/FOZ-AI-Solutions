@@ -34,6 +34,7 @@ interface Client {
     email: string;
     slug: string;
     createdAt: string;
+    totalCustomerChats?: number;
     integrations?: {
         simplybook: boolean;
         whatsapp: boolean;
@@ -45,6 +46,7 @@ interface Client {
 export default function AdminDashboard() {
     const router = useRouter();
     const [clients, setClients] = useState<Client[]>([]);
+    const [totalPazLeads, setTotalPazLeads] = useState<number>(0);
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
 
@@ -61,6 +63,9 @@ export default function AdminDashboard() {
             const data = await res.json();
             if (data.success) {
                 setClients(data.clients);
+                if (data.totalPazLeads !== undefined) {
+                    setTotalPazLeads(data.totalPazLeads);
+                }
             }
         } catch (error) {
             console.error("Failed to fetch clients", error);
@@ -136,8 +141,10 @@ export default function AdminDashboard() {
                         <ShieldCheck className="text-purple-500 w-8 h-8" />
                         מרכז שליטה וניהול
                     </h1>
-                    <div className="bg-card border border-border px-4 py-2 rounded-full text-xs md:text-sm font-medium text-muted-foreground shadow-sm">
-                        מחובר כמנהל (Admin)
+                    <div className="flex items-center gap-3">
+                        <div className="bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-purple-600/10 border border-purple-500/30 px-4 py-2 rounded-full text-xs md:text-sm font-bold text-foreground shadow-sm flex items-center gap-2">                      
+                            <span>{totalPazLeads} פניות לפז</span>
+                        </div>
                     </div>
                 </div>
 
@@ -263,6 +270,9 @@ export default function AdminDashboard() {
                                         תאריך הצטרפות
                                     </th>
                                     <th className="h-12 px-6 align-middle">
+                                        שיחות דניאלה
+                                    </th>
+                                    <th className="h-12 px-6 align-middle">
                                         ממשקים
                                     </th>
                                     <th className="h-12 px-6 align-middle">
@@ -291,6 +301,12 @@ export default function AdminDashboard() {
                                             {new Date(
                                                 client.createdAt
                                             ).toLocaleDateString("he-IL")}
+                                        </td>
+                                        <td className="p-6">
+                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-500/10 text-violet-600 dark:text-violet-300 font-bold text-xs rounded-full border border-violet-500/20 shadow-xs">
+                                                <MessageSquare className="w-3.5 h-3.5" />
+                                                <span>{client.totalCustomerChats ?? 0} שיחות</span>
+                                            </div>
                                         </td>
                                         <td className="p-6">
                                             <div className="flex items-center gap-3">
