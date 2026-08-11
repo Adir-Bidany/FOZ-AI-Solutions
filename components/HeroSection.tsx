@@ -282,7 +282,7 @@ export default function HeroSection() {
                                 slug: "demo",
                                 logo: "/logo.png",
                             }}
-                            agentPersona="foz"
+                            agentPersona="paz"
                             className="h-full w-full rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_0_100px_rgba(255,255,255,0.35)] border border-transparent dark:border-white/10 backdrop-blur-xl bg-card/90"
                         />
 

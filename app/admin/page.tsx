@@ -20,6 +20,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import GlobalHeader from "@/components/GlobalHeader";
 import PazLeadsInbox from "@/components/admin/PazLeadsInbox";
+import PromptCMSFAB from "@/components/admin/PromptCMSFAB";
 
 interface Client {
     _id: string;
@@ -337,6 +338,9 @@ export default function AdminDashboard() {
                 {/* פניות ולידים של פז (Paz Leads Inbox) */}
                 <PazLeadsInbox />
             </main>
+
+            {/* Prompt CMS Floating Action Button */}
+            <PromptCMSFAB />
         </div>
     );
 }
