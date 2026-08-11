@@ -2,21 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { RESERVED_SLUGS } from "@/lib/constants/reserved-slugs";
 
 export default function SystemFooter() {
     const pathname = usePathname();
     const currentYear = new Date().getFullYear();
 
-    // אם אנחנו בתוך ה-Setup (צ'אט הקמה) או בתוך דשבורד, אולי נרצה להסתיר את הפוטר
-    // כדי לתת תחושה של אפליקציה ("App-like feel").
-    // לשיקולך: כרגע השארתי אותו גלוי, אבל אם תרצה להסתיר, תוסיף את התנאי הבא:
-    /*
-  if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/onboarding")) {
-      return null;
-  }
-  */
-    
-    if (pathname?.startsWith("/c/")) {
+    const firstSegment = pathname?.split("/")[1]?.toLowerCase();
+    const isClientSite = !!(firstSegment && pathname !== "/" && !RESERVED_SLUGS.has(firstSegment));
+
+    if (isClientSite) {
         return null;
     }
 

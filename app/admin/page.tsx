@@ -214,7 +214,7 @@ export default function AdminDashboard() {
                                         <td className="p-6">
                                             <div className="flex items-center gap-3">
                                                 <Link
-                                                    href={`/c/${client.slug}`}
+                                                    href={`/${client.slug}`}
                                                     target="_blank"
                                                 >
                                                     <Button

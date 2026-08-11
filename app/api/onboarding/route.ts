@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
         // Force clear the Vercel Edge Cache so the dashboard shows the new data instantly
         revalidatePath("/dashboard", "layout");
-        revalidatePath(`/c/${newClient.slug}`, "page");
+        revalidatePath(`/${newClient.slug}`, "page");
 
         return NextResponse.json({
             success: true,
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
                     await existingBusiness.save();
                     
                     revalidatePath("/dashboard", "layout");
-                    revalidatePath(`/c/${existingBusiness.slug}`, "page");
+                    revalidatePath(`/${existingBusiness.slug}`, "page");
 
                     return NextResponse.json({
                         success: true,

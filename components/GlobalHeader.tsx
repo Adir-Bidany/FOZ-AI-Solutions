@@ -18,6 +18,14 @@ import {
 } from "@/components/ui/dialog";
 import ThemeToggle from "@/components/ThemeToggle";
 import ClientLogo from "@/components/ClientLogo";
+import { RESERVED_SLUGS } from "@/lib/constants/reserved-slugs";
+
+function isClientSitePath(pathname: string | null): boolean {
+    if (!pathname || pathname === "/") return false;
+    const firstSegment = pathname.split("/")[1]?.toLowerCase();
+    if (!firstSegment) return false;
+    return !RESERVED_SLUGS.has(firstSegment);
+}
 
 interface GlobalHeaderProps {
     clientData?: {
@@ -50,7 +58,7 @@ export default function GlobalHeader({ clientData, sessionBusinessId }: GlobalHe
     }, []);
 
     const isDashboard = pathname?.startsWith("/dashboard");
-    const isClientSite = pathname?.startsWith("/c/");
+    const isClientSite = isClientSitePath(pathname);
 
     // If on a public client landing page (e.g. /c/[slug]), hide platform header
     if (isClientSite) {
