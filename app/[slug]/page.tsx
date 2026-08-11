@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import UnifiedChatWidget from "@/components/chat/UnifiedChatWidget";
 import BrandingAnchor from "@/components/BrandingAnchor";
 import { getClientBySlug } from "@/services/client-service";
+import { RESERVED_SLUGS } from "@/lib/constants/reserved-slugs";
 import {
     ArrowRight,
     MapPin,
@@ -45,8 +46,14 @@ export default async function ClientPage({
     params: Promise<{ slug: string }>;
 }) {
     const resolvedParams = await params;
-    const clientData = await getClientData(resolvedParams.slug);
+    const slug = resolvedParams.slug;
 
+    // Safety Intercept: Protect core platform routes
+    if (RESERVED_SLUGS.has(slug.toLowerCase())) {
+        return notFound();
+    }
+
+    const clientData = await getClientData(slug);
     if (!clientData) return notFound();
 
     const { landing_page_data, phone, address } = clientData;

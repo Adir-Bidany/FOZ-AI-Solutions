@@ -681,7 +681,7 @@ export async function updateLandingPage(businessId: string, data: any) {
             $set: { landing_page_data: data }
         });
         revalidatePath("/dashboard/website");
-        revalidatePath(`/c/${data.slug}`); // Revalidate public page if slug is known, or just general revalidation
+        revalidatePath(`/${data.slug}`); // Revalidate public page if slug is known, or just general revalidation
         return { success: true };
     } catch (error) {
         console.error("Failed to update landing page:", error);
