@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import Business from "@/models/Business";
 import { cleanAIResponse, extractJsonFromText, mapChatHistory, createGeminiInstance } from "@/lib/utils/ai-helpers";
 import { AGENT_REGISTRY } from "@/lib/agents/registry";
+import { assembleDynamicSystemPrompt } from "@/lib/agents/assembler";
 
 import AgentInsight from "@/models/AgentInsight";
 import ChatExternal from "@/models/ChatExternal";
@@ -301,9 +302,9 @@ export async function sendInternalMessage(businessId: string, agentPersona: stri
         let systemInstruction = `You are an internal AI assistant for a business named "${business?.businessName || 'the business'}".
 The owner's name is ${business?.ownerName || 'the owner'}.\n`;
 
-        // Apply strict role boundaries
-        if (agentPersona && AGENT_REGISTRY[agentPersona]) {
-            systemInstruction += AGENT_REGISTRY[agentPersona].systemPrompt(business);
+        // Apply strict role boundaries dynamically from CMS
+        if (agentPersona) {
+            systemInstruction += await assembleDynamicSystemPrompt(agentPersona, business);
         }
 
         // Force Hebrew for everyone as requested by user
