@@ -51,10 +51,9 @@ const MOCK_LEADS: LeadCard[] = [
                 message_content: "אשמח שמישהו יחזור אלי לגבי מחירים לטיפול לייזר סדרה של 10",
             },
         },
-        created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+        created_at: "2026-08-12T07:00:00.000Z",
     },
 ];
-
 
 
 export default function LeadManager({ businessId, initialLeads = [] }: LeadManagerProps) {
@@ -105,24 +104,29 @@ export default function LeadManager({ businessId, initialLeads = [] }: LeadManag
     return (
         <section
             id="lead-manager"
-            className="space-y-6"
             aria-label="ניהול פניות ולידים"
+            className="bg-card border border-border rounded-3xl p-6 md:p-8 shadow-sm space-y-6"
         >
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
-                        ניהול פניות ולידים
-                    </h2>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        ריכוז פניות שנאספו ע"י דניאלה
-                    </p>
+            {/* Section header — matches HeroMetrics / AgentInsightsFeed pattern */}
+            <div className="flex items-center justify-between pb-2 border-b border-border/40">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                        <Inbox className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-extrabold text-foreground tracking-tight leading-none">
+                            ניהול פניות ולידים
+                        </h2>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            ריכוז פניות שנאספו ע&quot;י דניאלה
+                        </p>
+                    </div>
                 </div>
             </div>
 
             {/* Tabs View */}
             <Tabs defaultValue="pending" className="w-full" dir="rtl">
-                <TabsList className="grid w-full grid-cols-2 max-w-md bg-muted/60 p-1 rounded-2xl border border-border">
+                <TabsList className="grid w-full grid-cols-2 max-w-md bg-muted/60 p-1 rounded-2xl border border-border/50">
                     <TabsTrigger
                         value="pending"
                         className="rounded-xl text-xs font-bold data-[state=active]:bg-card data-[state=active]:text-foreground shadow-none"
@@ -150,7 +154,7 @@ export default function LeadManager({ businessId, initialLeads = [] }: LeadManag
                 {/* Pending Leads Tab */}
                 <TabsContent value="pending" className="mt-4 space-y-4">
                     {pendingLeads.length === 0 ? (
-                        <div className="p-8 rounded-3xl bg-card border border-dashed border-border text-center space-y-2">
+                        <div className="p-8 rounded-2xl bg-background border border-dashed border-border text-center space-y-2">
                             <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
                                 <CheckCircle2 className="w-6 h-6" />
                             </div>
@@ -158,7 +162,7 @@ export default function LeadManager({ businessId, initialLeads = [] }: LeadManag
                                 אין פניות חדשות
                             </h3>
                             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                                כל הפניות שנאספו ע"י דניאלה חולקו וטופלו!
+                                כל הפניות שנאספו ע&quot;י דניאלה חולקו וטופלו!
                             </p>
                         </div>
                     ) : (
@@ -184,12 +188,12 @@ export default function LeadManager({ businessId, initialLeads = [] }: LeadManag
                 {/* Handled Leads Tab */}
                 <TabsContent value="handled" className="mt-4 space-y-4">
                     {handledLeads.length === 0 ? (
-                        <div className="p-8 rounded-3xl bg-card border border-dashed border-border text-center space-y-2">
+                        <div className="p-8 rounded-2xl bg-background border border-dashed border-border text-center space-y-2">
                             <h3 className="text-base font-bold text-foreground">
                                 אין פניות בארכיון
                             </h3>
                             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                                פניות שיסומנו כ"טופל" יופיעו כאן
+                                פניות שיסומנו כ&quot;טופל&quot; יופיעו כאן
                             </p>
                         </div>
                     ) : (
@@ -236,7 +240,7 @@ function LeadCardItem({ lead, isPendingTab, isProcessing, onMarkHandled, onDelet
     return (
         <div
             className={`
-                bg-card rounded-2xl border border-border p-5 shadow-sm hover:shadow-md transition-all duration-200
+                bg-background rounded-2xl border border-border/80 p-5 shadow-xs hover:shadow-sm transition-all duration-200
                 flex flex-col justify-between gap-4
                 ${isProcessing ? "opacity-50 pointer-events-none" : ""}
             `}
@@ -249,7 +253,7 @@ function LeadCardItem({ lead, isPendingTab, isProcessing, onMarkHandled, onDelet
                         {"דניאלה (נציגה)"}
                     </span>
 
-                    <span className="inline-flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
+                    <span suppressHydrationWarning className="inline-flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
                         <Clock className="w-3 h-3" />
                         {formattedTime}
                     </span>
