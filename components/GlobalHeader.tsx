@@ -159,7 +159,7 @@ export default function GlobalHeader({ clientData, sessionBusinessId }: GlobalHe
                                     <span className="font-mono font-bold text-foreground tabular-nums">{mounted ? timeString : "00:00:00"}</span>
                                 </div>
 
-                                <Link href={`/c/${clientSlug}`} target="_blank">
+                                <Link href={`/${clientSlug}`} target="_blank">
                                     <Button
                                         variant="outline"
                                         size="sm"
