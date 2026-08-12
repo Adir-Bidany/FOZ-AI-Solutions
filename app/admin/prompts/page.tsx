@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import GlobalHeader from "@/components/GlobalHeader";
+import PromptCMSFAB from "@/components/admin/PromptCMSFAB";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,7 +45,7 @@ export interface PromptBlock {
 const SECTIONS = [
     {
         scope: "GLOBAL",
-        title: "🌐 כלל הסוכנים (GLOBAL)",
+        title: "כלל הסוכנים (GLOBAL)",
         subtitle: "חוקי אבטחה ופיירוול גלובליים המוחלים על כל סוכני ה-AI במערכת",
         badgeColor: "text-blue-400 bg-blue-500/10 border-blue-500/20",
         icon: Globe,
@@ -58,14 +59,14 @@ const SECTIONS = [
     },
     {
         scope: "DANIELA",
-        title: "👩‍💼 דניאלה (סוכנת קבלת פנים ותורים לעסקים)",
+        title: "דניאלה (סוכנת קבלת פנים ותורים לעסקים)",
         subtitle: "הנחיות נציגת השירות, המכירות והתורים בעמוד הנחיתה של בעלי העסקים",
         badgeColor: "text-violet-400 bg-violet-500/10 border-violet-500/20",
         icon: UserCheck,
     },
     {
         scope: "GOLDA",
-        title: "👑 גולדה (סוכנת ניהול, שיווק ואנליטיקה)",
+        title: "גולדה (סוכנת ניהול, שיווק ואנליטיקה)",
         subtitle: "הנחיות מנהלת העסק בדשבורד, כתיבת פוסטים שיווקיים והסטת שאלות טכניות",
         badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/20",
         icon: Crown,
@@ -208,37 +209,21 @@ export default function AdminPromptsPage() {
                 {/* Header Action Bar */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-card border border-border shadow-xs">
                     <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                            <Link href="/admin">
-                                <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground rounded-xl">
-                                    <ArrowRight className="w-3.5 h-3.5" />
-                                    חזרה לדשבורד אדמין
-                                </Button>
-                            </Link>
-                        </div>
-                        <h1 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-3">
-                            <Sparkles className="w-7 h-7 text-purple-400" />
-                            הגדרות וניהול סוכני AI (Prompt CMS)
+
+                        <h1 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-3"> 
+                            הגדרות וניהול סוכני AI
                         </h1>
                         <p className="text-xs md:text-sm text-muted-foreground">
                             עריכה דינמית ומודולרית של כלל הפרומפטים וההנחיות לשיפור ביצועי הסוכנים בזמן אמת
                         </p>
                     </div>
-
-                    <Button
-                        onClick={() => setShowCreateModal(true)}
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-5 rounded-2xl text-xs font-bold gap-2 shadow-sm shrink-0"
-                    >
-                        <Plus className="w-4 h-4" />
-                        הוסף בלוק הנחיות חדש
-                    </Button>
                 </div>
 
                 {/* Loading Spinner */}
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-24 gap-3">
                         <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                        <p className="text-sm text-muted-foreground">טוען פרומפטים והנחיות מ-MongoDB...</p>
+                        <p className="text-sm text-muted-foreground">טוען פרומפטים והנחיות</p>
                     </div>
                 ) : (
                     <div className="space-y-10">
@@ -259,9 +244,6 @@ export default function AdminPromptsPage() {
                                                 <p className="text-xs text-muted-foreground">{sec.subtitle}</p>
                                             </div>
                                         </div>
-                                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-background border border-border/80 text-muted-foreground">
-                                            {secBlocks.length} בלוקים
-                                        </span>
                                     </div>
 
                                     {/* Section Block Cards */}
@@ -355,6 +337,9 @@ export default function AdminPromptsPage() {
                     </div>
                 )}
             </main>
+
+            {/* Prompt CMS Floating Navigation Menu */}
+            <PromptCMSFAB />
         </div>
     );
 }
