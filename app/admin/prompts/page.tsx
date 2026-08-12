@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import GlobalHeader from "@/components/GlobalHeader";
-import PromptCMSFAB from "@/components/admin/PromptCMSFAB";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -338,8 +338,6 @@ export default function AdminPromptsPage() {
                 )}
             </main>
 
-            {/* Prompt CMS Floating Navigation Menu */}
-            <PromptCMSFAB />
         </div>
     );
 }
