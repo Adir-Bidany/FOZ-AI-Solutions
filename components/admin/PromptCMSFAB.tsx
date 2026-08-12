@@ -2,22 +2,11 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import {
-    Sparkles,
-    SlidersHorizontal,
-    ShieldCheck,
-    Bot,
-    ChevronUp,
-    Settings,
-    Layers,
-    X,
-} from "lucide-react";
-import PromptCMSModal from "./PromptCMSModal";
+import { Settings, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function PromptCMSFAB() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
     // Close menu on outside click
@@ -38,7 +27,6 @@ export default function PromptCMSFAB() {
                 <div className="mb-3 w-56 bg-card/95 backdrop-blur-xl border border-border/80 rounded-2xl shadow-[0_15px_35px_-5px_rgba(0,0,0,0.25)] p-2 space-y-1 animate-in fade-in slide-in-from-bottom-3 duration-200">
                     <div className="px-3 py-2 border-b border-border/60 mb-1 flex items-center justify-between">
                         <span className="text-[11px] font-extrabold text-foreground tracking-wide flex items-center gap-1.5">
-                            
                             תפריט ניהול מהיר
                         </span>
                         <button
@@ -56,7 +44,6 @@ export default function PromptCMSFAB() {
                         onClick={() => setIsMenuOpen(false)}
                         className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-foreground hover:bg-purple-500/10 hover:text-purple-400 transition-colors"
                     >
-
                         <span>הגדרות סוכני AI</span>
                     </Link>
 
@@ -66,22 +53,8 @@ export default function PromptCMSFAB() {
                         onClick={() => setIsMenuOpen(false)}
                         className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-foreground hover:bg-blue-500/10 hover:text-blue-400 transition-colors"
                     >
-
                         <span>דשבורד מנהל</span>
                     </Link>
-
-                    {/* Navigation Action 3: Quick Edit Modal */}
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setIsMenuOpen(false);
-                            setIsModalOpen(true);
-                        }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-foreground hover:bg-emerald-500/10 hover:text-emerald-400 transition-colors text-right cursor-pointer"
-                    >
-
-                        <span>עריכה מהירה (Modal)</span>
-                    </button>
                 </div>
             )}
 
@@ -103,9 +76,6 @@ export default function PromptCMSFAB() {
                     <Settings className="w-5 h-5 animate-spin-slow" />
                 )}
             </button>
-
-            {/* Quick Edit Modal */}
-            <PromptCMSModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </div>
     );
 }
