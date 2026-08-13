@@ -14,12 +14,12 @@ export async function POST(req: NextRequest) {
         await connectToDatabase();
 
         // Check if customer already exists for this business
-        const existingCustomer = await Customer.findOne({ businessId, phone });
+        const existingCustomer = await Customer.findOne({ business_id: businessId, phone });
         if (existingCustomer) {
             return NextResponse.json({ error: "Customer already registered with this phone number" }, { status: 409 });
         }
 
-        const existingCustomerEmail = await Customer.findOne({ businessId, email });
+        const existingCustomerEmail = await Customer.findOne({ business_id: businessId, email });
         if (existingCustomerEmail) {
             return NextResponse.json({ error: "Customer already registered with this email" }, { status: 409 });
         }
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
         const passwordHash = await bcrypt.hash(password, 10);
 
         const customer = await Customer.create({
-            businessId,
+            business_id: businessId,
             name,
             lastName,
             email,

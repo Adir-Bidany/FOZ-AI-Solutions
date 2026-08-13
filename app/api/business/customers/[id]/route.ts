@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         await connectToDatabase();
         
         const customer = await Customer.findOneAndUpdate(
-            { _id: resolvedParams.id, businessId: session.user.businessId },
+            { _id: resolvedParams.id, business_id: session.user.businessId },
             { status },
             { new: true }
         );
@@ -38,7 +38,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         await connectToDatabase();
         const customer = await Customer.findOneAndDelete({ 
             _id: resolvedParams.id, 
-            businessId: session.user.businessId 
+            business_id: session.user.businessId 
         });
 
         if (!customer) return NextResponse.json({ error: "Not found" }, { status: 404 });

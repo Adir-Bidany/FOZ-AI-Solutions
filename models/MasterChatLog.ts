@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface IMasterChatLog extends Document {
-    businessId: Types.ObjectId;
+    business_id: Types.ObjectId;
     sessionId: string;
     transcript: string;
     createdAt: Date;
@@ -10,7 +10,7 @@ export interface IMasterChatLog extends Document {
 
 const MasterChatLogSchema = new Schema(
     {
-        businessId: { type: Schema.Types.ObjectId, ref: "Business", required: true },
+        business_id: { type: Schema.Types.ObjectId, ref: "Business", required: true },
         sessionId: { type: String, required: true },
         transcript: { type: String, required: true },
     },

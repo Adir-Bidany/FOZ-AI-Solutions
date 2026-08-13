@@ -44,7 +44,7 @@ export async function processSessionSummary(sessionId: string) {
 
     // 1. Save to MasterChatLog
     await MasterChatLog.create({
-        businessId: business._id,
+        business_id: business._id,
         sessionId: sessionId,
         transcript: transcript
     });
