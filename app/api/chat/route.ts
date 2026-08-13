@@ -366,7 +366,54 @@ MARKETING POST CREATION BEHAVIORAL RULES:
 
                             if (bookingResult) {
                                 responseText += `\n\n✅ התור שלך נקבע בהצלחה! (מספר אישור: ${bookingResult})`;
-                                systemAction = "force_logout";
+                                
+                                // Persist local ActionCard & Appointment records in MongoDB for Business Owner Dashboard
+                                try {
+                                    if (businessId !== "demo" && Types.ObjectId.isValid(businessId)) {
+                                        await ActionCard.create({
+                                            business_id: new Types.ObjectId(businessId),
+                                            source_agent: "receptionist",
+                                            status: "pending",
+                                            priority: "medium",
+                                            display_content: {
+                                                title: `תור חדש נקבע: ${payload.customer_name || customer?.name || "לקוח מערכת"}`,
+                                                description: `שירות: ${payload.service_type} | תאריך: ${payload.date} | שעה: ${payload.time}. טלפון: ${payload.customer_phone || customer?.phone || "לא צוין"}`,
+                                                icon: "Calendar"
+                                            },
+                                            execution_payload: {
+                                                action_type: "schedule_event",
+                                                params: {
+                                                    date: payload.date,
+                                                    time: payload.time,
+                                                    service_type: payload.service_type,
+                                                    customer_name: payload.customer_name || customer?.name,
+                                                    phone: payload.customer_phone || customer?.phone,
+                                                    booking_id: bookingResult
+                                                }
+                                            }
+                                        });
+
+                                        if (customerId && Types.ObjectId.isValid(customerId)) {
+                                            const AppointmentModel = (await import("@/models/Appointment")).default;
+                                            await AppointmentModel.create({
+                                                tenant_id: new Types.ObjectId(businessId),
+                                                user_id: new Types.ObjectId(customerId),
+                                                details: {
+                                                    date: new Date(`${payload.date}T${payload.time}:00`),
+                                                    service_name: payload.service_type,
+                                                    duration_minutes: 30
+                                                },
+                                                status: "confirmed",
+                                                metadata: {
+                                                    source: "chat",
+                                                    notes: payload.note || `מספר אישור: ${bookingResult}`
+                                                }
+                                            });
+                                        }
+                                    }
+                                } catch (mongoErr) {
+                                    console.error("[Chat Route] Failed to persist local appointment/ActionCard record:", mongoErr);
+                                }
                             } else {
                                 responseText += "\n\nלצערי לא הצלחתי לקבוע את התור, ייתכן שהשעה כבר נתפסה. תרצה לבדוק שעה אחרת?";
                             }
@@ -495,15 +542,15 @@ MARKETING POST CREATION BEHAVIORAL RULES:
                 if (action === "trigger_auth_drawer") {
                     systemAction = "trigger_auth_drawer";
                     responseText = "בחלונית שנפתחה תוכל להירשם/להיכנס למערכת";
+                } else if (action === "check_availability") {
+                    systemAction = "show_date_picker";
+                    if (!responseText || responseText.includes("איזה") || responseText.includes("שירות")) {
+                        responseText = "אנא בחרי תאריך:";
+                    }
                 } else {
-                    const isBookingIntent = action === "book_appointment" || action === "check_availability";
                     const isAskingForDate = responseText && (responseText.includes("בחרי תאריך") || responseText.includes("בחר תאריך"));
-
-                    if (isBookingIntent || isAskingForDate) {
+                    if (isAskingForDate) {
                         systemAction = "show_date_picker";
-                        if (!responseText || responseText.includes("איזה") || responseText.includes("שירות")) {
-                            responseText = "אנא בחרי תאריך:";
-                        }
                     }
                 }
             }
