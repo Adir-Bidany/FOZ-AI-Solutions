@@ -396,7 +396,7 @@ MARKETING POST CREATION BEHAVIORAL RULES:
                                         if (customerId && Types.ObjectId.isValid(customerId)) {
                                             const AppointmentModel = (await import("@/models/Appointment")).default;
                                             await AppointmentModel.create({
-                                                tenant_id: new Types.ObjectId(businessId),
+                                                business_id: new Types.ObjectId(businessId),
                                                 user_id: new Types.ObjectId(customerId),
                                                 details: {
                                                     date: new Date(`${payload.date}T${payload.time}:00`),
@@ -612,7 +612,7 @@ MARKETING POST CREATION BEHAVIORAL RULES:
 
                             // Write directly to AgentInsight as auto-approved (no pending queue)
                             await AgentInsight.create({
-                                businessId: new Types.ObjectId(businessId),
+                                business_id: new Types.ObjectId(businessId),
                                 agentName: "Golda",
                                 type: args.type,
                                 title: args.title,

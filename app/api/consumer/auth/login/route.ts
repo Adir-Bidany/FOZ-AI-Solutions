@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
         await connectToDatabase();
 
-        const customer = await Customer.findOne({ businessId, email });
+        const customer = await Customer.findOne({ business_id: businessId, email });
         if (!customer) {
             return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
         }
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
             name: customer.name,
             lastName: customer.lastName,
             email: customer.email,
-            businessId: customer.businessId.toString(),
+            businessId: customer.business_id.toString(),
             role: "consumer"
         };
 

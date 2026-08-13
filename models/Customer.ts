@@ -1,7 +1,7 @@
 import mongoose, { Schema, model, models, Document, Types } from "mongoose";
 
 export interface ICustomer extends Document {
-    businessId: Types.ObjectId;
+    business_id: Types.ObjectId;
     phone: string;
     name: string;
     lastName: string;
@@ -33,7 +33,7 @@ export interface ICustomer extends Document {
 
 const CustomerSchema = new Schema<ICustomer>(
     {
-        businessId: { type: Schema.Types.ObjectId, ref: "Business", required: true },
+        business_id: { type: Schema.Types.ObjectId, ref: "Business", required: true },
         phone: { type: String, required: true },
         name: { type: String, required: true },
         lastName: { type: String, required: true },
@@ -63,7 +63,7 @@ const CustomerSchema = new Schema<ICustomer>(
 );
 
 // Ensure phone is unique per business
-CustomerSchema.index({ businessId: 1, phone: 1 }, { unique: true });
+CustomerSchema.index({ business_id: 1, phone: 1 }, { unique: true });
 
 const Customer = models.Customer || model<ICustomer>("Customer", CustomerSchema);
 

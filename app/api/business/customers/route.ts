@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
         }
 
         await connectToDatabase();
-        const customers = await Customer.find({ businessId: session.user.businessId }).sort({ createdAt: -1 });
+        const customers = await Customer.find({ business_id: session.user.businessId }).sort({ createdAt: -1 });
 
         return NextResponse.json({ success: true, customers });
     } catch (error: any) {

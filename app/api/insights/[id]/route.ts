@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         if (!insight) {
             return NextResponse.json({ error: "Insight not found" }, { status: 404 });
         }
-        if (insight.businessId.toString() !== session.user.businessId) {
+        if (insight.business_id.toString() !== session.user.businessId) {
             return NextResponse.json({ error: "Forbidden: Insight does not belong to your business" }, { status: 403 });
         }
 
@@ -57,7 +57,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         if (!insight) {
             return NextResponse.json({ error: "Insight not found" }, { status: 404 });
         }
-        if (insight.businessId.toString() !== session.user.businessId) {
+        if (insight.business_id.toString() !== session.user.businessId) {
             return NextResponse.json({ error: "Forbidden: Insight does not belong to your business" }, { status: 403 });
         }
 

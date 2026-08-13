@@ -14,7 +14,7 @@ export interface IKnowledgeItem {
 }
 
 export interface IKnowledgeBase extends Document {
-    tenant_id: Types.ObjectId; // Renamed from businessId to match SaaS architecture
+    business_id: Types.ObjectId; // Renamed to business_id to match SaaS architecture
     services: IService[];
     businessHours: string; // Free text or structured
     publicInstructions?: string; // Information for Daniela (public chat)
@@ -34,7 +34,7 @@ const ServiceSchema = new Schema<IService>({
 
 const KnowledgeBaseSchema = new Schema<IKnowledgeBase>(
     {
-        tenant_id: { type: Schema.Types.ObjectId, ref: "Tenant", required: true, unique: true },
+        business_id: { type: Schema.Types.ObjectId, ref: "Business", required: true, unique: true },
         services: [ServiceSchema],
         businessHours: { type: String, default: "09:00 - 18:00" },
         publicInstructions: { type: String, default: "" },

@@ -430,7 +430,7 @@ The owner's name is ${business?.ownerName || 'the owner'}.\n`;
                 } else if (call.name === "submit_for_approval") {
                     const args = call.args as any;
                     await AgentInsight.create({
-                        businessId: business._id,
+                        business_id: business._id,
                         agentName: "Golda",
                         type: args.type,
                         title: args.title,
