@@ -322,6 +322,12 @@ MARKETING POST CREATION BEHAVIORAL RULES:
 
         const result = await chatSession.sendMessage(message);
         
+        // Extract token usage metadata from Gemini SDK
+        const usageMetadata = (result as any)?.response?.usageMetadata;
+        const promptTokens = usageMetadata?.promptTokenCount || 0;
+        const completionTokens = usageMetadata?.candidatesTokenCount || 0;
+        const totalTokens = usageMetadata?.totalTokenCount || (promptTokens + completionTokens);
+
         let responseText = "";
 
         if (["daniela", "foz"].includes(agentPersona)) {
@@ -646,6 +652,16 @@ MARKETING POST CREATION BEHAVIORAL RULES:
             parts: [{ text: responseText }],
             timestamp: new Date()
         } as any);
+
+        // Accumulate token usage metadata
+        if (promptTokens > 0 || completionTokens > 0) {
+            if (!chat.usage) {
+                chat.usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+            }
+            chat.usage.prompt_tokens = (chat.usage.prompt_tokens || 0) + promptTokens;
+            chat.usage.completion_tokens = (chat.usage.completion_tokens || 0) + completionTokens;
+            chat.usage.total_tokens = (chat.usage.total_tokens || 0) + totalTokens;
+        }
 
         await chat.save();
 

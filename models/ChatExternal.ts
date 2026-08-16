@@ -11,6 +11,11 @@ export interface IChatExternal extends Document {
     customer_id?: Types.ObjectId; // Optional if anonymous
     messages: IMessage[];
     processed_for_insights: boolean;
+    usage?: {
+        prompt_tokens: number;
+        completion_tokens: number;
+        total_tokens: number;
+    };
     createdAt: Date;
     updatedAt: Date;
 }
@@ -27,6 +32,11 @@ const ChatExternalSchema = new Schema<IChatExternal>(
             },
         ],
         processed_for_insights: { type: Boolean, default: false },
+        usage: {
+            prompt_tokens: { type: Number, default: 0 },
+            completion_tokens: { type: Number, default: 0 },
+            total_tokens: { type: Number, default: 0 },
+        },
     },
     { timestamps: true }
 );
