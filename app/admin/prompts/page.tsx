@@ -30,6 +30,7 @@ import {
 } from "@/actions/prompts";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import PromptCMSFAB from "@/components/admin/PromptCMSFAB";
 
 export interface PromptBlock {
     _id: string;
@@ -338,6 +339,8 @@ export default function AdminPromptsPage() {
                 )}
             </main>
 
+            {/* Prompt CMS Floating Action Button */}
+            <PromptCMSFAB />
         </div>
     );
 }
