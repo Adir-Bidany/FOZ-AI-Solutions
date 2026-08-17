@@ -32,6 +32,23 @@ export function ChatBubble({ role, content, mode, avatarUrl }: ChatBubbleProps) 
             : "rounded-2xl rounded-tl-sm bg-card border border-border text-foreground dark:text-zinc-50"
     );
 
+    // Safe JSON Parsing for AI messages containing structured JSON blobs
+    const displayContent = React.useMemo(() => {
+        if (!content) return "";
+        try {
+            const trimmed = content.trim();
+            if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+                const parsed = JSON.parse(trimmed);
+                if (parsed && (parsed.conversational_reply || parsed.reply || parsed.text)) {
+                    return parsed.conversational_reply || parsed.reply || parsed.text;
+                }
+            }
+        } catch (_) {
+            // Not valid JSON
+        }
+        return content;
+    }, [content]);
+
     return (
         <div className={containerClass} dir="rtl">
             {/* Avatar Logo on the RIGHT side of the bubble */}
@@ -44,7 +61,7 @@ export function ChatBubble({ role, content, mode, avatarUrl }: ChatBubbleProps) 
 
             {/* Message Content Bubble */}
             <div className={bubbleClass}>
-                {content}
+                {displayContent}
             </div>
         </div>
     );

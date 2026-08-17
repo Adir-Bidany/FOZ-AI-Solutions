@@ -14,6 +14,7 @@ export interface ChatSession {
     createdAt: string;
     messages: ChatMessage[];
     label?: string;
+    preview?: string;
 }
 
 export interface SharedChatInboxUIProps {
@@ -181,6 +182,11 @@ export default function SharedChatInboxUI({
                                             <p className="text-xs text-muted-foreground">
                                                 {formatSessionDate(session.createdAt)} · {msgCount} הודעות
                                             </p>
+                                            {session.preview && (
+                                                <p className="text-xs text-purple-400 dark:text-purple-300 font-medium truncate max-w-xs sm:max-w-md mt-0.5">
+                                                    {session.preview}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="text-muted-foreground">
@@ -231,7 +237,21 @@ export default function SharedChatInboxUI({
                                                                     {agentName}
                                                                 </p>
                                                             )}
-                                                            <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+                                                            <p className="whitespace-pre-wrap break-words">
+                                                                {(() => {
+                                                                    if (!msg.text) return "";
+                                                                    try {
+                                                                        const trimmed = msg.text.trim();
+                                                                        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+                                                                            const parsed = JSON.parse(trimmed);
+                                                                            if (parsed && (parsed.conversational_reply || parsed.reply || parsed.text)) {
+                                                                                return parsed.conversational_reply || parsed.reply || parsed.text;
+                                                                            }
+                                                                        }
+                                                                    } catch (_) {}
+                                                                    return msg.text;
+                                                                })()}
+                                                            </p>
                                                             <p className="text-[10px] mt-1 text-muted-foreground">
                                                                 {formatBubbleTime(msg.timestamp)}
                                                             </p>

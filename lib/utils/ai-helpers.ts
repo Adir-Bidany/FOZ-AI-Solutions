@@ -56,12 +56,18 @@ export function extractJsonFromText(rawText: string): Record<string, any> | null
 export function cleanAIResponse(rawText: string): string {
     if (!rawText) return "";
     
+    // Check if rawText is or contains a JSON response object with conversational_reply or reply
+    const extracted = extractJsonFromText(rawText);
+    if (extracted && (extracted.conversational_reply || extracted.reply || extracted.text)) {
+        return (extracted.conversational_reply || extracted.reply || extracted.text).trim();
+    }
+
     let text = rawText;
     
     // Strip markdown-wrapped tool call blobs
     text = text.replace(/```json[\s\S]*?```/gi, "").trim();
-    // Strip bare JSON objects that look like tool calls (contain specific tool-call keys)
-    text = text.replace(/\{[^{}]*"(?:submit_for_approval|approve_asset|delegate_task|check_availability|book_appointment)"[^{}]*\}/gi, "").trim();
+    // Strip bare JSON objects that look like tool calls or JSON responses
+    text = text.replace(/\{[^{}]*"(?:submit_for_approval|approve_asset|delegate_task|check_availability|book_appointment|conversational_reply)"[^{}]*\}/gi, "").trim();
     
     return text.trim();
 }

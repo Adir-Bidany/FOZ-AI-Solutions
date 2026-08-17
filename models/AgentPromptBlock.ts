@@ -2,7 +2,7 @@ import mongoose, { Schema, model, models, Document } from "mongoose";
 
 export interface IAgentPromptBlock extends Document {
     key_identifier: string;
-    target_scope: "GLOBAL" | "PAZ" | "FOZ" | "DANIELA" | "GOLDA";
+    target_scope: "GLOBAL" | "PAZ" | "DANIELA" | "GOLDA";
     topic_title: string;
     content: string;
     is_active: boolean;
@@ -17,7 +17,7 @@ const AgentPromptBlockSchema = new Schema<IAgentPromptBlock>(
         key_identifier: { type: String, required: true, unique: true, index: true },
         target_scope: {
             type: String,
-            enum: ["GLOBAL", "PAZ", "FOZ", "DANIELA", "GOLDA"],
+            enum: ["GLOBAL", "PAZ", "DANIELA", "GOLDA"],
             required: true,
             index: true,
         },

@@ -2,7 +2,7 @@ import mongoose, { Schema, model, models } from "mongoose";
 
 const NotificationSchema = new Schema({
     clientId: { type: Schema.Types.ObjectId, ref: "Client", required: true },
-    persona: { type: String, required: true }, // מי שלח? 'daniela', 'golda', 'foz'
+    persona: { type: String, required: true }, // מי שלח? 'daniela', 'golda', 'paz'
     type: {
         type: String,
         enum: ["info", "success", "alert", "insight"],
