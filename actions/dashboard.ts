@@ -593,15 +593,34 @@ export async function fetchCustomerChatHistory(customerId: string): Promise<Chat
             customer_id: new Types.ObjectId(customerId),
         }).sort({ createdAt: 1 }).lean();
 
-        return chats.map((chat: any) => ({
-            sessionId: chat._id.toString(),
-            createdAt: chat.createdAt.toISOString(),
-            messages: (chat.messages || []).map((m: any) => ({
-                role: m.role as "user" | "model",
-                text: m.parts?.[0]?.text ?? "",
-                timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : chat.createdAt.toISOString(),
-            })),
-        }));
+        return chats.map((chat: any) => {
+            const userMsgs = (chat.messages || []).filter((m: any) => m.role === "user");
+            const phoneRegex = /(?:05\d[-\s]?\d{7}|0\d[-\s]?\d{7}|\+?972[-\s]?\d{1,2}[-\s]?\d{7})/;
+            const hasPhone = userMsgs.some((m: any) => phoneRegex.test(m.parts?.[0]?.text || ""));
+
+            let preview = "";
+            if (userMsgs.length === 0) {
+                preview = "שיחה ללא תוכן מצד הלקוח";
+            } else if (hasPhone) {
+                preview = "📞 השאיר פרטי התקשרות לחזרה";
+            } else {
+                const lastUserText = userMsgs[userMsgs.length - 1]?.parts?.[0]?.text?.trim() || "";
+                preview = lastUserText
+                    ? (lastUserText.length > 50 ? `${lastUserText.slice(0, 50)}...` : lastUserText)
+                    : "שיחה ללא תוכן מצד הלקוח";
+            }
+
+            return {
+                sessionId: chat._id.toString(),
+                createdAt: chat.createdAt ? new Date(chat.createdAt).toISOString() : new Date().toISOString(),
+                preview,
+                messages: (chat.messages || []).map((m: any) => ({
+                    role: m.role as "user" | "model",
+                    text: m.parts?.[0]?.text ?? "",
+                    timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : (chat.createdAt ? new Date(chat.createdAt).toISOString() : new Date().toISOString()),
+                })),
+            };
+        });
     } catch (error) {
         console.error("Failed to fetch customer chat history:", error);
         return [];
@@ -621,17 +640,37 @@ export async function fetchGuestChats(): Promise<ChatSession[]> {
         const chats = await ChatExternal.find({
             business_id: new Types.ObjectId(session.user.businessId),
             customer_id: { $exists: false },
-        }).sort({ createdAt: -1 }).limit(50).lean();
+        }).sort({ createdAt: -1 }).lean();
 
-        return chats.map((chat: any) => ({
-            sessionId: chat._id.toString(),
-            createdAt: chat.createdAt.toISOString(),
-            messages: (chat.messages || []).map((m: any) => ({
-                role: m.role as "user" | "model",
-                text: m.parts?.[0]?.text ?? "",
-                timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : chat.createdAt.toISOString(),
-            })),
-        }));
+        return chats.map((chat: any, idx: number) => {
+            const userMsgs = (chat.messages || []).filter((m: any) => m.role === "user");
+            const phoneRegex = /(?:05\d[-\s]?\d{7}|0\d[-\s]?\d{7}|\+?972[-\s]?\d{1,2}[-\s]?\d{7})/;
+            const hasPhone = userMsgs.some((m: any) => phoneRegex.test(m.parts?.[0]?.text || ""));
+
+            let preview = "";
+            if (userMsgs.length === 0) {
+                preview = "שיחה ללא תוכן מצד הלקוח";
+            } else if (hasPhone) {
+                preview = "📞 השאיר פרטי התקשרות לחזרה";
+            } else {
+                const lastUserText = userMsgs[userMsgs.length - 1]?.parts?.[0]?.text?.trim() || "";
+                preview = lastUserText
+                    ? (lastUserText.length > 50 ? `${lastUserText.slice(0, 50)}...` : lastUserText)
+                    : "שיחה ללא תוכן מצד הלקוח";
+            }
+
+            return {
+                sessionId: chat._id.toString(),
+                createdAt: chat.createdAt ? new Date(chat.createdAt).toISOString() : new Date().toISOString(),
+                label: `אורח/ת מזדמן/ת #${chats.length - idx}`,
+                preview,
+                messages: (chat.messages || []).map((m: any) => ({
+                    role: m.role as "user" | "model",
+                    text: m.parts?.[0]?.text ?? "",
+                    timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : (chat.createdAt ? new Date(chat.createdAt).toISOString() : new Date().toISOString()),
+                })),
+            };
+        });
     } catch (error) {
         console.error("Failed to fetch guest chats:", error);
         return [];

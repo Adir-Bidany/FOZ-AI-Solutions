@@ -173,7 +173,7 @@ export default function SharedChatInboxUI({
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${colors.iconBg}`}>
-                                            {idx + 1}
+                                            {sessions.length - idx}
                                         </div>
                                         <div>
                                             <p className="text-sm font-bold text-foreground">
