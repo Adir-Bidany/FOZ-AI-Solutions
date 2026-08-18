@@ -51,18 +51,16 @@ function interpolateVariables(template: string, context: any): string {
  * by fetching active GLOBAL + persona-specific blocks from MongoDB.
  */
 export async function assembleDynamicSystemPrompt(
-    agentPersona: "paz" | "foz" | "daniela" | "golda" | string,
+    agentPersona: "paz" | "daniela" | "golda" | string,
     businessContext: any
 ): Promise<string> {
     await connectToDatabase();
 
-    const rawPersona = (agentPersona || "daniela").toLowerCase();
-    const normalizedPersona = rawPersona === "foz" ? "paz" : rawPersona;
+    const normalizedPersona = (agentPersona || "daniela").toLowerCase();
     const scopeKey = normalizedPersona.toUpperCase(); // "PAZ", "DANIELA", "GOLDA"
 
-    // Query active blocks matching GLOBAL + current scope (plus legacy FOZ if PAZ)
+    // Query active blocks matching GLOBAL + current scope
     const validScopes = ["GLOBAL", scopeKey];
-    if (scopeKey === "PAZ") validScopes.push("FOZ");
 
     // 1. Fetch active blocks
     let blocks = await AgentPromptBlock.find({

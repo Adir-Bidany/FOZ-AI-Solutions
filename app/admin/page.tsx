@@ -15,6 +15,12 @@ import {
     MessageSquare,
     Facebook,
     Instagram,
+    Pencil,
+    X,
+    Loader2,
+    CheckCircle2,
+    AlertCircle,
+    PauseCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -28,6 +34,7 @@ interface Client {
     ownerName: string;
     email: string;
     slug: string;
+    account_status?: "active" | "suspended" | "trial";
     createdAt: string;
     totalCustomerChats?: number;
     integrations?: {
@@ -45,10 +52,75 @@ export default function AdminDashboard() {
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
 
+    // Edit Modal State
+    const [editingClient, setEditingClient] = useState<Client | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
+    const [editForm, setEditForm] = useState({
+        businessName: "",
+        slug: "",
+        ownerName: "",
+        ownerEmail: "",
+        account_status: "trial" as "active" | "suspended" | "trial",
+    });
+
     // Fetch data immediately since middleware guarantees admin RBAC
     useEffect(() => {
         fetchClients();
     }, []);
+
+    const handleOpenEditModal = (client: Client) => {
+        setEditingClient(client);
+        setEditForm({
+            businessName: client.businessName || "",
+            slug: client.slug || "",
+            ownerName: client.ownerName || "",
+            ownerEmail: client.email || "",
+            account_status: client.account_status || "trial",
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const handleSaveTenant = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingClient) return;
+        setIsSavingEdit(true);
+
+        try {
+            const res = await fetch(`/api/admin/clients/${editingClient._id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(editForm),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setClients((prev) =>
+                    prev.map((c) =>
+                        c._id === editingClient._id
+                            ? {
+                                  ...c,
+                                  businessName: editForm.businessName,
+                                  slug: editForm.slug,
+                                  ownerName: editForm.ownerName,
+                                  email: editForm.ownerEmail,
+                                  account_status: editForm.account_status,
+                              }
+                            : c
+                    )
+                );
+                setIsEditModalOpen(false);
+                setEditingClient(null);
+                alert("פרטי העסק עודכנו בהצלחה!");
+            } else {
+                alert(data.error || "עדכון העסק נכשל");
+            }
+        } catch (error) {
+            console.error("Update error:", error);
+            alert("שגיאה בעדכון פרטי העסק");
+        } finally {
+            setIsSavingEdit(false);
+        }
+    };
 
     const fetchClients = async () => {
         setIsLoading(true);
@@ -165,6 +237,9 @@ export default function AdminDashboard() {
                             <thead className="bg-muted/40 text-muted-foreground font-semibold border-b border-border">
                                 <tr>
                                     <th className="h-12 px-6 align-middle">
+                                        סטטוס חשבון
+                                    </th>
+                                    <th className="h-12 px-6 align-middle">
                                         שם העסק
                                     </th>
                                     <th className="h-12 px-6 align-middle">
@@ -185,144 +260,177 @@ export default function AdminDashboard() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border/60">
-                                {filteredClients.map((client) => (
-                                    <tr
-                                        key={client._id}
-                                        className="transition-colors hover:bg-muted/20"
-                                    >
-                                        <td className="p-6 font-bold text-foreground">
-                                            {client.businessName}
-                                        </td>
-                                        <td className="p-6">
-                                            <div className="font-medium text-foreground">
-                                                {client.ownerName}
-                                            </div>
-                                            <div className="text-xs text-muted-foreground mt-0.5">
-                                                {client.email}
-                                            </div>
-                                        </td>
-                                        <td className="p-6 text-muted-foreground text-xs font-medium">
-                                            {new Date(
-                                                client.createdAt
-                                            ).toLocaleDateString("he-IL")}
-                                        </td>
-                                        <td className="p-6">
-                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-500/10 text-violet-600 dark:text-violet-300 font-bold text-xs rounded-full border border-violet-500/20 shadow-xs">
-                                                <MessageSquare className="w-3.5 h-3.5" />
-                                                <span>{client.totalCustomerChats ?? 0} שיחות</span>
-                                            </div>
-                                        </td>
-                                        <td className="p-6">
-                                            <div className="flex items-center gap-3">
-                                                <Link
-                                                    href={`/${client.slug}`}
-                                                    target="_blank"
-                                                >
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-8 text-xs bg-background border-border hover:bg-accent text-foreground rounded-xl gap-1.5"
+                                {filteredClients.map((client) => {
+                                    const status = client.account_status || "trial";
+                                    return (
+                                        <tr
+                                            key={client._id}
+                                            className="transition-colors hover:bg-muted/20"
+                                        >
+                                            <td className="p-6">
+                                                {status === "active" && (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-500 font-bold text-xs rounded-full border border-emerald-500/20">
+                                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                                        <span>פעיל</span>
+                                                    </span>
+                                                )}
+                                                {status === "suspended" && (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-500/10 text-rose-500 font-bold text-xs rounded-full border border-rose-500/20">
+                                                        <PauseCircle className="w-3.5 h-3.5" />
+                                                        <span>מושהה</span>
+                                                    </span>
+                                                )}
+                                                {status === "trial" && (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-500 font-bold text-xs rounded-full border border-amber-500/20">
+                                                        <AlertCircle className="w-3.5 h-3.5" />
+                                                        <span>ניסיון (Trial)</span>
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="p-6 font-bold text-foreground">
+                                                {client.businessName}
+                                            </td>
+                                            <td className="p-6">
+                                                <div className="font-medium text-foreground">
+                                                    {client.ownerName}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground mt-0.5">
+                                                    {client.email}
+                                                </div>
+                                            </td>
+                                            <td className="p-6 text-muted-foreground text-xs font-medium">
+                                                {new Date(
+                                                    client.createdAt
+                                                ).toLocaleDateString("he-IL")}
+                                            </td>
+                                            <td className="p-6">
+                                                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-500/10 text-violet-600 dark:text-violet-300 font-bold text-xs rounded-full border border-violet-500/20 shadow-xs">
+                                                    <MessageSquare className="w-3.5 h-3.5" />
+                                                    <span>{client.totalCustomerChats ?? 0} שיחות</span>
+                                                </div>
+                                            </td>
+                                            <td className="p-6">
+                                                <div className="flex items-center gap-3">
+                                                    <Link
+                                                        href={`/${client.slug}`}
+                                                        target="_blank"
                                                     >
-                                                        <ExternalLink
-                                                            size={12}
-                                                        />{" "}
-                                                        אתר חי
-                                                    </Button>
-                                                </Link>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-8 text-xs bg-background border-border hover:bg-accent text-foreground rounded-xl gap-1.5"
+                                                        >
+                                                            <ExternalLink
+                                                                size={12}
+                                                            />{" "}
+                                                            אתר חי
+                                                        </Button>
+                                                    </Link>
 
-                                                {/* Integration Status Badges */}
-                                                <div className="flex items-center gap-1.5 px-2 py-1 bg-muted/30 rounded-xl border border-border/40">
-                                                    {/* SimplyBook / Calendar */}
-                                                    <div
-                                                        title={client.integrations?.simplybook ? "SimplyBook: מחובר" : "SimplyBook: לא מחובר"}
-                                                        className={cn(
-                                                            "p-1 rounded-lg transition-colors",
-                                                            client.integrations?.simplybook
-                                                                ? "text-blue-500 bg-blue-500/10"
-                                                                : "text-muted-foreground/30 opacity-40"
-                                                        )}
-                                                    >
-                                                        <Calendar size={14} />
-                                                    </div>
+                                                    {/* Integration Status Badges */}
+                                                    <div className="flex items-center gap-1.5 px-2 py-1 bg-muted/30 rounded-xl border border-border/40">
+                                                        {/* SimplyBook / Calendar */}
+                                                        <div
+                                                            title={client.integrations?.simplybook ? "SimplyBook: מחובר" : "SimplyBook: לא מחובר"}
+                                                            className={cn(
+                                                                "p-1 rounded-lg transition-colors",
+                                                                client.integrations?.simplybook
+                                                                    ? "text-blue-500 bg-blue-500/10"
+                                                                    : "text-muted-foreground/30 opacity-40"
+                                                            )}
+                                                        >
+                                                            <Calendar size={14} />
+                                                        </div>
 
-                                                    {/* WhatsApp */}
-                                                    <div
-                                                        title={client.integrations?.whatsapp ? "WhatsApp: מחובר" : "WhatsApp: לא מחובר"}
-                                                        className={cn(
-                                                            "p-1 rounded-lg transition-colors",
-                                                            client.integrations?.whatsapp
-                                                                ? "text-emerald-500 bg-emerald-500/10"
-                                                                : "text-muted-foreground/30 opacity-40"
-                                                        )}
-                                                    >
-                                                        <MessageSquare size={14} />
-                                                    </div>
+                                                        {/* WhatsApp */}
+                                                        <div
+                                                            title={client.integrations?.whatsapp ? "WhatsApp: מחובר" : "WhatsApp: לא מחובר"}
+                                                            className={cn(
+                                                                "p-1 rounded-lg transition-colors",
+                                                                client.integrations?.whatsapp
+                                                                    ? "text-emerald-500 bg-emerald-500/10"
+                                                                    : "text-muted-foreground/30 opacity-40"
+                                                            )}
+                                                        >
+                                                            <MessageSquare size={14} />
+                                                        </div>
 
-                                                    {/* Facebook */}
-                                                    <div
-                                                        title={client.integrations?.facebook ? "Facebook: מחובר" : "Facebook: לא מחובר"}
-                                                        className={cn(
-                                                            "p-1 rounded-lg transition-colors",
-                                                            client.integrations?.facebook
-                                                                ? "text-indigo-500 bg-indigo-500/10"
-                                                                : "text-muted-foreground/30 opacity-40"
-                                                        )}
-                                                    >
-                                                        <Facebook size={14} />
-                                                    </div>
+                                                        {/* Facebook */}
+                                                        <div
+                                                            title={client.integrations?.facebook ? "Facebook: מחובר" : "Facebook: לא מחובר"}
+                                                            className={cn(
+                                                                "p-1 rounded-lg transition-colors",
+                                                                client.integrations?.facebook
+                                                                    ? "text-indigo-500 bg-indigo-500/10"
+                                                                    : "text-muted-foreground/30 opacity-40"
+                                                            )}
+                                                        >
+                                                            <Facebook size={14} />
+                                                        </div>
 
-                                                    {/* Instagram */}
-                                                    <div
-                                                        title={client.integrations?.instagram ? "Instagram: מחובר" : "Instagram: לא מחובר"}
-                                                        className={cn(
-                                                            "p-1 rounded-lg transition-colors",
-                                                            client.integrations?.instagram
-                                                                ? "text-pink-500 bg-pink-500/10"
-                                                                : "text-muted-foreground/30 opacity-40"
-                                                        )}
-                                                    >
-                                                        <Instagram size={14} />
+                                                        {/* Instagram */}
+                                                        <div
+                                                            title={client.integrations?.instagram ? "Instagram: מחובר" : "Instagram: לא מחובר"}
+                                                            className={cn(
+                                                                "p-1 rounded-lg transition-colors",
+                                                                client.integrations?.instagram
+                                                                    ? "text-pink-500 bg-pink-500/10"
+                                                                    : "text-muted-foreground/30 opacity-40"
+                                                            )}
+                                                        >
+                                                            <Instagram size={14} />
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="p-6">
-                                            <div className="flex items-center gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="h-8 text-xs gap-1.5 border-purple-500/30 text-purple-400 hover:bg-purple-500/10 hover:text-purple-300 bg-purple-500/5 rounded-xl font-semibold"
-                                                    onClick={() =>
-                                                        handleLoginAsClient(
-                                                            client.email,
-                                                            client.slug
-                                                        )
-                                                    }
-                                                >
-                                                    <LogIn size={12} /> כניסה
-                                                </Button>
+                                            </td>
+                                            <td className="p-6">
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="h-8 text-xs gap-1.5 border-purple-500/30 text-purple-400 hover:bg-purple-500/10 hover:text-purple-300 bg-purple-500/5 rounded-xl font-semibold"
+                                                        onClick={() =>
+                                                            handleLoginAsClient(
+                                                                client.email,
+                                                                client.slug
+                                                            )
+                                                        }
+                                                    >
+                                                        <LogIn size={12} /> כניסה
+                                                    </Button>
 
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-8 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl px-2.5 gap-1"
-                                                    onClick={() =>
-                                                        handleDelete(
-                                                            client._id,
-                                                            client.businessName
-                                                        )
-                                                    }
-                                                >
-                                                    <Trash2 size={12} /> מחק
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="h-8 text-xs border-amber-500/30 text-amber-500 hover:bg-amber-500/10 rounded-xl px-2.5 gap-1 font-semibold"
+                                                        onClick={() => handleOpenEditModal(client)}
+                                                        title="ערוך פרטי עסק וסטטוס חשבון"
+                                                    >
+                                                        <Pencil size={12} /> ערוך
+                                                    </Button>
+
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl px-2.5 gap-1"
+                                                        onClick={() =>
+                                                            handleDelete(
+                                                                client._id,
+                                                                client.businessName
+                                                            )
+                                                        }
+                                                    >
+                                                        <Trash2 size={12} /> מחק
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                                 {filteredClients.length === 0 && !isLoading && (
                                     <tr>
                                         <td
-                                            colSpan={5}
+                                            colSpan={7}
                                             className="p-12 text-center text-muted-foreground text-sm font-medium"
                                         >
                                             לא נמצאו לקוחות. זה הזמן ללחוץ על
@@ -338,6 +446,118 @@ export default function AdminDashboard() {
                 {/* פניות ולידים של פז (Paz Leads Inbox) */}
                 <PazLeadsInbox />
             </main>
+
+            {/* Edit Tenant Dialog Modal */}
+            {isEditModalOpen && editingClient && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" dir="rtl">
+                    <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+                        {/* Modal Header */}
+                        <div className="p-6 border-b border-border/80 flex items-center justify-between bg-muted/20">
+                            <div>
+                                <h3 className="font-extrabold text-lg text-foreground flex items-center gap-2">
+                                    <Pencil className="w-5 h-5 text-amber-500" />
+                                    עריכת פרטי עסק וסטטוס חשבון
+                                </h3>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    {editingClient.businessName} ({editingClient.slug})
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsEditModalOpen(false)}
+                                className="text-muted-foreground hover:text-foreground p-1 rounded-xl hover:bg-muted/50 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Modal Form */}
+                        <form onSubmit={handleSaveTenant} className="p-6 space-y-5">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-foreground">שם העסק</label>
+                                <Input
+                                    value={editForm.businessName}
+                                    onChange={(e) => setEditForm((prev) => ({ ...prev, businessName: e.target.value }))}
+                                    placeholder="שם העסק..."
+                                    required
+                                    className="bg-background border-border rounded-xl text-sm"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-foreground">Slug (כתובת עמוד נחיתה)</label>
+                                <Input
+                                    value={editForm.slug}
+                                    onChange={(e) => setEditForm((prev) => ({ ...prev, slug: e.target.value }))}
+                                    placeholder="slug..."
+                                    required
+                                    className="bg-background border-border rounded-xl text-sm font-mono dir-ltr text-right"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-foreground">שם הבעלים</label>
+                                <Input
+                                    value={editForm.ownerName}
+                                    onChange={(e) => setEditForm((prev) => ({ ...prev, ownerName: e.target.value }))}
+                                    placeholder="שם הבעלים..."
+                                    required
+                                    className="bg-background border-border rounded-xl text-sm"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-foreground">אימייל הבעלים</label>
+                                <Input
+                                    type="email"
+                                    value={editForm.ownerEmail}
+                                    onChange={(e) => setEditForm((prev) => ({ ...prev, ownerEmail: e.target.value }))}
+                                    placeholder="email@example.com..."
+                                    required
+                                    className="bg-background border-border rounded-xl text-sm dir-ltr text-right"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-foreground">סטטוס חשבון (Account Status)</label>
+                                <select
+                                    value={editForm.account_status}
+                                    onChange={(e) => setEditForm((prev) => ({ ...prev, account_status: e.target.value as any }))}
+                                    className="w-full bg-background border border-border text-foreground rounded-xl p-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                >
+                                    <option value="active">🟢 פעיל (Active Subscription)</option>
+                                    <option value="trial">🟡 ניסיון (Trial Period)</option>
+                                    <option value="suspended">🔴 מושהה (Suspended Account)</option>
+                                </select>
+                            </div>
+
+                            {/* Modal Footer Actions */}
+                            <div className="pt-4 flex items-center justify-end gap-3 border-t border-border/60">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="rounded-xl text-xs font-bold"
+                                >
+                                    ביטול
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={isSavingEdit}
+                                    className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold gap-2"
+                                >
+                                    {isSavingEdit ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Pencil className="w-4 h-4" />
+                                    )}
+                                    שמור שינויים
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Prompt CMS Floating Action Button */}
             <PromptCMSFAB />

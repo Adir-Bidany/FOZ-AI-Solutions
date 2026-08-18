@@ -43,6 +43,7 @@ export interface IBusiness extends Document {
         about_text?: string;
     };
     subscriptionStatus: "active" | "trial" | "expired";
+    account_status?: "active" | "suspended" | "trial";
     lastImageGeneratedAt?: Date;
     publicInstructions?: string;
     internalNotes?: string;
@@ -62,6 +63,11 @@ const BusinessSchema = new Schema<IBusiness>(
         address: { type: String },
         logo: { type: String },
         role: { type: String, enum: ["admin", "user"], default: "user" },
+        account_status: {
+            type: String,
+            enum: ["active", "suspended", "trial"],
+            default: "trial"
+        },
 
         // --- Config ---
         api_keys: {

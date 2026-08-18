@@ -47,3 +47,63 @@ export async function DELETE(
         );
     }
 }
+
+export async function PATCH(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    // Admin RBAC verification
+    const token = await getToken({ req: request as any, secret: process.env.NEXTAUTH_SECRET });
+    const cookiesHeader = request.headers.get("cookie") || "";
+    const hasAdminCookie = cookiesHeader.includes("admin_access=true");
+    if (!hasAdminCookie && (!token || token.role !== "admin")) {
+        return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    try {
+        await connectDB();
+        const { id } = await params;
+        const body = await request.json();
+
+        const updateFields: Record<string, any> = {};
+
+        if (body.businessName !== undefined) updateFields.businessName = body.businessName.trim();
+        if (body.slug !== undefined) updateFields.slug = body.slug.trim().toLowerCase();
+        if (body.ownerName !== undefined) updateFields.ownerName = body.ownerName.trim();
+        if (body.ownerEmail !== undefined) {
+            updateFields.ownerEmail = body.ownerEmail.trim();
+            updateFields.email = body.ownerEmail.trim();
+        }
+        if (body.account_status !== undefined) {
+            updateFields.account_status = body.account_status;
+            // Keep subscriptionStatus synchronized if active or trial
+            if (["active", "trial"].includes(body.account_status)) {
+                updateFields.subscriptionStatus = body.account_status;
+            } else if (body.account_status === "suspended") {
+                updateFields.subscriptionStatus = "expired";
+            }
+        }
+
+        const updatedClient = await Business.findByIdAndUpdate(
+            id,
+            { $set: updateFields },
+            { new: true, runValidators: true }
+        ).lean();
+
+        if (!updatedClient) {
+            return NextResponse.json({ success: false, error: "Client not found" }, { status: 404 });
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: "Client updated successfully",
+            client: updatedClient,
+        });
+    } catch (error: any) {
+        console.error("Update client error:", error);
+        return NextResponse.json(
+            { success: false, error: error.message || "Failed to update client" },
+            { status: 500 }
+        );
+    }
+}

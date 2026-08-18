@@ -2,7 +2,7 @@ import { SchemaType } from "@google/generative-ai";
 import { FOZ_KNOWLEDGE_BASE } from "./foz-knowledge";
 
 export interface AgentConfig {
-    id: "paz" | "foz" | "daniela" | "golda";
+    id: "paz" | "daniela" | "golda";
     name: string;
     initialGreeting: string | string[];
     systemPrompt: (businessConfig: any) => string;
@@ -441,7 +441,4 @@ You MUST output your response strictly as a JSON object with exactly two fields:
         ],
     },
 };
-
-// Backwards-compatibility alias: foz points to paz
-AGENT_REGISTRY.foz = AGENT_REGISTRY.paz;
 

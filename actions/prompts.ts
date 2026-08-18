@@ -65,7 +65,7 @@ export async function updatePromptBlock(
  */
 export async function createPromptBlock(data: {
     key_identifier: string;
-    target_scope: "GLOBAL" | "PAZ" | "FOZ" | "DANIELA" | "GOLDA";
+    target_scope: "GLOBAL" | "PAZ" | "DANIELA" | "GOLDA";
     topic_title: string;
     content: string;
     sort_order?: number;

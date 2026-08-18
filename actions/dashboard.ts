@@ -6,6 +6,7 @@ import { connectToDatabase } from "@/lib/db";
 import ActionCard from "@/models/ActionCard";
 import ChatInternal from "@/models/ChatInternal";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import Business from "@/models/Business";
 import { cleanAIResponse, extractJsonFromText, mapChatHistory, createGeminiInstance } from "@/lib/utils/ai-helpers";
 import { AGENT_REGISTRY } from "@/lib/agents/registry";
@@ -569,6 +570,8 @@ export interface ChatMessage {
 export interface ChatSession {
     sessionId: string;
     createdAt: string;
+    label?: string;
+    preview?: string;
     messages: ChatMessage[];
 }
 
@@ -641,11 +644,13 @@ export async function fetchGuestChats(): Promise<ChatSession[]> {
  */
 export async function fetchPazLeads(): Promise<ChatSession[]> {
     const session = await getServerSession(authOptions);
-    const isAdminUser = (session?.user as any)?.role === "admin";
+    const cookieStore = await cookies();
+    const adminCookie = cookieStore.get("admin_access")?.value;
+    const isAdminUser = !!adminCookie || (session?.user as any)?.role === "admin";
 
-    // Allow authenticated admins
+    // Allow authenticated admins or users with admin_access cookie
     if (!isAdminUser) {
-        throw new Error("Unauthorized: Admin access required");
+        return [];
     }
 
     await connectToDatabase();
@@ -655,16 +660,35 @@ export async function fetchPazLeads(): Promise<ChatSession[]> {
             business_id: pazTenantId,
         }).sort({ createdAt: -1 }).limit(50).lean();
 
-        return chats.map((chat: any, idx: number) => ({
-            sessionId: chat._id.toString(),
-            createdAt: chat.createdAt.toISOString(),
-            label: `פנייה ממתעניין #${chats.length - idx}`,
-            messages: (chat.messages || []).map((m: any) => ({
-                role: m.role as "user" | "model",
-                text: m.parts?.[0]?.text ?? "",
-                timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : chat.createdAt.toISOString(),
-            })),
-        }));
+        return chats.map((chat: any, idx: number) => {
+            const userMsgs = (chat.messages || []).filter((m: any) => m.role === "user");
+            const phoneRegex = /(?:05\d[-\s]?\d{7}|0\d[-\s]?\d{7}|\+?972[-\s]?\d{1,2}[-\s]?\d{7})/;
+            const hasPhone = userMsgs.some((m: any) => phoneRegex.test(m.parts?.[0]?.text || ""));
+
+            let preview = "";
+            if (userMsgs.length === 0) {
+                preview = "שיחה ללא תוכן מצד הלקוח";
+            } else if (hasPhone) {
+                preview = "📞 השאיר פרטי התקשרות לחזרה";
+            } else {
+                const lastUserText = userMsgs[userMsgs.length - 1]?.parts?.[0]?.text?.trim() || "";
+                preview = lastUserText
+                    ? (lastUserText.length > 50 ? `${lastUserText.slice(0, 50)}...` : lastUserText)
+                    : "שיחה ללא תוכן מצד הלקוח";
+            }
+
+            return {
+                sessionId: chat._id.toString(),
+                createdAt: chat.createdAt ? new Date(chat.createdAt).toISOString() : new Date().toISOString(),
+                label: `פנייה ממתעניין #${chats.length - idx}`,
+                preview,
+                messages: (chat.messages || []).map((m: any) => ({
+                    role: m.role as "user" | "model",
+                    text: m.parts?.[0]?.text ?? "",
+                    timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : (chat.createdAt ? new Date(chat.createdAt).toISOString() : new Date().toISOString()),
+                })),
+            };
+        });
     } catch (error) {
         console.error("Failed to fetch Paz leads:", error);
         return [];

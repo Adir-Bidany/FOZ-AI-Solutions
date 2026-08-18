@@ -32,8 +32,9 @@ export async function POST(req: NextRequest) {
     try {
         let { message, businessId, sessionId, agentPersona = "daniela" } = await req.json();
 
-        if (businessId === "demo" || agentPersona === "paz" || agentPersona === "foz") {
+        if (businessId === "demo" || agentPersona === "paz") {
             agentPersona = "paz";
+            businessId = "demo";
         }
 
         if (!message || !businessId) {
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
         let customerId: string | null = null;
         const consumerToken = req.cookies.get("consumer_token")?.value;
         
-        if (agentPersona !== "paz" && agentPersona !== "foz" && consumerToken) {
+        if (agentPersona !== "paz" && consumerToken) {
             try {
                 const decoded = jwt.verify(consumerToken, JWT_SECRET) as any;
                 // Strict Tenancy Match
@@ -152,7 +153,7 @@ export async function POST(req: NextRequest) {
         }
 
         // --- DUAL-DEFENSE FIREWALL (Public Agent ONLY) ---
-        if ((agentPersona === "daniela" || agentPersona === "paz" || agentPersona === "foz") && chat) {
+        if ((agentPersona === "daniela" || agentPersona === "paz") && chat) {
             
             // LAYER 1: Hardened Production Blacklist
             const injectionBlacklist = [
@@ -168,7 +169,7 @@ export async function POST(req: NextRequest) {
             
             if (containsInjection) {
                 console.warn(`[SECURITY LAYER 1] Static injection attempt blocked for business ${businessId}`);
-                const blockedMessage = (agentPersona === "paz" || agentPersona === "foz")
+                const blockedMessage = agentPersona === "paz"
                     ? "היי, אני פז ואני כאן כדי לעזור לך להכיר את המערכת שלנו. אשמח לענות על כל שאלה שקשורה לפתרונות ה-AI שלנו לעסק שלך. במה אוכל לעזור בהקשר הזה?"
                     : "נמצא קלט לא תקין בהודעה. אנא נסה לנסח את השאלה מחדש.";
                 return NextResponse.json({
@@ -206,7 +207,7 @@ export async function POST(req: NextRequest) {
 
             if (!isSafe) {
                 console.warn(`[SECURITY LAYER 2] Semantic injection attempt blocked for business ${businessId}`);
-                const blockedMessage = (agentPersona === "paz" || agentPersona === "foz")
+                const blockedMessage = agentPersona === "paz"
                     ? "היי, אני פז ואני כאן כדי לעזור לך להכיר את המערכת שלנו. אשמח לענות על כל שאלה שקשורה לפתרונות ה-AI שלנו לעסק שלך. במה אוכל לעזור בהקשר הזה?"
                     : "נמצא קלט לא תקין בהודעה. אנא נסה לנסח את השאלה מחדש.";
                 return NextResponse.json({
@@ -330,7 +331,7 @@ MARKETING POST CREATION BEHAVIORAL RULES:
 
         let responseText = "";
 
-        if (["daniela", "foz"].includes(agentPersona)) {
+        if (["daniela", "paz"].includes(agentPersona)) {
             let parsedJson: any = null;
 
             // 1. Safely inspect function calls across external personas
@@ -519,22 +520,12 @@ MARKETING POST CREATION BEHAVIORAL RULES:
             if (!responseText) {
                 try {
                     const rawText = result.response.text();
-                    if (agentPersona === "foz") {
-                        try {
-                            const structuredData = JSON.parse(rawText);
-                            responseText = structuredData.conversational_reply || cleanAIResponse(rawText);
-                        } catch (e) {
-                            responseText = cleanAIResponse(rawText);
-                        }
+                    const extracted = extractJsonFromText(rawText);
+                    if (extracted) {
+                        parsedJson = extracted;
+                        responseText = extracted.conversational_reply || extracted.reply || extracted.text || cleanAIResponse(rawText);
                     } else {
-                        try {
-                            const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-                            const jsonString = jsonMatch ? jsonMatch[1] : rawText;
-                            parsedJson = JSON.parse(jsonString);
-                            responseText = parsedJson.conversational_reply || cleanAIResponse(rawText);
-                        } catch (e) {
-                            responseText = cleanAIResponse(rawText);
-                        }
+                        responseText = cleanAIResponse(rawText);
                     }
                 } catch (err) {
                     console.error("Text extraction fallback error:", err);
