@@ -593,15 +593,34 @@ export async function fetchCustomerChatHistory(customerId: string): Promise<Chat
             customer_id: new Types.ObjectId(customerId),
         }).sort({ createdAt: 1 }).lean();
 
-        return chats.map((chat: any) => ({
-            sessionId: chat._id.toString(),
-            createdAt: chat.createdAt.toISOString(),
-            messages: (chat.messages || []).map((m: any) => ({
-                role: m.role as "user" | "model",
-                text: m.parts?.[0]?.text ?? "",
-                timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : chat.createdAt.toISOString(),
-            })),
-        }));
+        return chats.map((chat: any) => {
+            const userMsgs = (chat.messages || []).filter((m: any) => m.role === "user");
+            const phoneRegex = /(?:05\d[-\s]?\d{7}|0\d[-\s]?\d{7}|\+?972[-\s]?\d{1,2}[-\s]?\d{7})/;
+            const hasPhone = userMsgs.some((m: any) => phoneRegex.test(m.parts?.[0]?.text || ""));
+
+            let preview = "";
+            if (userMsgs.length === 0) {
+                preview = "שיחה ללא תוכן מצד הלקוח";
+            } else if (hasPhone) {
+                preview = "📞 השאיר פרטי התקשרות לחזרה";
+            } else {
+                const lastUserText = userMsgs[userMsgs.length - 1]?.parts?.[0]?.text?.trim() || "";
+                preview = lastUserText
+                    ? (lastUserText.length > 50 ? `${lastUserText.slice(0, 50)}...` : lastUserText)
+                    : "שיחה ללא תוכן מצד הלקוח";
+            }
+
+            return {
+                sessionId: chat._id.toString(),
+                createdAt: chat.createdAt ? new Date(chat.createdAt).toISOString() : new Date().toISOString(),
+                preview,
+                messages: (chat.messages || []).map((m: any) => ({
+                    role: m.role as "user" | "model",
+                    text: m.parts?.[0]?.text ?? "",
+                    timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : (chat.createdAt ? new Date(chat.createdAt).toISOString() : new Date().toISOString()),
+                })),
+            };
+        });
     } catch (error) {
         console.error("Failed to fetch customer chat history:", error);
         return [];
@@ -621,17 +640,37 @@ export async function fetchGuestChats(): Promise<ChatSession[]> {
         const chats = await ChatExternal.find({
             business_id: new Types.ObjectId(session.user.businessId),
             customer_id: { $exists: false },
-        }).sort({ createdAt: -1 }).limit(50).lean();
+        }).sort({ createdAt: -1 }).lean();
 
-        return chats.map((chat: any) => ({
-            sessionId: chat._id.toString(),
-            createdAt: chat.createdAt.toISOString(),
-            messages: (chat.messages || []).map((m: any) => ({
-                role: m.role as "user" | "model",
-                text: m.parts?.[0]?.text ?? "",
-                timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : chat.createdAt.toISOString(),
-            })),
-        }));
+        return chats.map((chat: any, idx: number) => {
+            const userMsgs = (chat.messages || []).filter((m: any) => m.role === "user");
+            const phoneRegex = /(?:05\d[-\s]?\d{7}|0\d[-\s]?\d{7}|\+?972[-\s]?\d{1,2}[-\s]?\d{7})/;
+            const hasPhone = userMsgs.some((m: any) => phoneRegex.test(m.parts?.[0]?.text || ""));
+
+            let preview = "";
+            if (userMsgs.length === 0) {
+                preview = "שיחה ללא תוכן מצד הלקוח";
+            } else if (hasPhone) {
+                preview = "📞 השאיר פרטי התקשרות לחזרה";
+            } else {
+                const lastUserText = userMsgs[userMsgs.length - 1]?.parts?.[0]?.text?.trim() || "";
+                preview = lastUserText
+                    ? (lastUserText.length > 50 ? `${lastUserText.slice(0, 50)}...` : lastUserText)
+                    : "שיחה ללא תוכן מצד הלקוח";
+            }
+
+            return {
+                sessionId: chat._id.toString(),
+                createdAt: chat.createdAt ? new Date(chat.createdAt).toISOString() : new Date().toISOString(),
+                label: `אורח/ת מזדמן/ת #${chats.length - idx}`,
+                preview,
+                messages: (chat.messages || []).map((m: any) => ({
+                    role: m.role as "user" | "model",
+                    text: m.parts?.[0]?.text ?? "",
+                    timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : (chat.createdAt ? new Date(chat.createdAt).toISOString() : new Date().toISOString()),
+                })),
+            };
+        });
     } catch (error) {
         console.error("Failed to fetch guest chats:", error);
         return [];
@@ -773,6 +812,50 @@ export async function markLeadAsHandled(cardId: string) {
     } catch (error) {
         console.error("Failed to mark lead as handled:", error);
         return { success: false, error: "Failed to update lead status" };
+    }
+}
+
+/**
+ * Permanently deletes a ChatExternal session by sessionId.
+ * RBAC: Super Admin (role or admin_access cookie) can delete any chat; Business Owners can only delete chats belonging to their business_id.
+ */
+export async function deleteChatSession(sessionId: string): Promise<{ success: boolean; error?: string }> {
+    const session = await getServerSession(authOptions);
+    const cookieStore = await cookies();
+    const adminCookie = cookieStore.get("admin_access")?.value === "true";
+    const isAdmin = (session?.user as any)?.role === "admin" || adminCookie;
+
+    if (!session?.user && !isAdmin) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    if (!Types.ObjectId.isValid(sessionId)) {
+        return { success: false, error: "Invalid session ID" };
+    }
+
+    await connectToDatabase();
+    try {
+        const chat = await ChatExternal.findById(sessionId);
+        if (!chat) {
+            return { success: false, error: "Chat session not found" };
+        }
+
+        // Ownership verification: non-admin users can only delete their business's chats
+        if (!isAdmin && chat.business_id?.toString() !== session?.user?.businessId) {
+            return { success: false, error: "Forbidden: Permission denied to delete this chat" };
+        }
+
+        await ChatExternal.deleteOne({ _id: new Types.ObjectId(sessionId) });
+
+        try {
+            revalidatePath("/admin");
+            revalidatePath("/dashboard/customers");
+        } catch (e) {}
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to delete chat session:", error);
+        return { success: false, error: error?.message || "Failed to delete chat session" };
     }
 }
 

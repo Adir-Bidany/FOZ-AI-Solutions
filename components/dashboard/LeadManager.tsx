@@ -57,8 +57,8 @@ const MOCK_LEADS: LeadCard[] = [
 
 
 export default function LeadManager({ businessId, initialLeads = [] }: LeadManagerProps) {
-    const activeInitial = initialLeads.length > 0 ? initialLeads : MOCK_LEADS;
-    const [leads, setLeads] = useState<LeadCard[]>(activeInitial);
+    const isDemoMode = typeof window !== "undefined" && window.location.search.includes("demo=true");
+    const [leads, setLeads] = useState<LeadCard[]>(isDemoMode && initialLeads.length === 0 ? MOCK_LEADS : initialLeads);
     const [isPending, startTransition] = useTransition();
     const [processingId, setProcessingId] = useState<string | null>(null);
 
