@@ -137,11 +137,17 @@ const TYPE_LABEL: Record<InsightType, string> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function AgentInsightsFeed() {
-    const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-    const [expanded, setExpanded] = useState<string | null>(MOCK_INSIGHTS[0]?.id ?? null);
+interface AgentInsightsFeedProps {
+    initialInsights?: AgentInsight[];
+}
 
-    const visible = MOCK_INSIGHTS.filter((i) => !dismissed.has(i.id));
+export default function AgentInsightsFeed({ initialInsights = [] }: AgentInsightsFeedProps) {
+    const isDemoMode = typeof window !== "undefined" && window.location.search.includes("demo=true");
+    const activeInsights = isDemoMode && initialInsights.length === 0 ? MOCK_INSIGHTS : initialInsights;
+    const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+    const [expanded, setExpanded] = useState<string | null>(activeInsights[0]?.id ?? null);
+
+    const visible = activeInsights.filter((i) => !dismissed.has(i.id));
     const newCount = visible.filter((i) => i.isNew).length;
 
     const dismiss = (id: string) => setDismissed((prev) => new Set([...prev, id]));
@@ -163,9 +169,16 @@ export default function AgentInsightsFeed() {
 
             {/* Insights list */}
             {visible.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 px-8 rounded-2xl border border-dashed border-border bg-muted/10 text-center gap-3">
-                    <Lightbulb className="w-8 h-8 text-muted-foreground/40" />
-                    <p className="text-sm text-muted-foreground">כל התובנות נסקרו. גולדה תוסיף חדשות בקרוב!</p>
+                <div className="flex flex-col items-center justify-center py-12 px-8 rounded-2xl border border-dashed border-border bg-card text-center space-y-2">
+                    <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center mx-auto mb-1">
+                        <Sparkles className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-base font-bold text-foreground">
+                        אין תובנות שיווקיות חדשות כרגע
+                    </h3>
+                    <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                        גולדה סורקת את ביצועי העסק ברקע ותציג תובנות והזדמנויות שיווקיות בהתאם לפעילות.
+                    </p>
                 </div>
             ) : (
                 <div className="space-y-3">

@@ -23,7 +23,7 @@ interface MetricCard {
 
 // ─── Mock metric data ─────────────────────────────────────────────────────────
 
-const METRICS: MetricCard[] = [
+const MOCK_METRICS: MetricCard[] = [
     {
         id: "ai-time-saved",
         icon: Clock,
@@ -86,6 +86,69 @@ const METRICS: MetricCard[] = [
     },
 ];
 
+const CLEAN_METRICS: MetricCard[] = [
+    {
+        id: "ai-time-saved",
+        icon: Clock,
+        iconBg: "bg-violet-500/10",
+        iconColor: "text-violet-500",
+        label: "זמן שחסך ה-AI",
+        labelEn: "AI Time Saved",
+        value: "0 שעות",
+        subValue: "השבוע הנוכחי",
+        trend: "neutral",
+        trendLabel: "ממתין לפעילות ראשונה",
+        trendColor: "text-muted-foreground",
+        accentFrom: "from-violet-500/10",
+        accentTo: "to-transparent",
+    },
+    {
+        id: "daily-appointments",
+        icon: CalendarDays,
+        iconBg: "bg-blue-500/10",
+        iconColor: "text-blue-500",
+        label: "תורים להיום",
+        labelEn: "Daily Appointments",
+        value: "0 תורים",
+        subValue: "0 ממתינים לאישור",
+        trend: "neutral",
+        trendLabel: "אין תורים לביצוע להיום",
+        trendColor: "text-muted-foreground",
+        accentFrom: "from-blue-500/10",
+        accentTo: "to-transparent",
+    },
+    {
+        id: "marketing-health",
+        icon: TrendingUp,
+        iconBg: "bg-fuchsia-500/10",
+        iconColor: "text-fuchsia-500",
+        label: "בריאות שיווקית",
+        labelEn: "Marketing Health",
+        value: "0 פוסטים",
+        subValue: "ממתין לתוכן ראשון",
+        trend: "neutral",
+        trendLabel: "מוכן ליצירת תוכן",
+        trendColor: "text-muted-foreground",
+        accentFrom: "from-fuchsia-500/10",
+        accentTo: "to-transparent",
+    },
+    {
+        id: "leads",
+        icon: Users,
+        iconBg: "bg-amber-500/10",
+        iconColor: "text-amber-500",
+        label: "לידים החודש",
+        labelEn: "Monthly Leads",
+        value: "0 לידים",
+        subValue: "0 הומרו ללקוחות",
+        trend: "neutral",
+        trendLabel: "ממתין לפניות מהצ'אט",
+        trendColor: "text-muted-foreground",
+        accentFrom: "from-amber-500/10",
+        accentTo: "to-transparent",
+    },
+];
+
 const TREND_ICON: Record<MetricCard["trend"], React.ElementType> = {
     up: ArrowUp,
     down: ArrowDown,
@@ -96,6 +159,8 @@ const TREND_ICON: Record<MetricCard["trend"], React.ElementType> = {
 
 export default function HeroMetrics() {
     const [visible, setVisible] = useState(false);
+    const isDemoMode = typeof window !== "undefined" && window.location.search.includes("demo=true");
+    const metricsList = isDemoMode ? MOCK_METRICS : CLEAN_METRICS;
 
     // Staggered entrance animation
     useEffect(() => {
@@ -118,7 +183,7 @@ export default function HeroMetrics() {
 
             {/* Cards grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {METRICS.map((metric, i) => {
+                {metricsList.map((metric, i) => {
                     const Icon = metric.icon;
                     const TrendIcon = TREND_ICON[metric.trend];
 

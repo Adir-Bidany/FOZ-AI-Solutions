@@ -815,4 +815,48 @@ export async function markLeadAsHandled(cardId: string) {
     }
 }
 
+/**
+ * Permanently deletes a ChatExternal session by sessionId.
+ * RBAC: Super Admin (role or admin_access cookie) can delete any chat; Business Owners can only delete chats belonging to their business_id.
+ */
+export async function deleteChatSession(sessionId: string): Promise<{ success: boolean; error?: string }> {
+    const session = await getServerSession(authOptions);
+    const cookieStore = await cookies();
+    const adminCookie = cookieStore.get("admin_access")?.value === "true";
+    const isAdmin = (session?.user as any)?.role === "admin" || adminCookie;
+
+    if (!session?.user && !isAdmin) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    if (!Types.ObjectId.isValid(sessionId)) {
+        return { success: false, error: "Invalid session ID" };
+    }
+
+    await connectToDatabase();
+    try {
+        const chat = await ChatExternal.findById(sessionId);
+        if (!chat) {
+            return { success: false, error: "Chat session not found" };
+        }
+
+        // Ownership verification: non-admin users can only delete their business's chats
+        if (!isAdmin && chat.business_id?.toString() !== session?.user?.businessId) {
+            return { success: false, error: "Forbidden: Permission denied to delete this chat" };
+        }
+
+        await ChatExternal.deleteOne({ _id: new Types.ObjectId(sessionId) });
+
+        try {
+            revalidatePath("/admin");
+            revalidatePath("/dashboard/customers");
+        } catch (e) {}
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to delete chat session:", error);
+        return { success: false, error: error?.message || "Failed to delete chat session" };
+    }
+}
+
 

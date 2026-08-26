@@ -349,9 +349,9 @@ export default function ActionCenter({
     initialCards,
     onCardsChange,
 }: ActionCenterProps) {
-    // If no initial real cards, use default strategic mock cards for layout visualization
-    const activeInitial = initialCards.length > 0 ? initialCards : MOCK_ACTION_CARDS;
-    const [cards, setCards] = useState<ActionCard[]>(activeInitial);
+    // Use initial real cards from database (or mock cards if explicit demo mode enabled)
+    const isDemoMode = typeof window !== "undefined" && window.location.search.includes("demo=true");
+    const [cards, setCards] = useState<ActionCard[]>(isDemoMode && initialCards.length === 0 ? MOCK_ACTION_CARDS : initialCards);
     const [isPending, startTransition] = useTransition();
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);

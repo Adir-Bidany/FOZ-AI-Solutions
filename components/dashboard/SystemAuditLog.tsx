@@ -139,10 +139,17 @@ const CATEGORY_CONFIG: Record<
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function SystemAuditLog() {
+interface SystemAuditLogProps {
+    initialLogs?: AuditEntry[];
+}
+
+export default function SystemAuditLog({ initialLogs = [] }: SystemAuditLogProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
-    const successCount = AUDIT_LOG.filter((l) => l.success).length;
-    const failCount = AUDIT_LOG.length - successCount;
+    const isDemoMode = typeof window !== "undefined" && window.location.search.includes("demo=true");
+    const activeLogs = isDemoMode && initialLogs.length === 0 ? AUDIT_LOG : initialLogs;
+
+    const successCount = activeLogs.filter((l) => l.success).length;
+    const failCount = activeLogs.length - successCount;
 
     return (
         <section id="v2-audit-log" aria-label="יומן פעילות מערכת">
@@ -152,23 +159,34 @@ export default function SystemAuditLog() {
                 <div className="flex items-center gap-3">
                     <div>
                         <h2 className="text-xl font-extrabold text-foreground tracking-tight leading-none">
-                            פעילות רקע
+                            יומן מערכת ואירועים
                         </h2>
-                    
                     </div>
                 </div>
             </div>
 
-            {/* Scrollable log container */}
-            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-
+            {/* Log feed box */}
+            {activeLogs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 px-8 rounded-2xl border border-dashed border-border bg-card text-center space-y-2">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mx-auto mb-1">
+                        <Clock className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-base font-bold text-foreground">
+                        יומן המערכת נקי
+                    </h3>
+                    <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                        פעולות אוטומטיות, גיבויים ועדכוני סוכנים יופיעו כאן בזמן אמת.
+                    </p>
+                </div>
+            ) : (
+                <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
 
                 {/* Scrollable entries */}
                 <div
                     ref={scrollRef}
                     className="h-72 overflow-y-auto custom-scrollbar divide-y divide-border/40"
                 >
-                    {AUDIT_LOG.map((entry, idx) => {
+                    {activeLogs.map((entry, idx) => {
                         const catConf = CATEGORY_CONFIG[entry.category];
                         const CatIcon = catConf.icon;
 
@@ -187,7 +205,7 @@ export default function SystemAuditLog() {
                                     <div className={`w-7 h-7 rounded-lg ${catConf.iconBg} flex items-center justify-center`}>
                                         <CatIcon className={`w-3.5 h-3.5 ${catConf.iconColor}`} />
                                     </div>
-                                    {idx < AUDIT_LOG.length - 1 && (
+                                    {idx < activeLogs.length - 1 && (
                                         <div className="w-px h-3 bg-border/60" />
                                     )}
                                 </div>
@@ -236,6 +254,7 @@ export default function SystemAuditLog() {
                     </button>
                 </div>
             </div>
-        </section>
+        )}
+    </section>
     );
 }

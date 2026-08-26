@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { Users, ChevronDown, ChevronRight, Bot, User, MessageSquare, Loader2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Users, ChevronDown, ChevronRight, Bot, User, MessageSquare, Loader2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { deleteChatSession } from "@/actions/dashboard";
 
 export interface ChatMessage {
     role: "user" | "model" | "assistant";
@@ -28,6 +30,7 @@ export interface SharedChatInboxUIProps {
     emptyStateTitle?: string;
     emptyStateDescription?: string;
     accentColor?: "violet" | "purple" | "indigo" | "primary";
+    defaultCollapsed?: boolean;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -38,13 +41,9 @@ function formatSessionDate(iso: string): string {
         date.toLocaleDateString("he-IL", {
             day: "numeric",
             month: "short",
-            year: "numeric",
-        }) +
-        " · " +
-        date.toLocaleTimeString("he-IL", {
             hour: "2-digit",
             minute: "2-digit",
-        })
+        }) || iso
     );
 }
 
@@ -55,30 +54,40 @@ function formatBubbleTime(iso: string): string {
     });
 }
 
+// ─── Color mappings ───────────────────────────────────────────────────────────
+
 const colorStyles = {
     violet: {
         iconBg: "bg-violet-500/10 text-violet-500",
-        badgeBg: "bg-violet-500/10 text-violet-500",
+        badgeBg: "bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20",
         bubbleBg: "bg-violet-50 dark:bg-violet-950/40 border-violet-200/50 dark:border-violet-800/30",
         botAvatarBg: "bg-violet-100 dark:bg-violet-950 text-violet-500",
+        userBg: "bg-violet-500/10 text-foreground border border-violet-500/20",
+        botBg: "bg-muted text-foreground border border-border",
     },
     purple: {
         iconBg: "bg-purple-500/10 text-purple-500",
-        badgeBg: "bg-purple-500/10 text-purple-500 border border-purple-500/20",
+        badgeBg: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20",
         bubbleBg: "bg-purple-50 dark:bg-purple-950/40 border-purple-200/50 dark:border-purple-800/30",
         botAvatarBg: "bg-purple-100 dark:bg-purple-950 text-purple-500",
+        userBg: "bg-purple-500/10 text-foreground border border-purple-500/20",
+        botBg: "bg-muted text-foreground border border-border",
     },
     indigo: {
         iconBg: "bg-indigo-500/10 text-indigo-500",
-        badgeBg: "bg-indigo-500/10 text-indigo-500",
+        badgeBg: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20",
         bubbleBg: "bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200/50 dark:border-indigo-800/30",
         botAvatarBg: "bg-indigo-100 dark:bg-indigo-950 text-indigo-500",
+        userBg: "bg-indigo-500/10 text-foreground border border-indigo-500/20",
+        botBg: "bg-muted text-foreground border border-border",
     },
     primary: {
         iconBg: "bg-primary/10 text-primary",
         badgeBg: "bg-primary/10 text-primary border border-primary/20",
         bubbleBg: "bg-card border-border",
         botAvatarBg: "bg-primary/10 text-primary",
+        userBg: "bg-primary/10 text-foreground border border-primary/20",
+        botBg: "bg-muted text-foreground border border-border",
     },
 };
 
@@ -93,9 +102,16 @@ export default function SharedChatInboxUI({
     emptyStateTitle = "אין שיחות להצגה",
     emptyStateDescription = "כאשר יתקבלו פניות חדשות, הן יופיעו כאן.",
     accentColor = "violet",
+    defaultCollapsed = true,
 }: SharedChatInboxUIProps) {
+    const [sessionList, setSessionList] = useState<ChatSession[]>(sessions);
+    const [isContainerOpen, setIsContainerOpen] = useState(!defaultCollapsed);
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
     const colors = colorStyles[accentColor] || colorStyles.violet;
+
+    useEffect(() => {
+        setSessionList(sessions);
+    }, [sessions]);
 
     const toggleExpand = (sessionId: string) => {
         setExpandedIds((prev) => {
@@ -109,10 +125,25 @@ export default function SharedChatInboxUI({
         });
     };
 
+    const handleDeleteSession = async (sessionId: string) => {
+        if (!window.confirm("האם למחוק שיחה זו לצמיתות?")) return;
+        try {
+            const res = await deleteChatSession(sessionId);
+            if (res.success) {
+                setSessionList((prev) => prev.filter((s) => s.sessionId !== sessionId));
+                toast.success("השיחה נמחקה בהצלחה ✓");
+            } else {
+                toast.error(res.error || "שגיאה במחיקת השיחה");
+            }
+        } catch {
+            toast.error("שגיאה במחיקת השיחה");
+        }
+    };
+
     return (
         <section className="space-y-5" aria-label={title} dir="rtl">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <div className={`w-9 h-9 rounded-2xl flex items-center justify-center ${colors.iconBg}`}>
                         {icon || <Users className="w-4 h-4" />}
@@ -129,31 +160,51 @@ export default function SharedChatInboxUI({
                             )}
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                            {description} — {sessions.length} שיחות אחרונות
+                            {description} — {sessionList.length} שיחות אחרונות
                         </p>
                     </div>
                 </div>
+
+                {/* Outer Collapsible Container Toggle Button */}
+                <button
+                    type="button"
+                    onClick={() => setIsContainerOpen((prev) => !prev)}
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border bg-card hover:bg-muted/50 text-xs font-bold text-foreground transition-all shadow-sm shrink-0"
+                >
+                    <span>
+                        {isContainerOpen
+                            ? "הסתר שיחות"
+                            : `הצג את כל השיחות (${sessionList.length})`}
+                    </span>
+                    <ChevronDown
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                            isContainerOpen ? "rotate-180" : ""
+                        }`}
+                    />
+                </button>
             </div>
 
-            {/* Content */}
-            {loading ? (
-                <div className="flex items-center justify-center py-12 gap-3">
-                    <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                    <p className="text-sm text-muted-foreground">טוען שיחות...</p>
-                </div>
-            ) : sessions.length === 0 ? (
-                <div className="p-8 rounded-3xl bg-card border border-dashed border-border text-center space-y-2">
-                    <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mx-auto">
-                        <MessageSquare className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-sm font-bold text-foreground">{emptyStateTitle}</h3>
-                    <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                        {emptyStateDescription}
-                    </p>
-                </div>
-            ) : (
+            {/* Content Container */}
+            {isContainerOpen && (
+                <>
+                    {loading ? (
+                        <div className="flex items-center justify-center py-12 gap-3">
+                            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                            <p className="text-sm text-muted-foreground">טוען שיחות...</p>
+                        </div>
+                    ) : sessionList.length === 0 ? (
+                        <div className="p-8 rounded-3xl bg-card border border-dashed border-border text-center space-y-2">
+                            <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+                                <MessageSquare className="w-5 h-5 text-muted-foreground" />
+                            </div>
+                            <h3 className="text-sm font-bold text-foreground">{emptyStateTitle}</h3>
+                            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                                {emptyStateDescription}
+                            </p>
+                        </div>
+                    ) : (
                 <div className="space-y-3">
-                    {sessions.map((session, idx) => {
+                    {sessionList.map((session, idx) => {
                         const isExpanded = expandedIds.has(session.sessionId);
                         const msgCount = session.messages.length;
                         const defaultLabel = `לקוח מזדמן ${idx + 1}`;
@@ -173,7 +224,7 @@ export default function SharedChatInboxUI({
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${colors.iconBg}`}>
-                                            {sessions.length - idx}
+                                            {sessionList.length - idx}
                                         </div>
                                         <div>
                                             <p className="text-sm font-bold text-foreground">
@@ -189,7 +240,19 @@ export default function SharedChatInboxUI({
                                             )}
                                         </div>
                                     </div>
-                                    <div className="text-muted-foreground">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteSession(session.sessionId);
+                                            }}
+                                            className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors"
+                                            title="מחק שיחה"
+                                            aria-label="מחק שיחה"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
                                         {isExpanded ? (
                                             <ChevronDown className="w-4 h-4" />
                                         ) : (
@@ -266,6 +329,8 @@ export default function SharedChatInboxUI({
                         );
                     })}
                 </div>
+                    )}
+                </>
             )}
         </section>
     );
