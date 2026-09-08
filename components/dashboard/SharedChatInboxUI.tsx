@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Users, ChevronDown, ChevronRight, Bot, User, MessageSquare, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { deleteChatSession } from "@/actions/dashboard";
+import { deleteChatSession, bulkDeleteChatSessions } from "@/actions/dashboard";
 
 export interface ChatMessage {
     role: "user" | "model" | "assistant";
@@ -107,10 +107,12 @@ export default function SharedChatInboxUI({
     const [sessionList, setSessionList] = useState<ChatSession[]>(sessions);
     const [isContainerOpen, setIsContainerOpen] = useState(!defaultCollapsed);
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const colors = colorStyles[accentColor] || colorStyles.violet;
 
     useEffect(() => {
         setSessionList(sessions);
+        setSelectedIds(new Set());
     }, [sessions]);
 
     const toggleExpand = (sessionId: string) => {
@@ -125,18 +127,63 @@ export default function SharedChatInboxUI({
         });
     };
 
+    const toggleSelectRow = (sessionId: string, e: React.MouseEvent | React.ChangeEvent) => {
+        e.stopPropagation();
+        setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(sessionId)) {
+                next.delete(sessionId);
+            } else {
+                next.add(sessionId);
+            }
+            return next;
+        });
+    };
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelectedIds(new Set(sessionList.map((s) => s.sessionId)));
+        } else {
+            setSelectedIds(new Set());
+        }
+    };
+
     const handleDeleteSession = async (sessionId: string) => {
         if (!window.confirm("האם למחוק שיחה זו לצמיתות?")) return;
         try {
             const res = await deleteChatSession(sessionId);
             if (res.success) {
                 setSessionList((prev) => prev.filter((s) => s.sessionId !== sessionId));
+                setSelectedIds((prev) => {
+                    const next = new Set(prev);
+                    next.delete(sessionId);
+                    return next;
+                });
                 toast.success("השיחה נמחקה בהצלחה ✓");
             } else {
                 toast.error(res.error || "שגיאה במחיקת השיחה");
             }
         } catch {
             toast.error("שגיאה במחיקת השיחה");
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.size === 0) return;
+        if (!window.confirm(`האם למחוק ${selectedIds.size} שיחות שנבחרו לצמיתות?`)) return;
+
+        try {
+            const idsArray = Array.from(selectedIds);
+            const res = await bulkDeleteChatSessions(idsArray);
+            if (res.success) {
+                setSessionList((prev) => prev.filter((s) => !selectedIds.has(s.sessionId)));
+                setSelectedIds(new Set());
+                toast.success(`${res.deletedCount ?? idsArray.length} שיחות נמחקו בהצלחה ✓`);
+            } else {
+                toast.error(res.error || "שגיאה במחיקת השיחות");
+            }
+        } catch {
+            toast.error("שגיאה במחיקת השיחות");
         }
     };
 
@@ -204,8 +251,32 @@ export default function SharedChatInboxUI({
                         </div>
                     ) : (
                 <div className="space-y-3">
+                    {/* Bulk Selection Toolbar */}
+                    <div className="flex items-center justify-between px-3.5 py-2 bg-card border border-border rounded-xl text-xs shadow-sm">
+                        <label className="flex items-center gap-2 font-bold text-foreground cursor-pointer select-none">
+                            <input
+                                type="checkbox"
+                                checked={sessionList.length > 0 && selectedIds.size === sessionList.length}
+                                onChange={handleSelectAll}
+                                className="w-4 h-4 rounded border-border text-purple-600 focus:ring-purple-500 cursor-pointer"
+                            />
+                            <span>בחר הכל ({sessionList.length})</span>
+                        </label>
+                        {selectedIds.size > 0 && (
+                            <button
+                                type="button"
+                                onClick={handleBulkDelete}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold text-xs transition-all shadow-sm"
+                            >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>מחק מסומנים ({selectedIds.size})</span>
+                            </button>
+                        )}
+                    </div>
+
                     {sessionList.map((session, idx) => {
                         const isExpanded = expandedIds.has(session.sessionId);
+                        const isSelected = selectedIds.has(session.sessionId);
                         const msgCount = session.messages.length;
                         const defaultLabel = `לקוח מזדמן ${idx + 1}`;
                         const displayLabel = session.label || defaultLabel;
@@ -213,7 +284,7 @@ export default function SharedChatInboxUI({
                         return (
                             <div
                                 key={session.sessionId}
-                                className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+                                className={`bg-card rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 ${isSelected ? "border-purple-500/50 bg-purple-500/5" : "border-border"}`}
                             >
                                 {/* Session Header — always visible, click to expand */}
                                 <button
@@ -223,6 +294,14 @@ export default function SharedChatInboxUI({
                                     aria-expanded={isExpanded}
                                 >
                                     <div className="flex items-center gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={(e) => toggleSelectRow(session.sessionId, e)}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="w-4 h-4 rounded border-border text-purple-600 focus:ring-purple-500 cursor-pointer shrink-0"
+                                            aria-label="בחר שיחה"
+                                        />
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${colors.iconBg}`}>
                                             {sessionList.length - idx}
                                         </div>

@@ -859,4 +859,52 @@ export async function deleteChatSession(sessionId: string): Promise<{ success: b
     }
 }
 
+/**
+ * Permanently deletes multiple ChatExternal sessions in bulk by sessionIds array.
+ * RBAC: Super Admin (role or admin_access cookie) can delete any chats; Business Owners can only delete chats belonging to their business_id.
+ */
+export async function bulkDeleteChatSessions(sessionIds: string[]): Promise<{ success: boolean; deletedCount?: number; error?: string }> {
+    const session = await getServerSession(authOptions);
+    const cookieStore = await cookies();
+    const adminCookie = cookieStore.get("admin_access")?.value === "true";
+    const isAdmin = (session?.user as any)?.role === "admin" || adminCookie;
+
+    if (!session?.user && !isAdmin) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    const validObjectIds = (sessionIds || [])
+        .filter((id) => Types.ObjectId.isValid(id))
+        .map((id) => new Types.ObjectId(id));
+
+    if (validObjectIds.length === 0) {
+        return { success: false, error: "No valid session IDs provided" };
+    }
+
+    await connectToDatabase();
+    try {
+        const filter: any = { _id: { $in: validObjectIds } };
+
+        // Ownership verification: non-admin users can only delete chats belonging to their business_id
+        if (!isAdmin) {
+            if (!session?.user?.businessId) {
+                return { success: false, error: "Unauthorized" };
+            }
+            filter.business_id = new Types.ObjectId(session.user.businessId);
+        }
+
+        const res = await ChatExternal.deleteMany(filter);
+
+        try {
+            revalidatePath("/admin");
+            revalidatePath("/dashboard/customers");
+        } catch (e) {}
+
+        return { success: true, deletedCount: res.deletedCount };
+    } catch (error: any) {
+        console.error("Failed to bulk delete chat sessions:", error);
+        return { success: false, error: error?.message || "Failed to bulk delete chat sessions" };
+    }
+}
+
 
