@@ -287,10 +287,18 @@ export default function SharedChatInboxUI({
                                 className={`bg-card rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 ${isSelected ? "border-purple-500/50 bg-purple-500/5" : "border-border"}`}
                             >
                                 {/* Session Header — always visible, click to expand */}
-                                <button
+                                <div
                                     id={`chat-session-toggle-${session.sessionId}`}
+                                    role="button"
+                                    tabIndex={0}
                                     onClick={() => toggleExpand(session.sessionId)}
-                                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-muted/30 transition-colors duration-150 text-right"
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                            e.preventDefault();
+                                            toggleExpand(session.sessionId);
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-muted/30 transition-colors duration-150 text-right cursor-pointer"
                                     aria-expanded={isExpanded}
                                 >
                                     <div className="flex items-center gap-3">
@@ -338,7 +346,7 @@ export default function SharedChatInboxUI({
                                             <ChevronRight className="w-4 h-4" />
                                         )}
                                     </div>
-                                </button>
+                                </div>
 
                                 {/* Expanded Transcript */}
                                 {isExpanded && (

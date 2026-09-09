@@ -44,6 +44,7 @@ export interface IBusiness extends Document {
     };
     subscriptionStatus: "active" | "trial" | "expired";
     account_status?: "active" | "suspended" | "trial";
+    subscription_tier?: "basic" | "pro" | "enterprise";
     lastImageGeneratedAt?: Date;
     publicInstructions?: string;
     internalNotes?: string;
@@ -119,6 +120,12 @@ const BusinessSchema = new Schema<IBusiness>(
             type: String,
             enum: ["active", "trial", "expired"],
             default: "trial"
+        },
+
+        subscription_tier: {
+            type: String,
+            enum: ["basic", "pro", "enterprise"],
+            default: "pro"
         },
         lastImageGeneratedAt: { type: Date },
         publicInstructions: { type: String, default: "" },
