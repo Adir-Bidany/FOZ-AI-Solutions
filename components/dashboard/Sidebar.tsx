@@ -17,8 +17,10 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ClientLogo from "@/components/ClientLogo";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { archiveCurrentSession } from "@/actions/dashboard";
+import FeatureGate from "@/components/dashboard/FeatureGate";
+import { type SubscriptionTier } from "@/lib/config/tiers";
 
 interface SidebarProps {
     client: {
@@ -39,6 +41,12 @@ export function SidebarContent({
     onNavClick?: () => void;
 }) {
     const pathname = usePathname();
+    const { data: sessionData } = useSession();
+
+    // effectiveTier is pre-computed server-side in the JWT callback (BATCH 284).
+    // Fall back to "basic" while the session is loading so gated links stay hidden during hydration.
+    const effectiveTier: SubscriptionTier =
+        (sessionData?.user?.effectiveTier as SubscriptionTier | undefined) ?? "basic";
 
     const handleLogout = async () => {
         if (client?._id) {
@@ -94,22 +102,26 @@ export function SidebarContent({
                     </Button>
                 </Link>
 
-                <Button
-                    variant="ghost"
-                    onClick={handleOpenGolda}
-                    className="w-full justify-start gap-3 font-semibold text-foreground hover:bg-purple-500/10 hover:text-purple-600 h-12 rounded-xl"
-                >
-                    <Bot size={20} className="text-purple-500" /> שיחה עם גולדה
-                </Button>
-
-                <Link href="/dashboard/calendar" onClick={onNavClick}>
+                <FeatureGate currentTier={effectiveTier} requiredFeature="GOLDA_CHAT" silent>
                     <Button
                         variant="ghost"
-                        className={getNavItemClass("/dashboard/calendar")}
+                        onClick={handleOpenGolda}
+                        className="w-full justify-start gap-3 font-semibold text-foreground hover:bg-purple-500/10 hover:text-purple-600 h-12 rounded-xl"
                     >
-                        <Calendar size={20} className={isActive("/dashboard/calendar") ? "text-primary" : ""} /> יומן תורים
+                        <Bot size={20} className="text-purple-500" /> שיחה עם גולדה
                     </Button>
-                </Link>
+                </FeatureGate>
+
+                <FeatureGate currentTier={effectiveTier} requiredFeature="CALENDAR_SYNC" silent>
+                    <Link href="/dashboard/calendar" onClick={onNavClick}>
+                        <Button
+                            variant="ghost"
+                            className={getNavItemClass("/dashboard/calendar")}
+                        >
+                            <Calendar size={20} className={isActive("/dashboard/calendar") ? "text-primary" : ""} /> יומן תורים
+                        </Button>
+                    </Link>
+                </FeatureGate>
 
                 <Link href="/dashboard/customers" onClick={onNavClick}>
                     <Button
@@ -120,14 +132,16 @@ export function SidebarContent({
                     </Button>
                 </Link>
 
-                <Link href="/dashboard/marketing" onClick={onNavClick}>
-                    <Button
-                        variant="ghost"
-                        className={getNavItemClass("/dashboard/marketing")}
-                    >
-                        <Megaphone size={20} className={isActive("/dashboard/marketing") ? "text-primary" : ""} /> שיווק ותוכן
-                    </Button>
-                </Link>
+                <FeatureGate currentTier={effectiveTier} requiredFeature="MARKETING_HUB" silent>
+                    <Link href="/dashboard/marketing" onClick={onNavClick}>
+                        <Button
+                            variant="ghost"
+                            className={getNavItemClass("/dashboard/marketing")}
+                        >
+                            <Megaphone size={20} className={isActive("/dashboard/marketing") ? "text-primary" : ""} /> שיווק ותוכן
+                        </Button>
+                    </Link>
+                </FeatureGate>
 
                 <Link href="/dashboard/website" onClick={onNavClick}>
                     <Button

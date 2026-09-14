@@ -31,7 +31,14 @@ interface MissingInfoCard {
     created_at: string;
 }
 
+import { useSession } from "next-auth/react";
+import FeatureGate from "@/components/dashboard/FeatureGate";
+import { type SubscriptionTier } from "@/lib/config/tiers";
+
 export default function GrowthPage() {
+    const { data: session } = useSession();
+    const effectiveTier = (session?.user?.effectiveTier as SubscriptionTier) ?? "basic";
+
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -165,7 +172,8 @@ export default function GrowthPage() {
             ) : (
                 <div className="space-y-8">
                     {/* === SECTION 0: MISSING INFO QUEUE ("מידע שחסר לדניאלה") === */}
-                    <Card className="bg-card/90 border-border shadow-sm rounded-3xl overflow-hidden backdrop-blur-xl">
+                    <FeatureGate currentTier={effectiveTier} requiredFeature="MISSING_INFO_RESOLVER">
+                        <Card className="bg-card/90 border-border shadow-sm rounded-3xl overflow-hidden backdrop-blur-xl">
                         <CardHeader className="border-b border-border/60 pb-4">
                             <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
@@ -226,81 +234,84 @@ export default function GrowthPage() {
                             )}
                         </CardContent>
                     </Card>
+                    </FeatureGate>
 
-                    <form onSubmit={handleSave} className="space-y-8">
-                        {/* SECTION 1: DANIELA PUBLIC KNOWLEDGE */}
-                        <Card className="bg-card border-border shadow-sm rounded-3xl overflow-hidden">
-                            <CardHeader className="border-b border-border/60 pb-4">
-                                <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                      
-                                        <CardTitle className="text-lg font-bold text-foreground">
-                                           מידע על העסק(ללקוחות)
-                                        </CardTitle>
+                    <FeatureGate currentTier={effectiveTier} requiredFeature="PROMPT_EDITOR">
+                        <form onSubmit={handleSave} className="space-y-8">
+                            {/* SECTION 1: DANIELA PUBLIC KNOWLEDGE */}
+                            <Card className="bg-card border-border shadow-sm rounded-3xl overflow-hidden">
+                                <CardHeader className="border-b border-border/60 pb-4">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                          
+                                            <CardTitle className="text-lg font-bold text-foreground">
+                                               מידע על העסק(ללקוחות)
+                                            </CardTitle>
+                                        </div>
                                     </div>
-                                </div>
-                                <CardDescription className="text-muted-foreground text-xs pt-1">
-                                    מידע תפעולי, הוראות הגעה, מדיניות תורים ודגשים שדניאלה תענה לפיהם ללקוחות.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-6 space-y-4">
-                                {/* Explicit UI Warning Label */}
-                                <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 p-4 rounded-2xl text-xs leading-relaxed font-medium">
-                                    <AlertCircle className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                                    <div>
-                                        <p className="font-bold text-sm mb-0.5">שים לב:</p>
-                                        <p>מידע שייכתב כאן גלוי לכלל הלקוחות שמשוחחים עם דניאלה. אל תכתוב כאן נתונים פיננסיים או אסטרטגיות פנימיות.</p>
+                                    <CardDescription className="text-muted-foreground text-xs pt-1">
+                                        מידע תפעולי, הוראות הגעה, מדיניות תורים ודגשים שדניאלה תענה לפיהם ללקוחות.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-6 space-y-4">
+                                    {/* Explicit UI Warning Label */}
+                                    <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 p-4 rounded-2xl text-xs leading-relaxed font-medium">
+                                        <AlertCircle className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                                        <div>
+                                            <p className="font-bold text-sm mb-0.5">שים לב:</p>
+                                            <p>מידע שייכתב כאן גלוי לכלל הלקוחות שמשוחחים עם דניאלה. אל תכתוב כאן נתונים פיננסיים או אסטרטגיות פנימיות.</p>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <Textarea
-                                    value={publicInstructions}
-                                    onChange={(e) => setPublicInstructions(e.target.value)}
-                                    rows={6}
-                                    placeholder="לדוגמה: הקליניקה ממוקמת בקומה 3. חניה חינם ללקוחות בחניון הבניין. הגעה בלבוש נוח..."
-                                    className="rounded-2xl border-border bg-background p-4 text-sm text-foreground focus-visible:ring-primary leading-relaxed font-sans"
-                                />
-                            </CardContent>
-                        </Card>
+                                    <Textarea
+                                        value={publicInstructions}
+                                        onChange={(e) => setPublicInstructions(e.target.value)}
+                                        rows={6}
+                                        placeholder="לדוגמה: הקליניקה ממוקמת בקומה 3. חניה חינם ללקוחות בחניון הבניין. הגעה בלבוש נוח..."
+                                        className="rounded-2xl border-border bg-background p-4 text-sm text-foreground focus-visible:ring-primary leading-relaxed font-sans"
+                                    />
+                                </CardContent>
+                            </Card>
 
-                        {/* SECTION 2: GOLDA INTERNAL KNOWLEDGE */}
-                        <Card className="bg-card border-border shadow-sm rounded-3xl overflow-hidden">
-                            <CardHeader className="border-b border-border/60 pb-4">
-                                <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                        <Lock className="w-5 h-5 text-amber-500" />
-                                        <CardTitle className="text-lg font-bold text-foreground">
-                                            תובנות שיווקיות וניהוליות 
-                                        </CardTitle>
+                            {/* SECTION 2: GOLDA INTERNAL KNOWLEDGE */}
+                            <Card className="bg-card border-border shadow-sm rounded-3xl overflow-hidden">
+                                <CardHeader className="border-b border-border/60 pb-4">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <Lock className="w-5 h-5 text-amber-500" />
+                                            <CardTitle className="text-lg font-bold text-foreground">
+                                                תובנות שיווקיות וניהוליות 
+                                            </CardTitle>
+                                        </div>
+                                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                             חסוי - מנהל בלבד
+                                        </span>
                                     </div>
-                                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                                         חסוי - מנהל בלבד
-                                    </span>
-                                </div>
-                                <CardDescription className="text-muted-foreground text-xs pt-1">
-                                    הערות פנימיות, יתרות תקציב, יעדים עסקיים ואסטרטגיה - נגיש אך ורק לגולדה בדשבורד.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-6 space-y-4">
-                                {/* Explicit Private Badge */}
-                                <div className="flex items-start gap-3 bg-muted/60 border border-border text-foreground p-4 rounded-2xl text-xs leading-relaxed font-medium">
-                                    
-                                    <div>
-                                        <p className="font-bold text-sm mb-0.5"> מידע פנימי - גולדה בלבד:</p>
-                                        <p>מידע זה אינו נגיש לדניאלה בשום אופן ולא ייחשף לעולם ללקוחות קצה. גולדה משתמשת במידע זה בלבד להפקת דוחות ואסטרטגיה.</p>
+                                    <CardDescription className="text-muted-foreground text-xs pt-1">
+                                        הערות פנימיות, יתרות תקציב, יעדים עסקיים ואסטרטגיה - נגיש אך ורק לגולדה בדשבורד.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-6 space-y-4">
+                                    {/* Explicit Private Badge */}
+                                    <div className="flex items-start gap-3 bg-muted/60 border border-border text-foreground p-4 rounded-2xl text-xs leading-relaxed font-medium">
+                                        
+                                        <div>
+                                            <p className="font-bold text-sm mb-0.5"> מידע פנימי - גולדה בלבד:</p>
+                                            <p>מידע זה אינו נגיש לדניאלה בשום אופן ולא ייחשף לעולם ללקוחות קצה. גולדה משתמשת במידע זה בלבד להפקת דוחות ואסטרטגיה.</p>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <Textarea
-                                    value={internalNotes}
-                                    onChange={(e) => setInternalNotes(e.target.value)}
-                                    rows={5}
-                                    placeholder="לדוגמה: יעד מכירות חודשי ₪50,000. להתמקד החודש בקידום חבילת בוטוקס. שולי רווח יעד 40%..."
-                                    className="rounded-2xl border-border bg-background p-4 text-sm text-foreground focus-visible:ring-primary leading-relaxed font-sans"
-                                />
-                            </CardContent>
-                        </Card>
-                    </form>
+                                    <Textarea
+                                        value={internalNotes}
+                                        onChange={(e) => setInternalNotes(e.target.value)}
+                                        rows={5}
+                                        placeholder="לדוגמה: יעד מכירות חודשי ₪50,000. להתמקד החודש בקידום חבילת בוטוקס. שולי רווח יעד 40%..."
+                                        className="rounded-2xl border-border bg-background p-4 text-sm text-foreground focus-visible:ring-primary leading-relaxed font-sans"
+                                    />
+                                </CardContent>
+                            </Card>
+                        </form>
+                    </FeatureGate>
                 </div>
             )}
 

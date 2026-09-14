@@ -10,10 +10,17 @@ import { format } from "date-fns";
 import { he } from "date-fns/locale/he";
 import useSWR from "swr";
 import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
+import FeatureGate from "@/components/dashboard/FeatureGate";
+import { type SubscriptionTier } from "@/lib/config/tiers";
+import { Lock } from "lucide-react";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function AnalyticsSection() {
+    const { data: session } = useSession();
+    const effectiveTier = (session?.user?.effectiveTier as SubscriptionTier) ?? "basic";
+
     const [isMounted, setIsMounted] = useState(false);
     const [date, setDate] = useState<Date | undefined>(undefined);
 
@@ -129,12 +136,25 @@ export default function AnalyticsSection() {
                         <p className="text-sm text-muted-foreground mb-4">
                             הורדת דוח מרוכז של נתוני השיחות לקובץ CSV.
                         </p>
-                        <Button
-                            onClick={handleExport}
-                            className="w-full h-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
+                        <FeatureGate
+                            currentTier={effectiveTier}
+                            requiredFeature="CSV_EXPORT"
+                            fallback={
+                                <Button
+                                    disabled
+                                    className="w-full h-10 rounded-xl bg-muted text-muted-foreground gap-2 cursor-not-allowed"
+                                >
+                                    <Lock size={16} /> ייצוא (Enterprise)
+                                </Button>
+                            }
                         >
-                            <Download size={16} /> הורד דוח
-                        </Button>
+                            <Button
+                                onClick={handleExport}
+                                className="w-full h-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
+                            >
+                                <Download size={16} /> הורד דוח
+                            </Button>
+                        </FeatureGate>
                     </CardContent>
                 </Card>
             </div>

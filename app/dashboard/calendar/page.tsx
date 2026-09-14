@@ -7,10 +7,13 @@ import WeeklyCalendar from "@/components/dashboard/WeeklyCalendar";
 import CalendarHeaderActions from "@/components/dashboard/CalendarHeaderActions";
 import { getBookings } from "@/lib/simplybook";
 import { format, addDays, startOfWeek } from "date-fns";
+import FeatureGate from "@/components/dashboard/FeatureGate";
 
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) redirect("/login");
+
+    const effectiveTier = session.user.effectiveTier ?? "basic";
 
     await connectToDatabase();
     const business = await Business.findOne({ ownerEmail: session.user.email }).lean();
@@ -47,20 +50,22 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     }
 
     return (
-        <div className="h-full flex flex-col p-6 w-full">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">יומן תורים</h1>
-                    <p className="text-gray-500 mt-1">
-                        {sbCreds?.companyLogin ? `מחובר לחשבון: ${sbCreds.companyLogin}` : "לא מחובר ליומן"}
-                    </p>
+        <FeatureGate currentTier={effectiveTier} requiredFeature="CALENDAR_SYNC">
+            <div className="h-full flex flex-col p-6 w-full">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">יומן תורים</h1>
+                        <p className="text-gray-500 mt-1">
+                            {sbCreds?.companyLogin ? `מחובר לחשבון: ${sbCreds.companyLogin}` : "לא מחובר ליומן"}
+                        </p>
+                    </div>
+                    {sbCreds?.companyLogin && (
+                        <CalendarHeaderActions />
+                    )}
                 </div>
-                {sbCreds?.companyLogin && (
-                    <CalendarHeaderActions />
-                )}
-            </div>
 
-            <WeeklyCalendar events={liveEvents} hasError={hasError} />
-        </div>
+                <WeeklyCalendar events={liveEvents} hasError={hasError} />
+            </div>
+        </FeatureGate>
     );
 }

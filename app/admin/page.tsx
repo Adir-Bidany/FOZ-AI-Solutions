@@ -35,6 +35,8 @@ import PazLeadsInbox from "@/components/admin/PazLeadsInbox";
 import PromptCMSFAB from "@/components/admin/PromptCMSFAB";
 import AdminMetricsBoard from "@/components/admin/AdminMetricsBoard";
 import AdminBillingTab from "@/components/admin/AdminBillingTab";
+import AdminAIUsageTab from "@/components/admin/AdminAIUsageTab";
+import TierSelectDropdown from "@/components/admin/TierSelectDropdown";
 
 // --- Tab Definitions ---
 
@@ -418,11 +420,7 @@ export default function AdminDashboard() {
 
                 {/* Tab: AI Usage */}
                 {activeTab === "ai-usage" && (
-                    <ComingSoonTab
-                        icon={Zap}
-                        label="שימוש AI — צריכת טוקנים ועלויות"
-                        description="כאן יוצגו: פירוט טוקנים ועלויות לכל לקוח, מכסות שימוש, ואיתור לקוחות בעלי צריכה חריגה."
-                    />
+                    <AdminAIUsageTab />
                 )}
 
                 {/* Tab: System Health */}
@@ -477,13 +475,23 @@ export default function AdminDashboard() {
                                     <option value="suspended">🔴 מושהה (Suspended Account)</option>
                                 </select>
                             </div>
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-foreground">טייר מנוי (Subscription Tier)</label>
-                                <select value={editForm.subscription_tier} onChange={(e) => setEditForm((prev) => ({ ...prev, subscription_tier: e.target.value as "basic" | "pro" | "enterprise" }))} className="w-full bg-background border border-border text-foreground rounded-xl p-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-purple-500">
-                                    <option value="basic">⭐ Basic (בסיסי)</option>
-                                    <option value="pro">🚀 Pro (פרו)</option>
-                                    <option value="enterprise">🏢 Enterprise (ארגוני)</option>
-                                </select>
+                            <div className="space-y-1.5 p-4 border border-amber-500/30 bg-amber-500/5 rounded-xl">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <label className="text-xs font-bold text-foreground">טייר מנוי (Subscription Tier)</label>
+                                        <p className="text-[10px] text-muted-foreground mt-0.5">שינוי כאן מגדיר את הלקוח כקבוע ומבטל את מגבלת 14-יום (Free Trial).</p>
+                                    </div>
+                                    <div className="w-40">
+                                        <TierSelectDropdown 
+                                            businessId={editingClient._id} 
+                                            currentTier={editForm.subscription_tier} 
+                                            onSuccess={(newTier) => {
+                                                setEditForm(prev => ({ ...prev, subscription_tier: newTier }));
+                                                setClients(prev => prev.map(c => c._id === editingClient._id ? { ...c, subscription_tier: newTier } : c));
+                                            }}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                             <div className="pt-4 flex items-center justify-end gap-3 border-t border-border/60">
                                 <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)} className="rounded-xl text-xs font-bold">ביטול</Button>

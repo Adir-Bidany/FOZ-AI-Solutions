@@ -138,8 +138,9 @@ export async function POST(req: NextRequest) {
                 processed_for_insights: false
             });
         } else {
-            // Load history
-            history = mapChatHistory(chat.messages);
+            // Load history — apply sliding window: cap to last 20 message pairs (40 entries)
+            const rawHistory = mapChatHistory(chat.messages);
+            history = rawHistory.slice(-40);
 
             // Fetch Customer if linked
             if (chat.customer_id) {
@@ -249,9 +250,15 @@ export async function POST(req: NextRequest) {
             ? "PENDING_APPROVAL (משתמש ממתין לאישור מנהל עסק)"
             : "GUEST (אורח לא מחובר)";
 
+        // Build clientHistorySummary — inject long-term AI memory if available
         let clientHistorySummary = "אין גישה להיסטוריית לקוח לפני אימות ואישור מנהל.";
         if (agentPersona === "daniela" && isVerifiedCustomer) {
-            clientHistorySummary = `Customer Name: ${customer.name} ${customer.lastName || ""}. Total Appointments: ${customer.metrics?.totalAppointments || 0}. Recent Treatments: ${(customer.history?.lastTreatments || []).join(", ")}`;
+            const crmSummary = `Customer Name: ${customer.name} ${customer.lastName || ""}. Total Appointments: ${customer.metrics?.totalAppointments || 0}. Recent Treatments: ${(customer.history?.lastTreatments || []).join(", ")}`;
+            // Inject long-term AI memory summary if it exists
+            const aiMemorySummary = customer.ai_profile?.summary;
+            clientHistorySummary = aiMemorySummary
+                ? `${crmSummary}\n\n[LONG-TERM AI MEMORY — Summary from previous conversations]:\n${aiMemorySummary}`
+                : crmSummary;
         }
 
         const systemPrompt = await assembleDynamicSystemPrompt(agentPersona, {
@@ -655,6 +662,51 @@ MARKETING POST CREATION BEHAVIORAL RULES:
         }
 
         await chat.save();
+
+        // --- PHASE 2: ASYNC MEMORY WRITER (Non-blocking) ---
+        // For verified customers, after enough messages, generate/update a cumulative memory summary.
+        // This runs asynchronously so it never delays the response to the client.
+        const MEMORY_UPDATE_THRESHOLD = 6; // minimum messages in this session to trigger a summary update
+        if (
+            agentPersona === "daniela" &&
+            customerId &&
+            Types.ObjectId.isValid(customerId) &&
+            chat.messages.length >= MEMORY_UPDATE_THRESHOLD
+        ) {
+            (async () => {
+                try {
+                    // Build a compact transcript from the current session for summarization
+                    const sessionTranscript = chat.messages
+                        .slice(-20) // only summarize recent 20 messages
+                        .map((m: any) => `${m.role === "user" ? "לקוח" : "AI"}: ${m.parts?.[0]?.text || ""}`)
+                        .join("\n");
+
+                    const existingSummary = customer?.ai_profile?.summary || "";
+                    const summaryPrompt = existingSummary
+                        ? `להלן הסיכום הקיים שלך על הלקוח:\n${existingSummary}\n\nולהלן תמליל מהשיחה האחרונה:\n${sessionTranscript}\n\nאנא עדכן את הסיכום על הלקוח בעברית (עד 250 מילים), תוך שמירה על המידע הישן הרלוונטי ושילוב המידע החדש. כלול: העדפות, מטרות, שאלות שחזרו, ומאפיינים חשובים.`
+                        : `להלן תמליל שיחה עם לקוח:\n${sessionTranscript}\n\nאנא כתוב סיכום קצר על הלקוח בעברית (עד 200 מילים). כלול: שם, העדפות, מטרות, שאלות שעלו, ומאפיינים חשובים לשיחות עתידיות.`;
+
+                    const summaryModel = createGeminiInstance({
+                        modelName: "gemini-2.5-flash",
+                        systemInstruction: "אתה מערכת לניהול זיכרון לקוחות. כתוב סיכום תמציתי ומועיל לשימוש עתידי.",
+                    });
+
+                    const summaryResult = await summaryModel.generateContent(summaryPrompt);
+                    const newSummary = summaryResult.response.text().trim();
+
+                    if (newSummary) {
+                        await Customer.findByIdAndUpdate(customerId, {
+                            "ai_profile.summary": newSummary
+                        });
+                        console.log(`[Memory Writer] Updated ai_profile.summary for customer ${customerId}`);
+                    }
+                } catch (memoryErr) {
+                    // Silent failure — memory update never blocks the main response
+                    console.error("[Memory Writer] Failed to update customer memory:", memoryErr);
+                }
+            })();
+        }
+        // --- END MEMORY WRITER ---
 
         const nextResponse = NextResponse.json({
             response: responseText,

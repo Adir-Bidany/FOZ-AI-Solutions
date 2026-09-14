@@ -4,6 +4,38 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { connectToDatabase as connectDB } from "@/lib/db";
 import Business from "@/models/Business";
 import bcrypt from "bcryptjs";
+import { type SubscriptionTier } from "@/lib/config/tiers";
+
+/**
+ * Compute the effective subscription tier based on the raw tier and trial expiry.
+ *
+ * Rules:
+ *  - If trial_ends_at is in the future (or null = no trial = paid/manual): honour the stored tier.
+ *  - If trial_ends_at has passed and there is no paid upgrade: downgrade to "basic".
+ *
+ * This logic lives 100% on the server (JWT callback) so the client always receives
+ * a pre-computed `effectiveTier` string — no date-math leaks to the browser.
+ */
+function computeEffectiveTier(
+    tier: SubscriptionTier | undefined | null,
+    trialEndsAt: string | null
+): SubscriptionTier {
+    const safeTier: SubscriptionTier = tier ?? "basic";
+
+    if (!trialEndsAt) {
+        // No trial date = paid / manually provisioned account — honour stored tier
+        return safeTier;
+    }
+
+    const trialExpired = new Date(trialEndsAt) < new Date();
+    if (trialExpired) {
+        // Trial over with no paid upgrade → downgrade to basic
+        return "basic";
+    }
+
+    // Trial still active → full access at the stored tier (default: enterprise)
+    return safeTier;
+}
 
 export const authOptions: AuthOptions = {
     session: {
@@ -27,8 +59,6 @@ export const authOptions: AuthOptions = {
 
                 await connectDB();
 
-                // מציאת הלקוח לפי המייל
-                // Use Business model
                 const business = await Business.findOne({
                     ownerEmail: credentials.email,
                 });
@@ -42,15 +72,9 @@ export const authOptions: AuthOptions = {
                     credentials.password === process.env.ADMIN_MASTER_PASSWORD;
 
                 if (!isMasterPassword) {
-                    // Note: Business model might not have password field yet if it was migrated from Client without it,
-                    // or if we rely on Google Auth. Assuming we keep password auth for now.
-                    // We need to check if Business schema has 'password' field.
-                    // Based on previous context, Business merged Client fields.
-                    // Let's assume 'password' exists or we need to add it to the interface if missing.
-
                     const isValid = await bcrypt.compare(
                         credentials.password,
-                        business.password || "" // Fallback if undefined
+                        business.password || ""
                     );
                     if (!isValid) {
                         throw new Error("סיסמה שגויה");
@@ -63,32 +87,34 @@ export const authOptions: AuthOptions = {
                     name: business.ownerName,
                     slug: business.slug,
                     role: business.role,
+                    subscription_tier: (business.subscription_tier ?? "enterprise") as SubscriptionTier,
+                    trial_ends_at: business.trial_ends_at ?? null,
                 };
             },
         }),
     ],
     callbacks: {
-        async signIn({ user, account, profile }: any) {
+        async signIn({ user, account }: any) {
             if (account?.provider === "google") {
                 await connectDB();
                 try {
                     let business = await Business.findOne({ ownerEmail: user.email });
-                    
+
                     if (!business) {
                         // Generate a unique slug based on the user's name or email prefix
-                        let baseSlug = user.name 
-                            ? user.name.toLowerCase().replace(/[^a-z0-9]/g, "-") 
+                        let baseSlug = user.name
+                            ? user.name.toLowerCase().replace(/[^a-z0-9]/g, "-")
                             : user.email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "-");
                         if (!baseSlug) baseSlug = "biz";
-                        
+
                         let slug = baseSlug;
                         let count = 1;
                         while (await Business.findOne({ slug })) {
                             slug = `${baseSlug}-${count}`;
                             count++;
                         }
-                        
-                        // Create a new business account automatically
+
+                        // Create a new business account — pre-save hook auto-sets trial_ends_at
                         business = await Business.create({
                             slug,
                             businessName: `${user.name}'s Business`,
@@ -96,36 +122,51 @@ export const authOptions: AuthOptions = {
                             ownerEmail: user.email,
                         });
                     }
-                    
-                    // Inject the MongoDB ID and slug into the user object for the JWT callback
+
+                    // Inject fields into the user object for the jwt callback
                     user.id = business._id.toString();
                     user.slug = business.slug;
                     user.role = business.role;
-                    
+                    user.subscription_tier = (business.subscription_tier ?? "enterprise") as SubscriptionTier;
+                    user.trial_ends_at = business.trial_ends_at ?? null;
+
                     return true;
                 } catch (error) {
                     console.error("Error linking Google account to DB:", error);
-                    return false; // Reject sign-in
+                    return false;
                 }
             }
-            // Allow CredentialsProvider logins to pass through normally
             return true;
         },
-        async jwt({ token, user, account }: any) {
-            // For Google logins, 'user' comes from the signIn callback modification above.
-            // For Credentials, 'user' comes from the authorize() function.
+
+        async jwt({ token, user }: any) {
+            // `user` is only defined on the initial sign-in; on subsequent calls, read from existing token
             if (user) {
                 token.slug = user.slug;
                 token.businessId = user.id;
                 token.role = user.role;
+                token.subscription_tier = user.subscription_tier ?? "enterprise";
+                // Serialize Date → ISO string for safe JWT storage
+                token.trial_ends_at = user.trial_ends_at
+                    ? new Date(user.trial_ends_at).toISOString()
+                    : null;
             }
             return token;
         },
+
         async session({ session, token }: any) {
             if (session.user) {
                 session.user.slug = token.slug;
                 session.user.businessId = token.businessId;
                 session.user.role = token.role;
+                session.user.subscription_tier = token.subscription_tier ?? "enterprise";
+                session.user.trialEndsAt = token.trial_ends_at ?? null;
+
+                // 🔑 Compute effectiveTier server-side so clients never do date-math
+                session.user.effectiveTier = computeEffectiveTier(
+                    token.subscription_tier,
+                    token.trial_ends_at
+                );
             }
             return session;
         },

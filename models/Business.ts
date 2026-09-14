@@ -45,6 +45,9 @@ export interface IBusiness extends Document {
     subscriptionStatus: "active" | "trial" | "expired";
     account_status?: "active" | "suspended" | "trial";
     subscription_tier?: "basic" | "pro" | "enterprise";
+    ai_token_quota?: number;
+    /** ISO date — when the 14-day free trial expires. Null means no trial (manual/paid account). */
+    trial_ends_at?: Date;
     lastImageGeneratedAt?: Date;
     publicInstructions?: string;
     internalNotes?: string;
@@ -125,7 +128,15 @@ const BusinessSchema = new Schema<IBusiness>(
         subscription_tier: {
             type: String,
             enum: ["basic", "pro", "enterprise"],
-            default: "pro"
+            default: "enterprise"  // New businesses start on full enterprise trial
+        },
+        ai_token_quota: {
+            type: Number,
+            default: 500000
+        },
+        trial_ends_at: {
+            type: Date,
+            default: null  // Set by pre-save hook on first save
         },
         lastImageGeneratedAt: { type: Date },
         publicInstructions: { type: String, default: "" },
@@ -133,6 +144,16 @@ const BusinessSchema = new Schema<IBusiness>(
     },
     { timestamps: true }
 );
+
+// ─── Pre-save Hook ────────────────────────────────────────────────────────────
+// Automatically set trial_ends_at to 14 days from creation for new businesses.
+BusinessSchema.pre("save", async function () {
+    if (this.isNew && !this.trial_ends_at) {
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + 14);
+        this.trial_ends_at = trialEndDate;
+    }
+});
 
 const Business = models.Business || model<IBusiness>("Business", BusinessSchema);
 
