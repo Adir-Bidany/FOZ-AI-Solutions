@@ -15,8 +15,7 @@ export async function POST(req: Request) {
             );
         }
 
-        const { companyLogin, apiKey, userLogin, userPassword } = await req.json();
-
+        const data = await req.json();
         await connectToDatabase();
 
         const business = await Business.findOne({
@@ -30,19 +29,8 @@ export async function POST(req: Request) {
             );
         }
 
-        // Update SimplyBook keys
-        if (!business.api_keys) {
-            business.api_keys = {};
-        }
-
-        business.api_keys.simplybook = {
-            companyLogin: companyLogin,
-            apiKey: apiKey,
-            userLogin: userLogin,
-            userPassword: userPassword
-        };
-
-        await business.save();
+        // Logic for future integrations (e.g. Meta, WhatsApp, Google Calendar) will go here.
+        // await business.save();
 
         return NextResponse.json({ success: true });
     } catch (error) {
@@ -78,10 +66,8 @@ export async function DELETE(req: Request) {
             );
         }
 
-        if (business.api_keys && business.api_keys.simplybook) {
-            business.api_keys.simplybook = undefined;
-            await business.save();
-        }
+        // Logic for disconnecting future integrations will go here.
+        // await business.save();
 
         return NextResponse.json({ success: true });
     } catch (error) {

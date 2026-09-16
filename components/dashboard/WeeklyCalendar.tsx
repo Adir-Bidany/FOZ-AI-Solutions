@@ -5,16 +5,13 @@ import { he } from "date-fns/locale";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
-import CalendarConnectModal from "./CalendarConnectModal";
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 
 interface WeeklyCalendarProps {
     events: any[] | null;
-    hasError?: boolean;
 }
 
-export default function WeeklyCalendar({ events, hasError = false }: WeeklyCalendarProps) {
+export default function WeeklyCalendar({ events }: WeeklyCalendarProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     
@@ -62,14 +59,6 @@ export default function WeeklyCalendar({ events, hasError = false }: WeeklyCalen
         };
     };
 
-    useEffect(() => {
-        if (hasError) {
-            toast.error("החיבור ליומן נכשל. אנא בדוק את הפרטים ונסה שנית");
-        }
-    }, [hasError]);
-
-    const isUnconnected = events === null || hasError;
-
     return (
         <div className="flex flex-col h-[calc(100vh-12rem)] min-h-[600px] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative" dir="rtl">
             {/* Header */}
@@ -92,13 +81,8 @@ export default function WeeklyCalendar({ events, hasError = false }: WeeklyCalen
 
             {/* Grid */}
             <div className="flex-1 overflow-auto relative bg-slate-50/50">
-                {isUnconnected && (
-                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/40 backdrop-blur-md">
-                        <CalendarConnectModal hasError={hasError} />
-                    </div>
-                )}
                 
-                <div className={`flex min-w-[800px] h-full transition-all ${isUnconnected ? 'opacity-40 blur-[2px]' : ''}`}>
+                <div className="flex min-w-[800px] h-full transition-all">
                     {/* Time Column */}
                     <div className="w-16 flex-shrink-0 bg-slate-50 border-l border-border/80 sticky right-0 z-30">
                         <div className="h-24 border-b border-border/80 bg-slate-100/80 sticky top-0 z-40"></div>
@@ -110,72 +94,61 @@ export default function WeeklyCalendar({ events, hasError = false }: WeeklyCalen
                             ))}
                         </div>
                     </div>
-                    
-                    {/* Day Columns */}
-                    <div className="grid grid-cols-7 flex-1 divide-x divide-x-reverse divide-border/80">
-                        {days.map((day, i) => {
-                            const dayEvents = (events || []).filter(e => {
-                                if (!e.date) return false;
-                                const eDate = new Date(e.date);
-                                return isSameDay(eDate, day);
-                            });
 
-                            return (
-                                <div key={i} className="flex flex-col relative h-full bg-white">
-                                    <div className="text-center h-24 border-b border-border/80 bg-slate-100/80 sticky top-0 z-20 flex flex-col justify-center">
-                                        <div className="text-sm text-slate-500 font-bold uppercase tracking-wider">
-                                            {format(day, "EEEE", { locale: he })}
-                                        </div>
-                                        <div className={`text-2xl mt-1 ${isSameDay(day, new Date()) ? 'text-blue-600 font-black' : 'text-slate-900 font-bold'}`}>
-                                            {format(day, "d")}
-                                        </div>
-                                    </div>
-                                    <div className="relative flex-1" style={{ height: `${(HOURS_END - HOURS_START) * HOUR_HEIGHT}px` }}>
-                                        {/* Grid lines */}
-                                        {hours.slice(0, -1).map(h => (
-                                            <div key={h} className="absolute w-full border-t border-slate-100" style={{ top: `${(h - HOURS_START) * HOUR_HEIGHT}px` }}></div>
-                                        ))}
-                                        
-                                        {/* Event Cards */}
-                                        {dayEvents.map((evt, idx) => {
-                                            const style = getEventStyle(evt.startTime, evt.endTime);
-                                            return (
-                                                <div key={idx} className="absolute w-[92%] right-[4%] bg-blue-50/90 border border-blue-200 border-r-4 border-r-blue-500 rounded-md p-1.5 overflow-hidden shadow-sm hover:shadow-md hover:bg-blue-100 transition-all z-10" style={style}>
-                                                    <div className="font-bold text-blue-900 text-xs truncate leading-tight">{evt.title}</div>
-                                                    <div className="text-blue-700 text-[10px] mt-0.5 truncate">{evt.startTime?.substring(0,5)} - {evt.endTime?.substring(0,5)}</div>
-                                                    {evt.service && <div className="text-blue-600/80 mt-0.5 text-[10px] truncate">{evt.service}</div>}
-                                                    {evt.note && (
-                                                        <button 
-                                                            onClick={(e) => { e.stopPropagation(); setSelectedNote(evt.note); }}
-                                                            className="mt-1 w-full bg-blue-200 text-blue-800 text-[10px] font-bold py-0.5 rounded shadow-sm hover:bg-blue-300 transition-colors"
-                                                        >
-                                                            הודעה מהלקוח
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                    {/* Days Columns */}
+                    <div className="flex-1 flex relative">
+                        {/* Background Grid Lines */}
+                        <div className="absolute inset-0 pointer-events-none">
+                            {hours.slice(0, -1).map((h) => (
+                                <div key={`grid-${h}`} className="border-b border-slate-100" style={{ height: `${HOUR_HEIGHT}px` }}></div>
+                            ))}
+                        </div>
+
+                        {days.map((day, dayIdx) => (
+                            <div key={dayIdx} className="flex-1 min-w-[120px] border-l border-slate-100 last:border-l-0 relative group">
+                                {/* Day Header */}
+                                <div className="h-24 border-b border-border/80 bg-white sticky top-0 z-40 flex flex-col items-center justify-center gap-1 group-hover:bg-blue-50/30 transition-colors">
+                                    <span className="text-xs font-semibold uppercase text-slate-500">{format(day, "EEEE", { locale: he })}</span>
+                                    <span className={`text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full ${isSameDay(day, new Date()) ? 'bg-blue-600 text-white shadow-md' : 'text-slate-800'}`}>
+                                        {format(day, "d")}
+                                    </span>
                                 </div>
-                            );
-                        })}
+
+                                {/* Day Events */}
+                                <div className="relative h-full" style={{ height: `${(HOURS_END - HOURS_START) * HOUR_HEIGHT}px` }}>
+                                    {events?.filter(e => isSameDay(new Date(e.date), day)).map((event) => (
+                                        <div
+                                            key={event.id}
+                                            className="absolute left-1 right-1 rounded-lg border shadow-sm flex flex-col p-2 text-sm overflow-hidden bg-white/95 border-emerald-200 cursor-pointer hover:shadow-md transition-shadow z-10 group/event"
+                                            style={getEventStyle(event.startTime, event.endTime)}
+                                            onClick={() => event.note ? setSelectedNote(event.note) : null}
+                                        >
+                                            <div className="flex items-start justify-between gap-1 mb-1">
+                                                <span className="font-bold text-emerald-800 leading-tight truncate">{event.title}</span>
+                                                <span className="text-[10px] font-medium text-emerald-600/80 whitespace-nowrap bg-emerald-50 px-1.5 py-0.5 rounded-full shrink-0">
+                                                    {event.startTime}
+                                                </span>
+                                            </div>
+                                            <span className="text-xs text-slate-600 truncate">{event.service}</span>
+                                            {event.phone && (
+                                                <span className="text-[11px] text-slate-400 mt-auto truncate" dir="ltr">{event.phone}</span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
-            
-            {/* Note Modal */}
+
+            {/* Note Popover Modal */}
             {selectedNote && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden" dir="rtl">
-                        <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-                            <h3 className="font-bold text-gray-800">הודעה מהלקוח</h3>
-                            <button onClick={() => setSelectedNote(null)} className="text-gray-400 hover:text-gray-600 font-bold text-lg">
-                                &times;
-                            </button>
-                        </div>
-                        <div className="p-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                            {selectedNote}
-                        </div>
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm" onClick={() => setSelectedNote(null)}>
+                    <div className="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full mx-4 border border-gray-100" onClick={e => e.stopPropagation()}>
+                        <h3 className="font-bold text-lg mb-2 text-gray-900">הערות להזמנה</h3>
+                        <p className="text-gray-600 text-sm whitespace-pre-wrap leading-relaxed">{selectedNote}</p>
+                        <Button className="w-full mt-6" onClick={() => setSelectedNote(null)}>סגור</Button>
                     </div>
                 </div>
             )}

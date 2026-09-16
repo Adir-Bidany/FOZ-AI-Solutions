@@ -16,7 +16,6 @@ import { AGENT_REGISTRY, securityClassifierSchema } from "@/lib/agents/registry"
 import { Types } from "mongoose";
 import { cleanAIResponse, extractJsonFromText, mapChatHistory, createGeminiInstance } from "@/lib/utils/ai-helpers";
 import { assembleDynamicSystemPrompt } from "@/lib/agents/assembler";
-import { getAvailableSlots, bookAppointment, SimplyBookCreds } from "@/lib/simplybook";
 import jwt from "jsonwebtoken";
 import { forwardMessageToOwner, reportMissingInfoQuestion } from "@/actions/dashboard";
 
