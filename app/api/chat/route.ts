@@ -9,6 +9,7 @@ import Business from "@/models/Business";
 import ChatExternal from "@/models/ChatExternal";
 import Customer from "@/models/Customer";
 import ActionCard from "@/models/ActionCard";
+import Appointment from "@/models/Appointment";
 import AgentInsight from "@/models/AgentInsight";
 
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
@@ -333,6 +334,160 @@ MARKETING POST CREATION BEHAVIORAL RULES:
             model: google("gemini-2.5-flash"),
             system: finalSystemPrompt,
             messages: coreMessages,
+
+            // ─── Native FOZ Calendar Tools ───────────────────────────────
+            ...(agentPersona === "daniela" && isVerifiedCustomer && businessId !== "demo"
+                ? {
+                    tools: {
+                        check_availability: tool({
+                            description: "בדיקת זמינות תורים לתאריך מסוים. מחזיר רשימת שעות פנויות.",
+                            inputSchema: z.object({
+                                date: z.string().describe("התאריך לבדיקה בפורמט YYYY-MM-DD"),
+                            }),
+                            execute: (async (args: any) => {
+                                const { date } = args;
+                                try {
+                                    const targetDate = new Date(date);
+                                    const dayOfWeek = targetDate.getDay(); // 0=Sun…6=Sat
+
+                                    // Fetch working hours from Business document
+                                    const biz = await Business.findById(businessId).lean() as any;
+                                    const workingHours: any[] = biz?.workingHours ?? [];
+                                    const dayConfig = workingHours.find((w: any) => w.day === dayOfWeek);
+
+                                    if (!dayConfig || !dayConfig.isOpen) {
+                                        return { available: [], message: "העסק סגור ביום זה." };
+                                    }
+
+                                    // Build list of candidate hour slots within working hours
+                                    const openStart = parseInt(dayConfig.startTime.split(":")[0], 10);
+                                    const openEnd   = parseInt(dayConfig.endTime.split(":")[0], 10);
+                                    const candidateSlots: string[] = [];
+                                    for (let h = openStart; h < openEnd; h++) {
+                                        candidateSlots.push(`${h.toString().padStart(2, "0")}:00`);
+                                    }
+
+                                    // Fetch all bookings/blocks for this date
+                                    const startOfDay = new Date(targetDate);
+                                    startOfDay.setHours(0, 0, 0, 0);
+                                    const endOfDay = new Date(targetDate);
+                                    endOfDay.setHours(23, 59, 59, 999);
+
+                                    const existing = await Appointment.find({
+                                        business_id: businessId,
+                                        "details.date": { $gte: startOfDay, $lte: endOfDay },
+                                        status: { $nin: ["cancelled"] },
+                                    }).lean();
+
+                                    // Remove taken slots
+                                    const takenHours = new Set<number>();
+                                    for (const appt of existing) {
+                                        const apptDate = new Date((appt as any).details.date);
+                                        const apptHour = apptDate.getHours();
+                                        const durationHours = Math.ceil(((appt as any).details.duration_minutes ?? 60) / 60);
+                                        for (let i = 0; i < durationHours; i++) {
+                                            takenHours.add(apptHour + i);
+                                        }
+                                        // Full-day blocks close everything
+                                        if ((appt as any).details.is_full_day) {
+                                            return { available: [], message: "היומן חסום לכל היום הזה." };
+                                        }
+                                    }
+
+                                    const available = candidateSlots.filter(slot => {
+                                        const h = parseInt(slot.split(":")[0], 10);
+                                        return !takenHours.has(h);
+                                    });
+
+                                    if (available.length === 0) {
+                                        return { available: [], message: "אין שעות פנויות ביום זה." };
+                                    }
+
+                                    return { available, message: `שעות פנויות ב-${date}: ${available.join(", ")}` };
+                                } catch (e: any) {
+                                    return { available: [], message: "שגיאה בבדיקת הזמינות. נסה שוב." };
+                                }
+                            }) as any,
+                        }) as any,
+
+                        book_appointment: tool({
+                            description: "קביעת תור חדש ללקוח לאחר שהזמינות אומתה.",
+                            inputSchema: z.object({
+                                date:          z.string().describe("תאריך התור YYYY-MM-DD"),
+                                time:          z.string().describe("שעת התור HH:MM"),
+                                service_type:  z.string().describe("סוג השירות / הטיפול"),
+                                customer_name: z.string().optional().describe("שם הלקוח"),
+                                customer_phone:z.string().optional().describe("טלפון הלקוח"),
+                                note:          z.string().optional().describe("הערה נוספת"),
+                            }),
+                            execute: (async (args: any) => {
+                                const { date, time, service_type, customer_name, customer_phone, note } = args;
+                                try {
+                                    // Parse appointment datetime
+                                    const [year, month, day]   = date.split("-").map(Number);
+                                    const [hours, minutes]      = time.split(":").map(Number);
+                                    const apptDate = new Date(year, month - 1, day, hours, minutes, 0);
+
+                                    // Double-check the slot is still free
+                                    const startOfHour = new Date(apptDate);
+                                    const endOfHour   = new Date(apptDate.getTime() + 60 * 60 * 1000);
+
+                                    const conflict = await Appointment.findOne({
+                                        business_id: businessId,
+                                        "details.date": { $gte: startOfHour, $lt: endOfHour },
+                                        status: { $nin: ["cancelled"] },
+                                    });
+
+                                    if (conflict) {
+                                        return { success: false, message: "מצטערת, השעה הזו כבר תפוסה. נסי שעה אחרת." };
+                                    }
+
+                                    // Create the appointment
+                                    const newAppt = new Appointment({
+                                        business_id: businessId,
+                                        user_id: customerId && Types.ObjectId.isValid(customerId)
+                                            ? new Types.ObjectId(customerId)
+                                            : undefined,
+                                        type: "booking",
+                                        status: "confirmed",
+                                        details: {
+                                            date: apptDate,
+                                            duration_minutes: 60,
+                                            service_name: service_type,
+                                        },
+                                        metadata: {
+                                            source: "chat",
+                                            notes: [
+                                                customer_name  ? `שם: ${customer_name}`  : null,
+                                                customer_phone ? `טלפון: ${customer_phone}` : null,
+                                                note           ? `הערה: ${note}`          : null,
+                                            ].filter(Boolean).join(" | ") || undefined,
+                                        },
+                                    });
+
+                                    await newAppt.save();
+
+                                    const confirmation = [
+                                        `✅ התור נקבע בהצלחה!`,
+                                        `📅 תאריך: ${date}`,
+                                        `🕐 שעה: ${time}`,
+                                        `💼 שירות: ${service_type}`,
+                                        customer_name  ? `👤 שם: ${customer_name}`   : null,
+                                        customer_phone ? `📞 טלפון: ${customer_phone}` : null,
+                                    ].filter(Boolean).join("\n");
+
+                                    return { success: true, appointmentId: newAppt._id.toString(), message: confirmation };
+                                } catch (e: any) {
+                                    console.error("[book_appointment tool] Error:", e);
+                                    return { success: false, message: "שגיאה בקביעת התור. נסי שוב." };
+                                }
+                            }) as any,
+                        }) as any,
+                    },
+                }
+                : {}),
+            // ─────────────────────────────────────────────────────────────
+
             onFinish: async ({ text, usage }) => {
                 chat.messages.push({
                     role: "user",
