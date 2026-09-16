@@ -38,6 +38,7 @@ export default function UnifiedChatWidget({
 }: UnifiedChatWidgetProps) {
     const [messages, setMessages] = useState<Message[]>(initialMessages);
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const [sessionId, setSessionId] = useState<string | null>(null);
@@ -82,16 +83,45 @@ export default function UnifiedChatWidget({
         return () => window.removeEventListener("security-purge", handlePurge);
     }, [initialMessages]);
 
+    // --- PHASE 4: Load persistent chat history on mount for registered consumers ---
+    useEffect(() => {
+        // Only load history for the public daniela persona when the user is a registered consumer
+        const hasConsumerToken = typeof document !== "undefined" && document.cookie.includes("consumer_token");
+        if (mode !== "public" || agentPersona !== "daniela" || !hasConsumerToken) return;
+        // Don't overwrite if we already have messages (e.g. passed via initialMessages)
+        if (messages.length > 0) return;
+
+        setIsLoadingHistory(true);
+        fetch("/api/chat/history")
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.success && data.messages && data.messages.length > 0) {
+                    setMessages(data.messages as Message[]);
+                    if (data.sessionId) {
+                        setSessionId(data.sessionId);
+                    }
+                }
+            })
+            .catch((err) => {
+                console.error("[UnifiedChatWidget] Failed to load chat history:", err);
+            })
+            .finally(() => {
+                setIsLoadingHistory(false);
+            });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mode, agentPersona]);
+    // --- END HISTORY LOADER ---
+
     // Fetch dynamic initial greeting if starting empty (only if consent is bypassed or approved)
     useEffect(() => {
-        if (messages.length === 0 && agentPersona && (consentStatus === "approved" || consentStatus === "bypassed")) {
+        if (messages.length === 0 && !isLoadingHistory && agentPersona && (consentStatus === "approved" || consentStatus === "bypassed")) {
             getInitialGreeting(agentPersona).then((greeting) => {
                 if (greeting) {
                     setMessages([{ role: "assistant", content: greeting }]);
                 }
             });
         }
-    }, [agentPersona, messages.length, consentStatus]);
+    }, [agentPersona, messages.length, isLoadingHistory, consentStatus]);
 
     const handleSend = async (content: string) => {
         // Add user message
@@ -219,6 +249,14 @@ export default function UnifiedChatWidget({
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-transparent min-h-0">
+                {/* History loading shimmer */}
+                {isLoadingHistory && (
+                    <div className="flex flex-col gap-3 animate-pulse">
+                        <div className="flex justify-start"><div className="h-8 w-48 bg-muted rounded-2xl" /></div>
+                        <div className="flex justify-end"><div className="h-8 w-32 bg-primary/20 rounded-2xl" /></div>
+                        <div className="flex justify-start"><div className="h-8 w-56 bg-muted rounded-2xl" /></div>
+                    </div>
+                )}
                 {messages.map((msg, idx) => (
                     <ChatBubble
                         key={idx}

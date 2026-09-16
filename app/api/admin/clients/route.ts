@@ -43,6 +43,7 @@ export async function GET(req: NextRequest) {
             email: b.ownerEmail || b.email,
             slug: b.slug,
             account_status: b.account_status || b.subscriptionStatus || "trial",
+            subscription_tier: b.subscription_tier || "pro",
             createdAt: b.createdAt ? new Date(b.createdAt).toISOString() : new Date().toISOString(),
             totalCustomerChats: countMap[b._id.toString()] || 0,
             integrations: {

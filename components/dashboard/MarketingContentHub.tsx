@@ -13,12 +13,16 @@ import {
     HelpCircle,
     Unlink,
     ShieldCheck,
+    Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
+import FeatureGate from "@/components/dashboard/FeatureGate";
+import { type SubscriptionTier } from "@/lib/config/tiers";
 import {
     Dialog,
     DialogContent,
@@ -44,6 +48,9 @@ export default function MarketingContentHub({
     initialInsights,
     initialMetaConfig = null,
 }: MarketingContentHubProps) {
+    const { data: session } = useSession();
+    const effectiveTier = (session?.user?.effectiveTier as SubscriptionTier) ?? "basic";
+
     const [insightsList, setInsightsList] = useState<any[]>(initialInsights);
     const [metaConfig, setMetaConfig] = useState<any>(initialMetaConfig);
 
@@ -266,18 +273,37 @@ export default function MarketingContentHub({
 
                     {/* Include AI Image Toggle */}
                     <div className="flex items-center justify-between pt-2">
-                        <div className="flex items-center gap-3">
-                            <Switch
-                                id="include-image"
-                                checked={includeImage}
-                                onCheckedChange={(checked: boolean) => setIncludeImage(checked)}
-                                disabled={isGenerating}
-                            />
-                            <Label htmlFor="include-image" className="text-sm font-medium flex items-center gap-2 cursor-pointer">
-                                <ImageIcon className="w-4 h-4 text-primary" />
-                                כלול תמונת AI מותאמת אישית (Imagen 3)
-                            </Label>
-                        </div>
+                        <FeatureGate
+                            currentTier={effectiveTier}
+                            requiredFeature="AI_IMAGE_GENERATOR"
+                            fallback={
+                                <div className="flex items-center gap-3 opacity-70">
+                                    <Switch
+                                        id="include-image-locked"
+                                        checked={false}
+                                        disabled={true}
+                                    />
+                                    <Label htmlFor="include-image-locked" className="text-sm font-medium flex items-center gap-2 cursor-not-allowed">
+                                        <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                                        כלול תמונת AI מותאמת אישית
+                                        <Lock className="ml-2 text-muted-foreground" size={14} />
+                                    </Label>
+                                </div>
+                            }
+                        >
+                            <div className="flex items-center gap-3">
+                                <Switch
+                                    id="include-image"
+                                    checked={includeImage}
+                                    onCheckedChange={(checked: boolean) => setIncludeImage(checked)}
+                                    disabled={isGenerating}
+                                />
+                                <Label htmlFor="include-image" className="text-sm font-medium flex items-center gap-2 cursor-pointer">
+                                    <ImageIcon className="w-4 h-4 text-primary" />
+                                    כלול תמונת AI מותאמת אישית
+                                </Label>
+                            </div>
+                        </FeatureGate>
                     </div>
                 </form>
             </div>

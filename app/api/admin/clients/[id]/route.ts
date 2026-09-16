@@ -83,6 +83,12 @@ export async function PATCH(
                 updateFields.subscriptionStatus = "expired";
             }
         }
+        if (body.subscription_tier !== undefined) {
+            updateFields.subscription_tier = body.subscription_tier;
+        }
+        if (body.ai_token_quota !== undefined) {
+            updateFields.ai_token_quota = body.ai_token_quota;
+        }
 
         const updatedClient = await Business.findByIdAndUpdate(
             id,

@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { X, MessageSquare, Bot, User, Loader2 } from "lucide-react";
+import { X, MessageSquare, Bot, User, Loader2, Lock } from "lucide-react";
 import { fetchCustomerChatHistory, type ChatSession, type ChatMessage } from "@/actions/dashboard";
+import { useSession } from "next-auth/react";
+import FeatureGate from "@/components/dashboard/FeatureGate";
+import { type SubscriptionTier } from "@/lib/config/tiers";
 
 interface CustomerChatModalProps {
     isOpen: boolean;
@@ -65,6 +68,9 @@ export default function CustomerChatModal({
     customerId,
     customerName,
 }: CustomerChatModalProps) {
+    const { data: session } = useSession();
+    const effectiveTier = (session?.user?.effectiveTier as SubscriptionTier) ?? "basic";
+
     const [messages, setMessages] = useState<FlatMessage[]>([]);
     const [loading, setLoading] = useState(false);
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -191,12 +197,38 @@ export default function CustomerChatModal({
                     )}
                 </div>
 
-                {/* ─── Footer ─── */}
+                {/* ─── Footer / Live Chat Intervention ─── */}
                 <div className="px-5 py-3 border-t border-border bg-card/80 shrink-0">
-                    <p className="text-[11px] text-center text-muted-foreground">
+                    <FeatureGate 
+                        currentTier={effectiveTier} 
+                        requiredFeature="LIVE_CHAT_INTERVENTION"
+                        fallback={
+                            <div className="relative">
+                                <input 
+                                    type="text" 
+                                    disabled 
+                                    placeholder="התערבות בצ'אט זמינה במסלול Pro" 
+                                    className="w-full bg-muted/50 border border-border text-muted-foreground text-xs rounded-xl pl-10 pr-4 py-3 cursor-not-allowed"
+                                />
+                                <Lock className="w-4 h-4 absolute left-3 top-3.5 text-muted-foreground/60" />
+                            </div>
+                        }
+                    >
+                        <div className="flex items-center gap-2">
+                            <input 
+                                type="text" 
+                                placeholder="הקלד הודעה ללקוח (משהה את הבוט)..." 
+                                className="flex-1 bg-background border border-border text-foreground text-xs rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                            />
+                            <button className="bg-primary text-primary-foreground p-3 rounded-xl hover:bg-primary/90 transition-colors shadow-sm">
+                                <MessageSquare className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </FeatureGate>
+                    <p className="text-[10px] text-center text-muted-foreground mt-2">
                         {messages.length > 0
                             ? `${messages.length} הודעות בשיחה`
-                            : "קריאה בלבד — ניתן לראות אך לא לשלוח הודעות מכאן"}
+                            : "אין הודעות עדיין"}
                     </p>
                 </div>
             </div>

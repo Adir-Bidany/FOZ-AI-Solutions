@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
                 ownerName: b.ownerName || "בעלים",
                 email: b.ownerEmail || b.email || "",
                 slug: b.slug || "",
+                ai_token_quota: b.ai_token_quota || 500000,
             };
         });
 

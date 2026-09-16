@@ -9,6 +9,8 @@ import SystemAuditLog from "./SystemAuditLog";
 import GoldaModal from "./GoldaModal";
 import LeadManager from "./LeadManager";
 import AnalyticsSection from "./AnalyticsSection";
+import FeatureGate from "@/components/dashboard/FeatureGate";
+import { type SubscriptionTier } from "@/lib/config/tiers";
 
 interface ActionCard {
     _id: string;
@@ -28,6 +30,7 @@ interface DashboardShellProps {
     firstName: string;
     businessName: string;
     initialCards: ActionCard[];
+    effectiveTier: SubscriptionTier;
 }
 
 export default function DashboardShell({
@@ -35,6 +38,7 @@ export default function DashboardShell({
     firstName,
     businessName,
     initialCards,
+    effectiveTier,
 }: DashboardShellProps) {
     const [isGoldaOpen, setIsGoldaOpen] = useState(false);
     const [cards, setCards] = useState<ActionCard[]>(initialCards);
@@ -58,11 +62,13 @@ export default function DashboardShell({
                     SECTION 1 — Agent Action Center (מרכז הפעולות)
                     First component on page right below Global Header
                 ══════════════════════════════════════════════ */}
-                <ActionCenter
-                    businessId={businessId}
-                    initialCards={initialCards}
-                    onCardsChange={setCards}
-                />
+                <FeatureGate currentTier={effectiveTier} requiredFeature="ACTION_CENTER">
+                    <ActionCenter
+                        businessId={businessId}
+                        initialCards={initialCards}
+                        onCardsChange={setCards}
+                    />
+                </FeatureGate>
 
                 {/* ══════════════════════════════════════════════
                     SECTION 1.5 — Lead Manager (ניהול פניות ולידים)
@@ -82,12 +88,16 @@ export default function DashboardShell({
                 {/* ══════════════════════════════════════════════
                     SECTION 4 — Agent Insights Feed
                 ══════════════════════════════════════════════ */}
-                <AgentInsightsFeed />
+                <FeatureGate currentTier={effectiveTier} requiredFeature="AGENT_INSIGHTS_FEED">
+                    <AgentInsightsFeed />
+                </FeatureGate>
 
                 {/* ══════════════════════════════════════════════
                     SECTION 5 — System Audit Log
                 ══════════════════════════════════════════════ */}
-                <SystemAuditLog />
+                <FeatureGate currentTier={effectiveTier} requiredFeature="SYSTEM_AUDIT_LOG">
+                    <SystemAuditLog />
+                </FeatureGate>
 
                 {/* ══════════════════════════════════════════════
                     SECTION 6 — Analytics & CSV Export

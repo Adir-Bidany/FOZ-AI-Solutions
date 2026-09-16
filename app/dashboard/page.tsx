@@ -43,6 +43,7 @@ export default async function DashboardPage() {
 
     // Fetch real action cards for Section 1 — Agent Action Center
     const actionCards = await fetchActionCards(serialized._id.toString());
+    const effectiveTier = session.user.effectiveTier ?? "basic";
 
     return (
         <DashboardShell
@@ -50,6 +51,7 @@ export default async function DashboardPage() {
             firstName={firstName}
             businessName={displayBusinessName}
             initialCards={actionCards}
+            effectiveTier={effectiveTier}
         />
     );
 }
