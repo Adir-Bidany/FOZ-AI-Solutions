@@ -11,6 +11,7 @@ import "react-day-picker/style.css";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { ShieldCheck, CheckCircle2 } from "lucide-react";
+import { useChat } from "@ai-sdk/react";
 
 interface Message {
     role: "user" | "assistant" | "model";
