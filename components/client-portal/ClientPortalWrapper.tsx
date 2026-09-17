@@ -13,32 +13,40 @@ interface ClientPortalWrapperProps {
 
 export default function ClientPortalWrapper({ customerName, businessConfig }: ClientPortalWrapperProps) {
     return (
-        <div className="w-full max-w-xl mx-auto flex flex-col gap-6 pb-28" dir="rtl">
-            {/* Greeting */}
-            <ClientGreeting customerName={customerName} />
+        <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 pb-20" dir="rtl">
+            {/* Top Row: 2 Columns on Desktop */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
+                
+                {/* Right Column (50%): Core Info */}
+                <div className="flex flex-col gap-6 order-1">
+                    <ClientGreeting customerName={customerName} />
+                    <hr className="border-border opacity-50" />
+                    
+                    <section className="flex flex-col gap-2">
+                        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-0.5">התור הקרוב</h2>
+                        <UpcomingAppointmentCard />
+                    </section>
+                    
+                    <section className="flex flex-col gap-2">
+                        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-0.5">טיפולים קודמים</h2>
+                        <PastTreatmentsList />
+                    </section>
+                </div>
 
-            <hr className="border-border opacity-50" />
+                {/* Left Column (50%): Premium Daniela Frame */}
+                <div className="flex flex-col order-2 h-[500px] lg:h-auto min-h-[500px]">
+                    {/* DanielaFAB will expand to fill this entire container */}
+                    <DanielaFAB businessConfig={businessConfig} />
+                </div>
+            </div>
 
-            {/* Upcoming appointment */}
-            <section className="flex flex-col gap-2">
-                <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-0.5">התור הקרוב</h2>
-                <UpcomingAppointmentCard />
-            </section>
-
-            {/* Past treatments */}
-            <section className="flex flex-col gap-2">
-                <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-0.5">טיפולים קודמים</h2>
-                <PastTreatmentsList />
-            </section>
-            
-            {/* Public Availability Calendar */}
-            <section className="flex flex-col gap-2">
-                <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-0.5">קביעת תור חדש</h2>
-                <PublicAvailabilityCalendar businessId={businessConfig._id.toString()} />
-            </section>
-
-            {/* Daniela FAB — fixed to viewport, no layout impact */}
-            <DanielaFAB businessConfig={businessConfig} />
+            {/* Bottom Row: Full Width Calendar */}
+            <div className="mt-4">
+                <section className="flex flex-col gap-2">
+                    <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-0.5">קביעת תור חדש</h2>
+                    <PublicAvailabilityCalendar businessId={businessConfig._id.toString()} />
+                </section>
+            </div>
         </div>
     );
 }
