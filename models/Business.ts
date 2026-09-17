@@ -11,10 +11,6 @@ export interface IBusiness extends Document {
     logo?: string;
     role?: "admin" | "user";
     api_keys?: {
-        simplybook?: {
-            companyLogin?: string;
-            apiKey?: string;
-        };
         whatsapp?: string;
         meta?: {
             accessToken?: string;
@@ -49,6 +45,14 @@ export interface IBusiness extends Document {
     /** ISO date — when the 14-day free trial expires. Null means no trial (manual/paid account). */
     trial_ends_at?: Date;
     lastImageGeneratedAt?: Date;
+    workingHours?: {
+        day: number;       // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+        isOpen: boolean;
+        startTime: string; // e.g. "09:00"
+        endTime: string;   // e.g. "18:00"
+    }[];
+    /** If true, the booking AI flow will show a service selector. If false, books a generic appointment. */
+    hasServices?: boolean;
     publicInstructions?: string;
     internalNotes?: string;
     createdAt: Date;
@@ -75,12 +79,6 @@ const BusinessSchema = new Schema<IBusiness>(
 
         // --- Config ---
         api_keys: {
-            simplybook: {
-                companyLogin: { type: String },
-                apiKey: { type: String },
-                userLogin: { type: String },
-                userPassword: { type: String }
-            },
             whatsapp: { type: String },
             meta: {
                 accessToken: { type: String },
@@ -141,6 +139,28 @@ const BusinessSchema = new Schema<IBusiness>(
         lastImageGeneratedAt: { type: Date },
         publicInstructions: { type: String, default: "" },
         internalNotes: { type: String, default: "" },
+
+        // --- Native FOZ Calendar: Working Hours ---
+        workingHours: {
+            type: [
+                {
+                    day: { type: Number, required: true, min: 0, max: 6 },
+                    isOpen: { type: Boolean, default: true },
+                    startTime: { type: String, default: "09:00" },
+                    endTime: { type: String, default: "18:00" },
+                }
+            ],
+            default: [
+                { day: 0, isOpen: true,  startTime: "09:00", endTime: "18:00" }, // Sun
+                { day: 1, isOpen: true,  startTime: "09:00", endTime: "18:00" }, // Mon
+                { day: 2, isOpen: true,  startTime: "09:00", endTime: "18:00" }, // Tue
+                { day: 3, isOpen: true,  startTime: "09:00", endTime: "18:00" }, // Wed
+                { day: 4, isOpen: true,  startTime: "09:00", endTime: "18:00" }, // Thu
+                { day: 5, isOpen: true,  startTime: "09:00", endTime: "13:00" }, // Fri
+                { day: 6, isOpen: false, startTime: "09:00", endTime: "18:00" }, // Sat
+            ]
+        },
+        hasServices: { type: Boolean, default: false },
     },
     { timestamps: true }
 );

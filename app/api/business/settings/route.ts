@@ -54,7 +54,9 @@ export async function GET(req: Request) {
                 apiKeys: {
                     companyLogin: apiKeys.simplybook?.companyLogin || "",
                     apiKey: apiKeys.simplybook?.apiKey || ""
-                }
+                },
+                
+                hasServices: !!business.hasServices
             }
         });
     } catch (error) {
@@ -106,6 +108,10 @@ export async function POST(req: Request) {
             business.landing_page_data.about_text = body.description;
         }
 
+        if (body.hasServices !== undefined) {
+            business.hasServices = body.hasServices;
+        }
+
         await business.save();
 
         return NextResponse.json({ success: true });
@@ -116,4 +122,8 @@ export async function POST(req: Request) {
             { status: 500 }
         );
     }
+}
+
+export async function PATCH(req: Request) {
+    return POST(req);
 }

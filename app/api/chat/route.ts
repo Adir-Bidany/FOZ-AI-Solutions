@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { streamText, tool } from "ai";
+import { google } from "@ai-sdk/google";
+import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -6,6 +9,7 @@ import Business from "@/models/Business";
 import ChatExternal from "@/models/ChatExternal";
 import Customer from "@/models/Customer";
 import ActionCard from "@/models/ActionCard";
+import Appointment from "@/models/Appointment";
 import AgentInsight from "@/models/AgentInsight";
 
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
@@ -13,7 +17,6 @@ import { AGENT_REGISTRY, securityClassifierSchema } from "@/lib/agents/registry"
 import { Types } from "mongoose";
 import { cleanAIResponse, extractJsonFromText, mapChatHistory, createGeminiInstance } from "@/lib/utils/ai-helpers";
 import { assembleDynamicSystemPrompt } from "@/lib/agents/assembler";
-import { getAvailableSlots, bookAppointment, SimplyBookCreds } from "@/lib/simplybook";
 import jwt from "jsonwebtoken";
 import { forwardMessageToOwner, reportMissingInfoQuestion } from "@/actions/dashboard";
 
@@ -30,7 +33,10 @@ function isSameCalendarDay(date1?: Date | null, date2?: Date): boolean {
 
 export async function POST(req: NextRequest) {
     try {
-        let { message, businessId, sessionId, agentPersona = "daniela" } = await req.json();
+        let { messages, message, businessId, sessionId, agentPersona = "daniela" } = await req.json();
+        if (messages && messages.length > 0) {
+            message = messages[messages.length - 1].content;
+        }
 
         if (businessId === "demo" || agentPersona === "paz") {
             agentPersona = "paz";
@@ -282,6 +288,19 @@ export async function POST(req: NextRequest) {
 1. MANDATORY FIRST STEP: If the user wants to book an appointment or check availability, you MUST start by asking for the date. Set "action_type" to "check_availability" or "book_appointment", and set your "conversational_reply" to exactly "אנא בחרי תאריך:". DO NOT ask for the service type first.
 2. When you need the user to select a date, time, or service, keep your text response EXTREMELY short. DO NOT hallucinate available slots. Delegate the actual selection to the UI widgets by calling the appropriate function or setting the correct action_type.`;
 
+            // NEW (BATCH 321): Business logic for Services and Notes
+            const hasServices = business?.hasServices ?? false;
+            if (hasServices) {
+                finalSystemPrompt += `\n\n[SERVICES LOGIC]: The business offers multiple services. Before booking, you MUST ask the user what specific treatment they want. Pass their choice to the booking tool.`;
+            } else {
+                finalSystemPrompt += `\n\n[SERVICES LOGIC]: The business does NOT offer multiple distinct services. DO NOT ask the user what service they want. Implicitly use "פגישה" or "תור" for the service name.`;
+            }
+
+            finalSystemPrompt += `\n\n[CUSTOMER NOTE LOGIC]: Before calling book_appointment, you MUST ask the user: "האם תרצה להוסיף הערה לבעל העסק לקראת התור?". Pass their answer (or empty string if they decline) into the 'note' parameter of the booking tool.`;
+
+            finalSystemPrompt += `\n\n[WAITLIST LOGIC]: If the user asks for a time that is fully booked, or if 'check_availability' returns no slots, you must offer: "תרצה שאכניס אותך לרשימת ההמתנה ואעדכן אם יתפנה משהו?". If they agree, use the 'add_to_waitlist' tool.`;
+
+
             // --- AI GUARDRAILS (B2B2C Security) ---
             if (!isVerifiedCustomer) {
                 finalSystemPrompt += `\n\n[SECURITY ENFORCEMENT]: You are speaking to an unauthenticated or pending guest (${customerAuthStatus}). You CANNOT access their profile, book appointments, or cancel appointments. If they express intent to log in, register, book, cancel, or access profile data, you MUST set "action_type" to "trigger_auth_drawer" and set "conversational_reply" to exactly "בחלונית שנפתחה תוכל להירשם/להיכנס למערכת".`;
@@ -316,410 +335,318 @@ MARKETING POST CREATION BEHAVIORAL RULES:
         }
 
         let systemAction: string | undefined = undefined;
-// 5. AI Execution
-        const model = createGeminiInstance({
-            modelName: "gemini-2.5-flash",
-            systemInstruction: finalSystemPrompt,
-            responseSchema: responseSchema,
-            tools: tools
-        });
 
-        const chatSession = model.startChat({
-            history: history,
-        });
+        // 5. AI Execution with streamText
+        const coreMessages: any[] = history.map((m: any) => ({
+            role: m.role === "model" ? "assistant" : "user",
+            content: m.parts?.[0]?.text || ""
+        }));
+        coreMessages.push({ role: "user", content: message });
 
-        const result = await chatSession.sendMessage(message);
-        
-        // Extract token usage metadata from Gemini SDK
-        const usageMetadata = (result as any)?.response?.usageMetadata;
-        const promptTokens = usageMetadata?.promptTokenCount || 0;
-        const completionTokens = usageMetadata?.candidatesTokenCount || 0;
-        const totalTokens = usageMetadata?.totalTokenCount || (promptTokens + completionTokens);
+        const result = await streamText({
+            model: google("gemini-2.5-flash"),
+            system: finalSystemPrompt,
+            messages: coreMessages,
 
-        let responseText = "";
-
-        if (["daniela", "paz"].includes(agentPersona)) {
-            let parsedJson: any = null;
-
-            // 1. Safely inspect function calls across external personas
-            let functionCalls: any[] | undefined = undefined;
-            try {
-                functionCalls = result.response.functionCalls();
-            } catch (err) {
-                // No function calls in response
-            }
-
-            if (functionCalls && functionCalls.length > 0) {
-                for (const call of functionCalls) {
-                    const payload = call.args as any;
-
-                    if (call.name === "book_appointment") {
-                        if (payload && payload.date && payload.time && payload.service_type) {
-                            const sbCreds = business?.api_keys?.simplybook;
-                            let bookingResult;
-                            if (!sbCreds || !sbCreds.companyLogin || !sbCreds.apiKey) {
-                                bookingResult = "DEMO-" + Math.floor(Math.random() * 10000);
-                            } else {
-                                const clientData = {
-                                    name: payload.customer_name || customer?.name || "לקוח מערכת",
-                                    phone: payload.customer_phone || customer?.phone || "0000000000",
-                                    note: payload.note || undefined
-                                };
+            // ─── Native FOZ Calendar Tools ───────────────────────────────
+            ...(agentPersona === "daniela" && isVerifiedCustomer && businessId !== "demo"
+                ? {
+                    tools: {
+                        check_availability: tool({
+                            description: "בדיקת זמינות תורים לתאריך מסוים. מחזיר רשימת שעות פנויות.",
+                            inputSchema: z.object({
+                                date: z.string().describe("התאריך לבדיקה בפורמט YYYY-MM-DD"),
+                            }),
+                            execute: (async (args: any) => {
+                                const { date } = args;
                                 try {
-                                    bookingResult = await bookAppointment(
-                                        sbCreds as SimplyBookCreds,
-                                        payload.date,
-                                        payload.time,
-                                        clientData
-                                    );
-                                } catch (err) {
-                                    console.error("Booking integration failed:", err);
-                                    responseText += "\n\nאירעה תקלה זמנית מול מערכת התורים. אנא נסה שוב בעוד מספר דקות.";
-                                }
-                            }
-
-                            if (bookingResult) {
-                                responseText += `\n\n✅ התור שלך נקבע בהצלחה! (מספר אישור: ${bookingResult})`;
-                                
-                                // Persist local ActionCard & Appointment records in MongoDB for Business Owner Dashboard
-                                try {
-                                    if (businessId !== "demo" && Types.ObjectId.isValid(businessId)) {
-                                        await ActionCard.create({
-                                            business_id: new Types.ObjectId(businessId),
-                                            source_agent: "receptionist",
-                                            status: "pending",
-                                            priority: "medium",
-                                            display_content: {
-                                                title: `תור חדש נקבע: ${payload.customer_name || customer?.name || "לקוח מערכת"}`,
-                                                description: `שירות: ${payload.service_type} | תאריך: ${payload.date} | שעה: ${payload.time}. טלפון: ${payload.customer_phone || customer?.phone || "לא צוין"}`,
-                                                icon: "Calendar"
-                                            },
-                                            execution_payload: {
-                                                action_type: "schedule_event",
-                                                params: {
-                                                    date: payload.date,
-                                                    time: payload.time,
-                                                    service_type: payload.service_type,
-                                                    customer_name: payload.customer_name || customer?.name,
-                                                    phone: payload.customer_phone || customer?.phone,
-                                                    booking_id: bookingResult
-                                                }
-                                            }
-                                        });
-
-                                        if (customerId && Types.ObjectId.isValid(customerId)) {
-                                            const AppointmentModel = (await import("@/models/Appointment")).default;
-                                            await AppointmentModel.create({
-                                                business_id: new Types.ObjectId(businessId),
-                                                user_id: new Types.ObjectId(customerId),
-                                                details: {
-                                                    date: new Date(`${payload.date}T${payload.time}:00`),
-                                                    service_name: payload.service_type,
-                                                    duration_minutes: 30
-                                                },
-                                                status: "confirmed",
-                                                metadata: {
-                                                    source: "chat",
-                                                    notes: payload.note || `מספר אישור: ${bookingResult}`
-                                                }
-                                            });
-                                        }
-                                    }
-                                } catch (mongoErr) {
-                                    console.error("[Chat Route] Failed to persist local appointment/ActionCard record:", mongoErr);
-                                }
-                            } else {
-                                responseText += "\n\nלצערי לא הצלחתי לקבוע את התור, ייתכן שהשעה כבר נתפסה. תרצה לבדוק שעה אחרת?";
-                            }
-                        } else {
-                            responseText += "\n\nכדי שאוכל לקבוע את התור, אשמח לדעת תאריך, שעה, ואיזה טיפול תרצה לקבוע. מה חסר לנו?";
-                            systemAction = "show_date_picker";
-                        }
-
-                    } else if (call.name === "check_availability") {
-                        if (payload && payload.date) {
-                            const sbCreds = business?.api_keys?.simplybook;
-                            let timeMatrix;
-                            if (!sbCreds || !sbCreds.companyLogin || !sbCreds.apiKey) {
-                                timeMatrix = {
-                                    [payload.date]: ["10:00", "11:30", "14:00", "16:30"]
-                                };
-                            } else {
-                                try {
-                                    const toDate = new Date(new Date(payload.date).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-                                    timeMatrix = await getAvailableSlots(
-                                        sbCreds as SimplyBookCreds,
-                                        payload.date,
-                                        toDate
-                                    );
-                                } catch (err) {
-                                    console.error("Availability integration failed:", err);
-                                    responseText += "\n\nאירעה שגיאה בבדיקת התורים. נסה שוב מאוחר יותר.";
-                                }
-                            }
-
-                            if (timeMatrix && Object.keys(timeMatrix).length > 0) {
-                                let availableString = "";
-                                for (const [dateKey, times] of Object.entries(timeMatrix).slice(0, 3)) {
-                                    const timesArray = times as string[];
-                                    if (timesArray.length > 0) {
-                                        availableString += `\n📅 ב-${dateKey}: ${timesArray.slice(0, 3).join(", ")}`;
-                                    }
-                                }
-                                responseText += `\n\nמצאתי את התורים הבאים עבורך:${availableString}\nהאם אחד מהם מתאים לך?`;
-                                systemAction = "show_services";
-                            } else {
-                                responseText += "\n\nלצערי אין תורים פנויים בתאריכים שביקשת. תרצה לבדוק שבוע אחר?";
-                                systemAction = "show_date_picker";
-                            }
-                        } else {
-                            responseText += "\n\nלאיזה תאריך היית רוצה שאבדוק פניות?";
-                            systemAction = "show_date_picker";
-                        }
-
-                    } else if (call.name === "create_action_card") {
-                        if (businessId !== "demo" && Types.ObjectId.isValid(businessId)) {
-                            await ActionCard.create({
-                                business_id: new Types.ObjectId(businessId),
-                                source_agent: "receptionist",
-                                status: "pending",
-                                priority: payload?.priority || "medium",
-                                display_content: {
-                                    title: payload?.title || "בקשה מהלקוח",
-                                    description: payload?.description || "",
-                                    icon: "AlertCircle"
-                                },
-                                execution_payload: {
-                                    action_type: "cancel_appointment",
-                                    params: {
-                                        original_message: message,
-                                        chat_id: chat?._id,
-                                        details: payload?.description
-                                    }
-                                }
-                            });
-                            systemAction = "force_logout";
-                        }
-
-                    } else if (call.name === "forward_message_to_owner") {
-                        const custName = payload?.customer_name || "לקוח באתר";
-                        const msgContent = payload?.message_content || message || "";
-
-                        const res = await forwardMessageToOwner(
-                            businessId,
-                            custName,
-                            msgContent,
-                            sessionId
-                        );
-
-                        if (res.success) {
-                            responseText += `\n\n✉️ ההודעה שלך הועברה בהצלחה לבעל העסק!`;
-                        } else if (res.error === "daily_limit_reached") {
-                            responseText += `\n\n⚠️ הגעת למכסה היומית של 3 הודעות ליום לבעל העסק. תוכל להשאיר הודעה נוספת מחר!`;
-                        } else if (res.error === "word_limit_exceeded") {
-                            responseText += `\n\n⚠️ ההודעה ארוכה מ-50 מילים. אנא קצר אותה ל-50 מילים לכל היותר ושלח שוב.`;
-                        }
-                    }
-                }
-            }
-
-            // 2. Fallback text parsing if no function call populated text
-            if (!responseText) {
-                try {
-                    const rawText = result.response.text();
-                    const extracted = extractJsonFromText(rawText);
-                    if (extracted) {
-                        parsedJson = extracted;
-                        responseText = extracted.conversational_reply || extracted.reply || extracted.text || cleanAIResponse(rawText);
-                    } else {
-                        responseText = cleanAIResponse(rawText);
-                    }
-                } catch (err) {
-                    console.error("Text extraction fallback error:", err);
-                    responseText = "מצטערת, לא הבנתי.";
-                }
-            }
-
-            // Routing Logic Interceptor for Auth Triggers & Booking Intents without function calls
-            if (!systemAction) {
-                const action = parsedJson?.action_type;
-                if (action === "trigger_auth_drawer") {
-                    systemAction = "trigger_auth_drawer";
-                    responseText = "בחלונית שנפתחה תוכל להירשם/להיכנס למערכת";
-                } else if (action === "check_availability") {
-                    systemAction = "show_date_picker";
-                    if (!responseText || responseText.includes("איזה") || responseText.includes("שירות")) {
-                        responseText = "אנא בחרי תאריך:";
-                    }
-                } else {
-                    const isAskingForDate = responseText && (responseText.includes("בחרי תאריך") || responseText.includes("בחר תאריך"));
-                    if (isAskingForDate) {
-                        systemAction = "show_date_picker";
-                    }
-                }
-            }
-
-            responseText = responseText.trim();
-        } else {
-            // Internal agents (Golda): extract plain reply text, handling Golda's JSON schema format
-            try {
-                const rawText = result.response.text();
-                if (agentPersona === "golda") {
-                    const parsed = extractJsonFromText(rawText);
-                    responseText = parsed ? cleanAIResponse(parsed.reply || "") : cleanAIResponse(rawText);
-                } else {
-                    responseText = cleanAIResponse(rawText);
-                }
-            } catch (e) {
-                responseText = "";
-            }
-
-            let functionCalls: any[] | undefined = undefined;
-            try {
-                functionCalls = result.response.functionCalls();
-            } catch (e) {}
-
-            if (functionCalls && functionCalls.length > 0) {
-                for (const call of functionCalls) {
-                    if (call.name === "submit_for_approval") {
-                        const args = call.args as any;
-                        if (businessId !== "demo" && Types.ObjectId.isValid(businessId)) {
-                            let generatedImageUrl = args.imageUrl;
-
-                            // If Golda requested image generation and quota is available, generate image & update business quota
-                            if (args.generateImage) {
-                                const isQuotaUsedToday = isSameCalendarDay(business?.lastImageGeneratedAt, new Date());
-                                if (!isQuotaUsedToday) {
-                                    const cleanPrompt = encodeURIComponent(
-                                        `${args.title}, luxury aesthetic marketing photo, professional studio lighting`
-                                    );
-                                    const primaryUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?model=flux&width=1080&height=1080&nologo=true`;
-                                    const fallbackUrl = `https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1080&q=80`;
-
-                                    try {
-                                        const testRes = await fetch(primaryUrl, { method: "HEAD", signal: AbortSignal.timeout(5000) });
-                                        const contentType = testRes.headers.get("content-type") || "";
-                                        
-                                        if (testRes.ok && contentType.startsWith("image/")) {
-                                            generatedImageUrl = primaryUrl;
-                                        } else {
-                                            generatedImageUrl = fallbackUrl;
-                                        }
-                                    } catch (e) {
-                                        console.warn("[Chat Route] Pollinations verification failed, using fallback image:", e);
-                                        generatedImageUrl = fallbackUrl;
-                                    }
+                                    const targetDate = new Date(date);
                                     
-                                    await Business.findByIdAndUpdate(businessId, { lastImageGeneratedAt: new Date() });
+                                    // Check if requested date is in the past
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    if (targetDate < today) {
+                                        return { available: [], message: "Error: The requested time is in the past. Inform the user that past bookings are not allowed." };
+                                    }
+
+                                    const dayOfWeek = targetDate.getDay(); // 0=Sun…6=Sat
+
+                                    // Fetch working hours from Business document
+                                    const biz = await Business.findById(businessId).lean() as any;
+                                    const workingHours: any[] = biz?.workingHours ?? [];
+                                    const dayConfig = workingHours.find((w: any) => w.day === dayOfWeek);
+
+                                    if (!dayConfig || !dayConfig.isOpen) {
+                                        return { available: [], message: "העסק סגור ביום זה." };
+                                    }
+
+                                    // Build list of candidate hour slots within working hours
+                                    const openStart = parseInt(dayConfig.startTime.split(":")[0], 10);
+                                    const openEnd   = parseInt(dayConfig.endTime.split(":")[0], 10);
+                                    const candidateSlots: string[] = [];
+                                    for (let h = openStart; h < openEnd; h++) {
+                                        candidateSlots.push(`${h.toString().padStart(2, "0")}:00`);
+                                    }
+
+                                    // Fetch all bookings/blocks for this date
+                                    const startOfDay = new Date(targetDate);
+                                    startOfDay.setHours(0, 0, 0, 0);
+                                    const endOfDay = new Date(targetDate);
+                                    endOfDay.setHours(23, 59, 59, 999);
+
+                                    const existing = await Appointment.find({
+                                        business_id: businessId,
+                                        "details.date": { $gte: startOfDay, $lte: endOfDay },
+                                        status: { $nin: ["cancelled"] },
+                                    }).lean();
+
+                                    // Remove taken slots
+                                    const takenHours = new Set<number>();
+                                    for (const appt of existing) {
+                                        const apptDate = new Date((appt as any).details.date);
+                                        const apptHour = apptDate.getHours();
+                                        const durationHours = Math.ceil(((appt as any).details.duration_minutes ?? 60) / 60);
+                                        for (let i = 0; i < durationHours; i++) {
+                                            takenHours.add(apptHour + i);
+                                        }
+                                        // Full-day blocks close everything
+                                        if ((appt as any).details.is_full_day) {
+                                            return { available: [], message: "היומן חסום לכל היום הזה." };
+                                        }
+                                    }
+
+                                    const available = candidateSlots.filter(slot => {
+                                        const h = parseInt(slot.split(":")[0], 10);
+                                        return !takenHours.has(h);
+                                    });
+
+                                    if (available.length === 0) {
+                                        return { available: [], message: "אין שעות פנויות ביום זה." };
+                                    }
+
+                                    return { available, message: `שעות פנויות ב-${date}: ${available.join(", ")}` };
+                                } catch (e: any) {
+                                    return { available: [], message: "שגיאה בבדיקת הזמינות. נסה שוב." };
                                 }
-                            }
+                            }) as any,
+                        }) as any,
 
-                            // Write directly to AgentInsight as auto-approved (no pending queue)
-                            await AgentInsight.create({
-                                business_id: new Types.ObjectId(businessId),
-                                agentName: "Golda",
-                                type: args.type,
-                                title: args.title,
-                                content: args.content,
-                                imageUrl: generatedImageUrl,
-                                status: "approved"
-                            });
-                            responseText = `✅ ${args.title} פורסם בהצלחה במרכז התוכן השיווקי!`;
-                        } else {
-                            responseText = `Simulation: Asset "${args.title}" published to Marketing Hub (Demo mode).`;
+                        book_appointment: tool({
+                            description: "קביעת תור חדש ללקוח לאחר שהזמינות אומתה.",
+                            inputSchema: z.object({
+                                date:          z.string().describe("תאריך התור YYYY-MM-DD"),
+                                time:          z.string().describe("שעת התור HH:MM"),
+                                service_type:  z.string().describe("סוג השירות / הטיפול"),
+                                customer_name: z.string().optional().describe("שם הלקוח"),
+                                customer_phone:z.string().optional().describe("טלפון הלקוח"),
+                                note:          z.string().optional().describe("הערה נוספת"),
+                            }),
+                            execute: (async (args: any) => {
+                                const { date, time, service_type, customer_name, customer_phone, note } = args;
+                                try {
+                                    // Parse appointment datetime
+                                    const [year, month, day]   = date.split("-").map(Number);
+                                    const [hours, minutes]      = time.split(":").map(Number);
+                                    const startDateTime        = new Date(year, month - 1, day, hours, minutes);
+
+                                    // Check if requested time is strictly in the past
+                                    if (startDateTime < new Date()) {
+                                        return { success: false, message: "Error: The requested time is in the past. Inform the user that past bookings are not allowed." };
+                                    }
+
+                                    // Verify no existing overlapping booking/block for this exact time
+                                    const conflict = await Appointment.findOne({
+                                        business_id: businessId,
+                                        "details.date": startDateTime,
+                                        status: { $nin: ["cancelled"] }
+                                    }).lean();
+
+                                    if (conflict) {
+                                        return { success: false, message: "השעה המבוקשת כבר נתפסה. אנא הצע ללקוח שעה אחרת." };
+                                    }
+
+                                    const newAppt = new Appointment({
+                                        business_id: businessId,
+                                        user_id: customerId, // from JWT if present
+                                        type: "booking",
+                                        status: "confirmed",
+                                        details: {
+                                            date: startDateTime,
+                                            duration_minutes: 60,
+                                            service_name: service_type,
+                                        },
+                                        metadata: {
+                                            source: "chat",
+                                            notes: [
+                                                customer_name  ? `שם: ${customer_name}`  : null,
+                                                customer_phone ? `טלפון: ${customer_phone}` : null,
+                                                note           ? `הערה: ${note}`          : null,
+                                            ].filter(Boolean).join(" | ") || undefined,
+                                        },
+                                    });
+
+                                    await newAppt.save();
+
+                                    const confirmation = [
+                                        `✅ התור נקבע בהצלחה!`,
+                                        `📅 תאריך: ${date}`,
+                                        `🕐 שעה: ${time}`,
+                                        `💼 שירות: ${service_type}`,
+                                        customer_name  ? `👤 שם: ${customer_name}`   : null,
+                                        customer_phone ? `📞 טלפון: ${customer_phone}` : null,
+                                    ].filter(Boolean).join("\n");
+
+                                    return { success: true, appointmentId: newAppt._id.toString(), message: confirmation };
+                                } catch (e: any) {
+                                    console.error("[book_appointment tool] Error:", e);
+                                    return { success: false, message: "שגיאה בקביעת התור. נסי שוב." };
+                                }
+                            }) as any,
+                        }) as any,
+
+                        cancel_appointment: tool({
+                            description: "ביטול תור קיים. חפש תור לפי תאריך ושם לקוח / טלפון.",
+                            inputSchema: z.object({
+                                date:          z.string().describe("תאריך התור שנקבע YYYY-MM-DD"),
+                                customer_name: z.string().optional().describe("שם הלקוח הרשום (לצורך אימות)"),
+                            }),
+                            execute: (async (args: any) => {
+                                const { date, customer_name } = args;
+                                try {
+                                    const [year, month, day] = date.split("-").map(Number);
+                                    const startOfDay = new Date(year, month - 1, day, 0, 0, 0);
+                                    const endOfDay = new Date(year, month - 1, day, 23, 59, 59);
+
+                                    // Attempt to find the user's booking on this date
+                                    const query: any = {
+                                        business_id: businessId,
+                                        "details.date": { $gte: startOfDay, $lte: endOfDay },
+                                        type: "booking",
+                                        status: { $nin: ["cancelled"] }
+                                    };
+
+                                    // If authenticated, scope to their user_id
+                                    if (customerId) {
+                                        query.user_id = customerId;
+                                    } else if (customer_name) {
+                                        // Fallback to name search in notes for guests (not ideal but a fallback)
+                                        query["metadata.notes"] = { $regex: customer_name, $options: "i" };
+                                    } else {
+                                        return { success: false, message: "חסרים פרטים לזיהוי התור לביטול." };
+                                    }
+
+                                    const appt = await Appointment.findOne(query);
+
+                                    if (!appt) {
+                                        return { success: false, message: "לא נמצא תור תואם בתאריך זה." };
+                                    }
+
+                                    // Mark as cancelled
+                                    appt.status = "cancelled";
+                                    await appt.save();
+
+                                    return { success: true, message: `התור בתאריך ${date} בוטל בהצלחה.` };
+                                } catch (e: any) {
+                                    console.error("[cancel_appointment tool] Error:", e);
+                                    return { success: false, message: "שגיאה בביטול התור." };
+                                }
+                            }) as any,
+                        }) as any,
+
+                        add_to_waitlist: tool({
+                            description: "הוספת הלקוח לרשימת המתנה כאשר אין תורים פנויים.",
+                            inputSchema: z.object({
+                                preferred_dates: z.array(z.string()).describe("מערך של תאריכים רלוונטיים YYYY-MM-DD"),
+                                preferred_time_of_day: z.enum(["morning", "afternoon", "evening", "any"]).describe("חלקי היום המועדפים"),
+                                customer_name: z.string().describe("שם הלקוח"),
+                                note: z.string().optional().describe("הערה מהלקוח (שירות מבוקש וכו')"),
+                            }),
+                            execute: (async (args: any) => {
+                                const { preferred_dates, preferred_time_of_day, customer_name, note } = args;
+                                try {
+                                    // Use dynamic import for Waitlist to avoid top-level import issues if not already imported
+                                    const Waitlist = (await import("@/models/Waitlist")).default;
+
+                                    const newWaitlist = new Waitlist({
+                                        business_id: businessId,
+                                        user_id: customerId,
+                                        customer_name,
+                                        preferred_dates,
+                                        preferred_time_of_day,
+                                        note,
+                                        status: "waiting",
+                                    });
+
+                                    await newWaitlist.save();
+
+                                    return { success: true, message: "הלקוח נוסף לרשימת ההמתנה בהצלחה." };
+                                } catch (e: any) {
+                                    console.error("[add_to_waitlist tool] Error:", e);
+                                    return { success: false, message: "שגיאה בהוספה לרשימת המתנה." };
+                                }
+                            }) as any,
+                        }) as any,
+                    },
+                }
+                : {}),
+            // ─────────────────────────────────────────────────────────────
+
+            onFinish: async ({ text, usage }) => {
+                chat.messages.push({
+                    role: "user",
+                    parts: [{ text: message }],
+                    timestamp: new Date()
+                } as any);
+
+                chat.messages.push({
+                    role: "model",
+                    parts: [{ text }],
+                    timestamp: new Date()
+                } as any);
+
+                if (usage) {
+                    if (!chat.usage) chat.usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+                    chat.usage.prompt_tokens += (usage as any).promptTokens || 0;
+                    chat.usage.completion_tokens += (usage as any).completionTokens || 0;
+                    chat.usage.total_tokens += (usage as any).totalTokens || 0;
+                }
+                
+                await chat.save();
+                
+                const MEMORY_UPDATE_THRESHOLD = 6;
+                if (agentPersona === "daniela" && customerId && Types.ObjectId.isValid(customerId) && chat.messages.length >= MEMORY_UPDATE_THRESHOLD) {
+                    try {
+                        const sessionTranscript = chat.messages.slice(-20).map((m: any) => `${m.role === "user" ? "לקוח" : "AI"}: ${m.parts?.[0]?.text || ""}`).join("\n");
+                        const existingSummary = customer?.ai_profile?.summary || "";
+                        const summaryPrompt = existingSummary
+                            ? `להלן הסיכום הקיים שלך על הלקוח:\n${existingSummary}\n\nולהלן תמליל מהשיחה האחרונה:\n${sessionTranscript}\n\nאנא עדכן את הסיכום על הלקוח בעברית (עד 250 מילים).`
+                            : `להלן תמליל שיחה עם לקוח:\n${sessionTranscript}\n\nאנא כתוב סיכום קצר על הלקוח בעברית (עד 200 מילים).`;
+
+                        const summaryModel = createGeminiInstance({ modelName: "gemini-2.5-flash", systemInstruction: "אתה מערכת לניהול זיכרון לקוחות." });
+                        const summaryResult = await summaryModel.generateContent(summaryPrompt);
+                        const newSummary = summaryResult.response.text().trim();
+
+                        if (newSummary) {
+                            await Customer.findByIdAndUpdate(customerId, { "ai_profile.summary": newSummary });
                         }
-                    } else if (call.name === "report_missing_info") {
-                        const args = call.args as any;
-                        await reportMissingInfoQuestion(businessId, args.question, args.customer_name);
-                        responseText = "העברתי את השאלה לבעל העסק, וארשום לעצמי את התשובה לפעמים הבאות! 📝";
-                    }
+                    } catch (e) {}
                 }
             }
-        }
-
-        // 7. Persistence
-        // Ensure parts structure is correct
-        chat.messages.push({
-            role: "user",
-            parts: [{ text: message }],
-            timestamp: new Date()
-        } as any);
-
-        chat.messages.push({
-            role: "model",
-            parts: [{ text: responseText }],
-            timestamp: new Date()
-        } as any);
-
-        // Accumulate token usage metadata
-        if (promptTokens > 0 || completionTokens > 0) {
-            if (!chat.usage) {
-                chat.usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
-            }
-            chat.usage.prompt_tokens = (chat.usage.prompt_tokens || 0) + promptTokens;
-            chat.usage.completion_tokens = (chat.usage.completion_tokens || 0) + completionTokens;
-            chat.usage.total_tokens = (chat.usage.total_tokens || 0) + totalTokens;
-        }
-
-        await chat.save();
-
-        // --- PHASE 2: ASYNC MEMORY WRITER (Non-blocking) ---
-        // For verified customers, after enough messages, generate/update a cumulative memory summary.
-        // This runs asynchronously so it never delays the response to the client.
-        const MEMORY_UPDATE_THRESHOLD = 6; // minimum messages in this session to trigger a summary update
-        if (
-            agentPersona === "daniela" &&
-            customerId &&
-            Types.ObjectId.isValid(customerId) &&
-            chat.messages.length >= MEMORY_UPDATE_THRESHOLD
-        ) {
-            (async () => {
-                try {
-                    // Build a compact transcript from the current session for summarization
-                    const sessionTranscript = chat.messages
-                        .slice(-20) // only summarize recent 20 messages
-                        .map((m: any) => `${m.role === "user" ? "לקוח" : "AI"}: ${m.parts?.[0]?.text || ""}`)
-                        .join("\n");
-
-                    const existingSummary = customer?.ai_profile?.summary || "";
-                    const summaryPrompt = existingSummary
-                        ? `להלן הסיכום הקיים שלך על הלקוח:\n${existingSummary}\n\nולהלן תמליל מהשיחה האחרונה:\n${sessionTranscript}\n\nאנא עדכן את הסיכום על הלקוח בעברית (עד 250 מילים), תוך שמירה על המידע הישן הרלוונטי ושילוב המידע החדש. כלול: העדפות, מטרות, שאלות שחזרו, ומאפיינים חשובים.`
-                        : `להלן תמליל שיחה עם לקוח:\n${sessionTranscript}\n\nאנא כתוב סיכום קצר על הלקוח בעברית (עד 200 מילים). כלול: שם, העדפות, מטרות, שאלות שעלו, ומאפיינים חשובים לשיחות עתידיות.`;
-
-                    const summaryModel = createGeminiInstance({
-                        modelName: "gemini-2.5-flash",
-                        systemInstruction: "אתה מערכת לניהול זיכרון לקוחות. כתוב סיכום תמציתי ומועיל לשימוש עתידי.",
-                    });
-
-                    const summaryResult = await summaryModel.generateContent(summaryPrompt);
-                    const newSummary = summaryResult.response.text().trim();
-
-                    if (newSummary) {
-                        await Customer.findByIdAndUpdate(customerId, {
-                            "ai_profile.summary": newSummary
-                        });
-                        console.log(`[Memory Writer] Updated ai_profile.summary for customer ${customerId}`);
-                    }
-                } catch (memoryErr) {
-                    // Silent failure — memory update never blocks the main response
-                    console.error("[Memory Writer] Failed to update customer memory:", memoryErr);
-                }
-            })();
-        }
-        // --- END MEMORY WRITER ---
-
-        const nextResponse = NextResponse.json({
-            response: responseText,
-            sessionId: chat._id,
-            _system_action: systemAction,
         });
 
-        // Server-Side Cookie Flushing
+        const nextResponse = (result as any).toTextStreamResponse ? (result as any).toTextStreamResponse() : (result as any).toDataStreamResponse();
+        if (chat._id) {
+            nextResponse.headers.set("X-Session-Id", chat._id.toString());
+        }
+        if (systemAction) {
+            nextResponse.headers.set("X-System-Action", systemAction);
+        }
         if (systemAction === "force_logout") {
             nextResponse.cookies.set("consumer_token", "", { maxAge: 0, path: "/" });
         }
 
         return nextResponse;
+
 
     } catch (error: any) {
         console.error("RAW ERROR:", error);

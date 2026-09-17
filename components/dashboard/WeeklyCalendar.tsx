@@ -2,84 +2,125 @@
 
 import { format, addDays, startOfWeek, subWeeks, addWeeks, isSameDay } from "date-fns";
 import { he } from "date-fns/locale";
-import { ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
-import CalendarConnectModal from "./CalendarConnectModal";
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 
-interface WeeklyCalendarProps {
-    events: any[] | null;
-    hasError?: boolean;
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+interface WorkingHourEntry {
+    day: number;      // 0=Sun … 6=Sat
+    isOpen: boolean;
+    startTime: string; // "HH:MM"
+    endTime: string;   // "HH:MM"
 }
 
-export default function WeeklyCalendar({ events, hasError = false }: WeeklyCalendarProps) {
-    const router = useRouter();
+interface CalendarEvent {
+    id: string;
+    type?: "booking" | "block";
+    title: string;
+    date: string;       // "YYYY-MM-DD"
+    startTime: string;  // "HH:MM:SS"
+    endTime: string;    // "HH:MM:SS"
+    service?: string;
+    phone?: string;
+    note?: string;
+    isFullDay?: boolean;
+}
+
+interface WeeklyCalendarProps {
+    events: CalendarEvent[] | null;
+    workingHours?: WorkingHourEntry[];
+    onSlotClick?: (date: string, time: string) => void;
+    onEditEvent?: (event: CalendarEvent) => void;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const HOURS_START = 8;
+const HOURS_END = 20;
+const HOUR_HEIGHT = 70; // px per hour
+
+/** Convert "HH:MM" or "HH:MM:SS" to total minutes since midnight */
+function toMinutes(time: string): number {
+    const [h, m] = time.split(":").map(Number);
+    return h * 60 + m;
+}
+
+function getEventPositionStyle(startTime: string, endTime: string): React.CSSProperties {
+    const startMin = toMinutes(startTime);
+    const endMin   = toMinutes(endTime);
+    const gridStartMin = HOURS_START * 60;
+
+    let top    = ((startMin - gridStartMin) / 60) * HOUR_HEIGHT;
+    let height = ((endMin - startMin) / 60) * HOUR_HEIGHT;
+
+    if (top < 0) { height += top; top = 0; }
+
+    return {
+        top:    `${Math.max(0, top)}px`,
+        height: `${Math.max(20, height)}px`,
+    };
+}
+
+/**
+ * Returns true if the given hour slot (e.g. 9 = 09:00–10:00) falls OUTSIDE
+ * the business working hours for the given day-of-week.
+ */
+function isHourClosed(hour: number, dayOfWeek: number, workingHours?: WorkingHourEntry[]): boolean {
+    if (!workingHours) return false;
+    const dayConfig = workingHours.find(w => w.day === dayOfWeek);
+    if (!dayConfig) return false;
+    if (!dayConfig.isOpen) return true;
+
+    const slotStart = hour * 60;
+    const slotEnd   = slotStart + 60;
+    const openStart = toMinutes(dayConfig.startTime);
+    const openEnd   = toMinutes(dayConfig.endTime);
+
+    // Slot is outside the open window
+    return slotEnd <= openStart || slotStart >= openEnd;
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
+export default function WeeklyCalendar({ events, workingHours, onSlotClick, onEditEvent }: WeeklyCalendarProps) {
+    const router       = useRouter();
     const searchParams = useSearchParams();
-    
-    const dateParam = searchParams.get("date");
+
+    const dateParam   = searchParams.get("date");
     const currentDate = dateParam ? new Date(dateParam) : new Date();
-    const [selectedNote, setSelectedNote] = useState<string | null>(null);
-    
-    // Start of week (Sunday)
-    const startDate = startOfWeek(currentDate, { weekStartsOn: 0 });
-    
+    const startDate   = startOfWeek(currentDate, { weekStartsOn: 0 });
+
+    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+
     const navigateDate = (newDate: Date) => {
-        const dateStr = format(newDate, "yyyy-MM-dd");
-        router.push(`?date=${dateStr}`);
+        router.push(`?date=${format(newDate, "yyyy-MM-dd")}`);
     };
 
-    const days = Array.from({ length: 7 }).map((_, i) => addDays(startDate, i));
+    const days  = Array.from({ length: 7 }).map((_, i) => addDays(startDate, i));
+    const hours = Array.from({ length: HOURS_END - HOURS_START }).map((_, i) => i + HOURS_START);
 
-    const HOURS_START = 8;
-    const HOURS_END = 20;
-    const HOUR_HEIGHT = 70; // px per hour
-
-    const hours = Array.from({ length: HOURS_END - HOURS_START + 1 }).map((_, i) => i + HOURS_START);
-
-    const getEventStyle = (startTime?: string, endTime?: string) => {
-        if (!startTime || !endTime) return { display: 'none' };
-        
-        const [sH, sM] = startTime.split(':').map(Number);
-        const [eH, eM] = endTime.split(':').map(Number);
-
-        const startTotalMinutes = (sH * 60) + sM;
-        const endTotalMinutes = (eH * 60) + eM;
-        const gridStartMinutes = HOURS_START * 60;
-
-        let top = ((startTotalMinutes - gridStartMinutes) / 60) * HOUR_HEIGHT;
-        let height = ((endTotalMinutes - startTotalMinutes) / 60) * HOUR_HEIGHT;
-
-        if (top < 0) {
-            height += top;
-            top = 0;
-        }
-
-        return {
-            top: `${Math.max(0, top)}px`,
-            height: `${Math.max(20, height)}px`,
-        };
+    const isPastSlot = (day: Date, h: number) => {
+        const slotDate = new Date(day);
+        slotDate.setHours(h, 0, 0, 0);
+        return slotDate < new Date();
     };
-
-    useEffect(() => {
-        if (hasError) {
-            toast.error("החיבור ליומן נכשל. אנא בדוק את הפרטים ונסה שנית");
-        }
-    }, [hasError]);
-
-    const isUnconnected = events === null || hasError;
 
     return (
-        <div className="flex flex-col h-[calc(100vh-12rem)] min-h-[600px] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative" dir="rtl">
-            {/* Header */}
+        <div
+            className="flex flex-col h-[calc(100vh-14rem)] min-h-[600px] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative"
+            dir="rtl"
+        >
+            {/* ── Header ────────────────────────────────────────────────── */}
             <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50/50">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     <Button variant="outline" size="icon" onClick={() => navigateDate(addWeeks(startDate, 1))}>
                         <ChevronRight size={18} />
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => navigateDate(new Date())}>
-                       מעבר בין שבועות
+                        היום
                     </Button>
                     <Button variant="outline" size="icon" onClick={() => navigateDate(subWeeks(startDate, 1))}>
                         <ChevronLeft size={18} />
@@ -90,71 +131,158 @@ export default function WeeklyCalendar({ events, hasError = false }: WeeklyCalen
                 </h2>
             </div>
 
-            {/* Grid */}
-            <div className="flex-1 overflow-auto relative bg-slate-50/50">
-                {isUnconnected && (
-                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/40 backdrop-blur-md">
-                        <CalendarConnectModal hasError={hasError} />
-                    </div>
-                )}
-                
-                <div className={`flex min-w-[800px] h-full transition-all ${isUnconnected ? 'opacity-40 blur-[2px]' : ''}`}>
-                    {/* Time Column */}
-                    <div className="w-16 flex-shrink-0 bg-slate-50 border-l border-border/80 sticky right-0 z-30">
-                        <div className="h-24 border-b border-border/80 bg-slate-100/80 sticky top-0 z-40"></div>
-                        <div className="relative" style={{ height: `${(HOURS_END - HOURS_START) * HOUR_HEIGHT}px` }}>
-                            {hours.slice(0, -1).map((h) => (
-                                <div key={h} className="absolute w-full text-xs font-medium text-slate-400 text-center -mt-2" style={{ top: `${(h - HOURS_START) * HOUR_HEIGHT}px` }}>
-                                    {h.toString().padStart(2, '0')}:00
+            {/* ── Scrollable Grid ───────────────────────────────────────── */}
+            <div className="flex-1 overflow-auto">
+                <div className="flex min-w-[700px]">
+
+                    {/* Time Gutter */}
+                    <div className="w-14 shrink-0 bg-slate-50 border-l border-slate-100 sticky right-0 z-30">
+                        {/* Spacer to align with day headers */}
+                        <div className="h-20 border-b border-slate-200 bg-slate-100/80 sticky top-0 z-40" />
+                        <div className="relative" style={{ height: `${hours.length * HOUR_HEIGHT}px` }}>
+                            {hours.map(h => (
+                                <div
+                                    key={h}
+                                    className="absolute w-full text-[11px] font-medium text-slate-400 text-center"
+                                    style={{ top: `${(h - HOURS_START) * HOUR_HEIGHT - 6}px` }}
+                                >
+                                    {h.toString().padStart(2, "0")}:00
                                 </div>
                             ))}
                         </div>
                     </div>
-                    
+
                     {/* Day Columns */}
-                    <div className="grid grid-cols-7 flex-1 divide-x divide-x-reverse divide-border/80">
-                        {days.map((day, i) => {
-                            const dayEvents = (events || []).filter(e => {
-                                if (!e.date) return false;
-                                const eDate = new Date(e.date);
-                                return isSameDay(eDate, day);
-                            });
+                    <div className="flex-1 flex">
+                        {days.map((day, dayIdx) => {
+                            const dowIndex = day.getDay(); // 0=Sun…6=Sat
+                            const dayConfig = workingHours?.find(w => w.day === dowIndex);
+                            const isDayClosed = dayConfig ? !dayConfig.isOpen : false;
 
                             return (
-                                <div key={i} className="flex flex-col relative h-full bg-white">
-                                    <div className="text-center h-24 border-b border-border/80 bg-slate-100/80 sticky top-0 z-20 flex flex-col justify-center">
-                                        <div className="text-sm text-slate-500 font-bold uppercase tracking-wider">
+                                <div
+                                    key={dayIdx}
+                                    className="flex-1 min-w-[100px] border-l border-slate-100 last:border-l-0 relative"
+                                >
+                                    {/* Day Header */}
+                                    <div
+                                        className={`h-20 border-b border-slate-200 sticky top-0 z-40 flex flex-col items-center justify-center gap-0.5
+                                            ${isDayClosed ? "bg-slate-100" : "bg-white"}`}
+                                    >
+                                        <span className="text-[11px] font-semibold uppercase text-slate-500">
                                             {format(day, "EEEE", { locale: he })}
-                                        </div>
-                                        <div className={`text-2xl mt-1 ${isSameDay(day, new Date()) ? 'text-blue-600 font-black' : 'text-slate-900 font-bold'}`}>
+                                        </span>
+                                        <span
+                                            className={`text-2xl font-bold w-9 h-9 flex items-center justify-center rounded-full
+                                                ${isSameDay(day, new Date())
+                                                    ? "bg-blue-600 text-white shadow-md"
+                                                    : isDayClosed
+                                                    ? "text-slate-400"
+                                                    : "text-slate-800"}`}
+                                        >
                                             {format(day, "d")}
-                                        </div>
+                                        </span>
+                                        {isDayClosed && (
+                                            <span className="text-[10px] text-slate-400 font-medium">סגור</span>
+                                        )}
                                     </div>
-                                    <div className="relative flex-1" style={{ height: `${(HOURS_END - HOURS_START) * HOUR_HEIGHT}px` }}>
-                                        {/* Grid lines */}
-                                        {hours.slice(0, -1).map(h => (
-                                            <div key={h} className="absolute w-full border-t border-slate-100" style={{ top: `${(h - HOURS_START) * HOUR_HEIGHT}px` }}></div>
-                                        ))}
-                                        
-                                        {/* Event Cards */}
-                                        {dayEvents.map((evt, idx) => {
-                                            const style = getEventStyle(evt.startTime, evt.endTime);
+
+                                    {/* Hour Rows */}
+                                    <div
+                                        className="relative"
+                                        style={{ height: `${hours.length * HOUR_HEIGHT}px` }}
+                                    >
+                                        {/* Hour background rows (closed = gray) */}
+                                        {hours.map(h => {
+                                            const closed = isDayClosed || isHourClosed(h, dowIndex, workingHours);
+                                            const past = isPastSlot(day, h);
                                             return (
-                                                <div key={idx} className="absolute w-[92%] right-[4%] bg-blue-50/90 border border-blue-200 border-r-4 border-r-blue-500 rounded-md p-1.5 overflow-hidden shadow-sm hover:shadow-md hover:bg-blue-100 transition-all z-10" style={style}>
-                                                    <div className="font-bold text-blue-900 text-xs truncate leading-tight">{evt.title}</div>
-                                                    <div className="text-blue-700 text-[10px] mt-0.5 truncate">{evt.startTime?.substring(0,5)} - {evt.endTime?.substring(0,5)}</div>
-                                                    {evt.service && <div className="text-blue-600/80 mt-0.5 text-[10px] truncate">{evt.service}</div>}
-                                                    {evt.note && (
-                                                        <button 
-                                                            onClick={(e) => { e.stopPropagation(); setSelectedNote(evt.note); }}
-                                                            className="mt-1 w-full bg-blue-200 text-blue-800 text-[10px] font-bold py-0.5 rounded shadow-sm hover:bg-blue-300 transition-colors"
-                                                        >
-                                                            הודעה מהלקוח
-                                                        </button>
-                                                    )}
-                                                </div>
+                                                <div
+                                                    key={h}
+                                                    onClick={() => !closed && !past && onSlotClick?.(format(day, "yyyy-MM-dd"), `${h.toString().padStart(2, "0")}:00`)}
+                                                    className={`absolute w-full border-b border-slate-100 transition-colors
+                                                        ${closed
+                                                            ? "bg-slate-100/70"
+                                                            : past 
+                                                            ? "bg-transparent cursor-not-allowed" 
+                                                            : "bg-transparent hover:bg-blue-50/50 cursor-pointer"
+                                                        }`}
+                                                    style={{
+                                                        top:    `${(h - HOURS_START) * HOUR_HEIGHT}px`,
+                                                        height: `${HOUR_HEIGHT}px`,
+                                                    }}
+                                                />
                                             );
                                         })}
+
+                                        {/* Events & Blocks */}
+                                        {events
+                                            ?.filter(e => isSameDay(new Date(e.date), day))
+                                            .map(event => {
+                                                const isBlock = event.type === "block";
+
+                                                if (isBlock && event.isFullDay) {
+                                                    // Full-day block: cover the entire column
+                                                    return (
+                                                        <div
+                                                            key={event.id}
+                                                            className="absolute inset-x-1 top-0 bottom-0 rounded-lg z-10
+                                                                bg-slate-200/80 border border-slate-300
+                                                                flex items-center justify-center text-center p-2"
+                                                            style={{ backgroundImage: "repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(0,0,0,0.04) 6px,rgba(0,0,0,0.04) 12px)" }}
+                                                        >
+                                                            <div>
+                                                                <Ban size={14} className="mx-auto mb-1 text-slate-500" />
+                                                                <p className="text-xs font-semibold text-slate-600 leading-tight">{event.title}</p>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+
+                                                return (
+                                                    <div
+                                                        key={event.id}
+                                                        className={`absolute left-1 right-1 rounded-lg border shadow-sm
+                                                            flex flex-col p-1.5 text-sm overflow-hidden cursor-pointer
+                                                            hover:shadow-md transition-shadow z-10
+                                                            ${isBlock
+                                                                ? "bg-slate-100 border-slate-300 text-slate-600"
+                                                                : "bg-white/95 border-emerald-200"
+                                                            }`}
+                                                        style={{
+                                                            ...getEventPositionStyle(event.startTime, event.endTime),
+                                                            ...(isBlock
+                                                                ? { backgroundImage: "repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(0,0,0,0.04) 5px,rgba(0,0,0,0.04) 10px)" }
+                                                                : {}),
+                                                        }}
+                                                        onClick={() => setSelectedEvent(event)}
+                                                    >
+                                                        <div className="flex items-start justify-between gap-1">
+                                                            {isBlock
+                                                                ? (
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Ban size={10} className="text-slate-400 shrink-0" />
+                                                                        <span className="font-semibold text-xs text-slate-600 truncate">{event.title}</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <>
+                                                                        <span className="font-bold text-emerald-800 leading-tight truncate text-xs">{event.title}</span>
+                                                                        <span className="text-[10px] font-medium text-emerald-600/80 whitespace-nowrap bg-emerald-50 px-1.5 py-0.5 rounded-full shrink-0">
+                                                                            {event.startTime.substring(0, 5)}
+                                                                        </span>
+                                                                    </>
+                                                                )
+                                                            }
+                                                        </div>
+                                                        {!isBlock && event.service && (
+                                                            <span className="text-[11px] text-slate-500 truncate mt-0.5">{event.service}</span>
+                                                        )}
+                                                        {!isBlock && event.phone && (
+                                                            <span className="text-[10px] text-slate-400 mt-auto truncate" dir="ltr">{event.phone}</span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                     </div>
                                 </div>
                             );
@@ -162,19 +290,50 @@ export default function WeeklyCalendar({ events, hasError = false }: WeeklyCalen
                     </div>
                 </div>
             </div>
-            
-            {/* Note Modal */}
-            {selectedNote && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden" dir="rtl">
-                        <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-                            <h3 className="font-bold text-gray-800">הודעה מהלקוח</h3>
-                            <button onClick={() => setSelectedNote(null)} className="text-gray-400 hover:text-gray-600 font-bold text-lg">
-                                &times;
-                            </button>
+
+            {/* ── Event Details Modal ────────────────────────────────────── */}
+            {selectedEvent && (
+                <div
+                    className="absolute inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"
+                    onClick={() => setSelectedEvent(null)}
+                >
+                    <div
+                        className="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full mx-4 border border-gray-100 flex flex-col"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <h3 className="font-bold text-lg mb-4 text-gray-900 border-b pb-2">
+                            {selectedEvent.type === "block" ? "פרטי חסימה" : "פרטי תור"}
+                        </h3>
+                        
+                        <div className="space-y-3 mb-6 text-sm text-gray-700">
+                            <div><span className="font-semibold">כותרת:</span> {selectedEvent.title}</div>
+                            {selectedEvent.service && <div><span className="font-semibold">שירות:</span> {selectedEvent.service}</div>}
+                            <div><span className="font-semibold">תאריך:</span> {selectedEvent.date}</div>
+                            <div>
+                                <span className="font-semibold">שעות:</span> {selectedEvent.startTime.substring(0, 5)} - {selectedEvent.endTime.substring(0, 5)}
+                            </div>
+                            {selectedEvent.phone && <div><span className="font-semibold">טלפון:</span> <span dir="ltr">{selectedEvent.phone}</span></div>}
+                            {selectedEvent.note && (
+                                <div>
+                                    <span className="font-semibold">הערות:</span>
+                                    <p className="whitespace-pre-wrap mt-1 text-gray-600 bg-gray-50 p-2 rounded-lg border">{selectedEvent.note}</p>
+                                </div>
+                            )}
                         </div>
-                        <div className="p-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                            {selectedNote}
+
+                        <div className="flex justify-end gap-2 mt-auto pt-4 border-t">
+                            <Button variant="outline" onClick={() => setSelectedEvent(null)}>סגור</Button>
+                            {selectedEvent.type !== "block" && onEditEvent && (
+                                <Button 
+                                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                                    onClick={() => {
+                                        onEditEvent(selectedEvent);
+                                        setSelectedEvent(null);
+                                    }}
+                                >
+                                    ערוך תור
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </div>
