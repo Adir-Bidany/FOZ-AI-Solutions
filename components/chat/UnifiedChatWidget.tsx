@@ -11,7 +11,6 @@ import "react-day-picker/style.css";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { ShieldCheck, CheckCircle2 } from "lucide-react";
-import { useChat } from "@ai-sdk/react";
 
 interface Message {
     role: "user" | "assistant" | "model";
@@ -25,6 +24,8 @@ interface UnifiedChatWidgetProps {
     initialMessages?: Message[];
     className?: string;
     agentPersona?: string;
+    /** When set, the widget automatically sends this message once after mount (used by DanielaFAB). */
+    autoSendMessage?: string;
 }
 
 type ConsentStatus = "bypassed" | "pending" | "approved" | "rejected";
@@ -36,6 +37,7 @@ export default function UnifiedChatWidget({
     initialMessages = [],
     className,
     agentPersona,
+    autoSendMessage,
 }: UnifiedChatWidgetProps) {
     const [messages, setMessages] = useState<Message[]>(initialMessages);
     const [isLoading, setIsLoading] = useState(false);
@@ -123,6 +125,23 @@ export default function UnifiedChatWidget({
             });
         }
     }, [agentPersona, messages.length, isLoadingHistory, consentStatus]);
+
+    // Auto-send a pre-filled message from the FAB / calendar slot click
+    const autoSendFiredRef = useRef(false);
+    useEffect(() => {
+        if (
+            autoSendMessage &&
+            !autoSendFiredRef.current &&
+            !isLoadingHistory &&
+            (consentStatus === "bypassed" || consentStatus === "approved")
+        ) {
+            autoSendFiredRef.current = true;
+            // Small delay to let greeting render first
+            const timer = setTimeout(() => handleSend(autoSendMessage), 400);
+            return () => clearTimeout(timer);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [autoSendMessage, isLoadingHistory, consentStatus]);
 
     const handleSend = async (content: string) => {
         // Add user message

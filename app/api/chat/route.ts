@@ -288,6 +288,19 @@ export async function POST(req: NextRequest) {
 1. MANDATORY FIRST STEP: If the user wants to book an appointment or check availability, you MUST start by asking for the date. Set "action_type" to "check_availability" or "book_appointment", and set your "conversational_reply" to exactly "אנא בחרי תאריך:". DO NOT ask for the service type first.
 2. When you need the user to select a date, time, or service, keep your text response EXTREMELY short. DO NOT hallucinate available slots. Delegate the actual selection to the UI widgets by calling the appropriate function or setting the correct action_type.`;
 
+            // NEW (BATCH 321): Business logic for Services and Notes
+            const hasServices = business?.hasServices ?? false;
+            if (hasServices) {
+                finalSystemPrompt += `\n\n[SERVICES LOGIC]: The business offers multiple services. Before booking, you MUST ask the user what specific treatment they want. Pass their choice to the booking tool.`;
+            } else {
+                finalSystemPrompt += `\n\n[SERVICES LOGIC]: The business does NOT offer multiple distinct services. DO NOT ask the user what service they want. Implicitly use "פגישה" or "תור" for the service name.`;
+            }
+
+            finalSystemPrompt += `\n\n[CUSTOMER NOTE LOGIC]: Before calling book_appointment, you MUST ask the user: "האם תרצה להוסיף הערה לבעל העסק לקראת התור?". Pass their answer (or empty string if they decline) into the 'note' parameter of the booking tool.`;
+
+            finalSystemPrompt += `\n\n[WAITLIST LOGIC]: If the user asks for a time that is fully booked, or if 'check_availability' returns no slots, you must offer: "תרצה שאכניס אותך לרשימת ההמתנה ואעדכן אם יתפנה משהו?". If they agree, use the 'add_to_waitlist' tool.`;
+
+
             // --- AI GUARDRAILS (B2B2C Security) ---
             if (!isVerifiedCustomer) {
                 finalSystemPrompt += `\n\n[SECURITY ENFORCEMENT]: You are speaking to an unauthenticated or pending guest (${customerAuthStatus}). You CANNOT access their profile, book appointments, or cancel appointments. If they express intent to log in, register, book, cancel, or access profile data, you MUST set "action_type" to "trigger_auth_drawer" and set "conversational_reply" to exactly "בחלונית שנפתחה תוכל להירשם/להיכנס למערכת".`;
@@ -348,6 +361,14 @@ MARKETING POST CREATION BEHAVIORAL RULES:
                                 const { date } = args;
                                 try {
                                     const targetDate = new Date(date);
+                                    
+                                    // Check if requested date is in the past
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    if (targetDate < today) {
+                                        return { available: [], message: "Error: The requested time is in the past. Inform the user that past bookings are not allowed." };
+                                    }
+
                                     const dayOfWeek = targetDate.getDay(); // 0=Sun…6=Sat
 
                                     // Fetch working hours from Business document
@@ -426,32 +447,31 @@ MARKETING POST CREATION BEHAVIORAL RULES:
                                     // Parse appointment datetime
                                     const [year, month, day]   = date.split("-").map(Number);
                                     const [hours, minutes]      = time.split(":").map(Number);
-                                    const apptDate = new Date(year, month - 1, day, hours, minutes, 0);
+                                    const startDateTime        = new Date(year, month - 1, day, hours, minutes);
 
-                                    // Double-check the slot is still free
-                                    const startOfHour = new Date(apptDate);
-                                    const endOfHour   = new Date(apptDate.getTime() + 60 * 60 * 1000);
-
-                                    const conflict = await Appointment.findOne({
-                                        business_id: businessId,
-                                        "details.date": { $gte: startOfHour, $lt: endOfHour },
-                                        status: { $nin: ["cancelled"] },
-                                    });
-
-                                    if (conflict) {
-                                        return { success: false, message: "מצטערת, השעה הזו כבר תפוסה. נסי שעה אחרת." };
+                                    // Check if requested time is strictly in the past
+                                    if (startDateTime < new Date()) {
+                                        return { success: false, message: "Error: The requested time is in the past. Inform the user that past bookings are not allowed." };
                                     }
 
-                                    // Create the appointment
+                                    // Verify no existing overlapping booking/block for this exact time
+                                    const conflict = await Appointment.findOne({
+                                        business_id: businessId,
+                                        "details.date": startDateTime,
+                                        status: { $nin: ["cancelled"] }
+                                    }).lean();
+
+                                    if (conflict) {
+                                        return { success: false, message: "השעה המבוקשת כבר נתפסה. אנא הצע ללקוח שעה אחרת." };
+                                    }
+
                                     const newAppt = new Appointment({
                                         business_id: businessId,
-                                        user_id: customerId && Types.ObjectId.isValid(customerId)
-                                            ? new Types.ObjectId(customerId)
-                                            : undefined,
+                                        user_id: customerId, // from JWT if present
                                         type: "booking",
                                         status: "confirmed",
                                         details: {
-                                            date: apptDate,
+                                            date: startDateTime,
                                             duration_minutes: 60,
                                             service_name: service_type,
                                         },
@@ -480,6 +500,89 @@ MARKETING POST CREATION BEHAVIORAL RULES:
                                 } catch (e: any) {
                                     console.error("[book_appointment tool] Error:", e);
                                     return { success: false, message: "שגיאה בקביעת התור. נסי שוב." };
+                                }
+                            }) as any,
+                        }) as any,
+
+                        cancel_appointment: tool({
+                            description: "ביטול תור קיים. חפש תור לפי תאריך ושם לקוח / טלפון.",
+                            inputSchema: z.object({
+                                date:          z.string().describe("תאריך התור שנקבע YYYY-MM-DD"),
+                                customer_name: z.string().optional().describe("שם הלקוח הרשום (לצורך אימות)"),
+                            }),
+                            execute: (async (args: any) => {
+                                const { date, customer_name } = args;
+                                try {
+                                    const [year, month, day] = date.split("-").map(Number);
+                                    const startOfDay = new Date(year, month - 1, day, 0, 0, 0);
+                                    const endOfDay = new Date(year, month - 1, day, 23, 59, 59);
+
+                                    // Attempt to find the user's booking on this date
+                                    const query: any = {
+                                        business_id: businessId,
+                                        "details.date": { $gte: startOfDay, $lte: endOfDay },
+                                        type: "booking",
+                                        status: { $nin: ["cancelled"] }
+                                    };
+
+                                    // If authenticated, scope to their user_id
+                                    if (customerId) {
+                                        query.user_id = customerId;
+                                    } else if (customer_name) {
+                                        // Fallback to name search in notes for guests (not ideal but a fallback)
+                                        query["metadata.notes"] = { $regex: customer_name, $options: "i" };
+                                    } else {
+                                        return { success: false, message: "חסרים פרטים לזיהוי התור לביטול." };
+                                    }
+
+                                    const appt = await Appointment.findOne(query);
+
+                                    if (!appt) {
+                                        return { success: false, message: "לא נמצא תור תואם בתאריך זה." };
+                                    }
+
+                                    // Mark as cancelled
+                                    appt.status = "cancelled";
+                                    await appt.save();
+
+                                    return { success: true, message: `התור בתאריך ${date} בוטל בהצלחה.` };
+                                } catch (e: any) {
+                                    console.error("[cancel_appointment tool] Error:", e);
+                                    return { success: false, message: "שגיאה בביטול התור." };
+                                }
+                            }) as any,
+                        }) as any,
+
+                        add_to_waitlist: tool({
+                            description: "הוספת הלקוח לרשימת המתנה כאשר אין תורים פנויים.",
+                            inputSchema: z.object({
+                                preferred_dates: z.array(z.string()).describe("מערך של תאריכים רלוונטיים YYYY-MM-DD"),
+                                preferred_time_of_day: z.enum(["morning", "afternoon", "evening", "any"]).describe("חלקי היום המועדפים"),
+                                customer_name: z.string().describe("שם הלקוח"),
+                                note: z.string().optional().describe("הערה מהלקוח (שירות מבוקש וכו')"),
+                            }),
+                            execute: (async (args: any) => {
+                                const { preferred_dates, preferred_time_of_day, customer_name, note } = args;
+                                try {
+                                    // Use dynamic import for Waitlist to avoid top-level import issues if not already imported
+                                    const Waitlist = (await import("@/models/Waitlist")).default;
+
+                                    const newWaitlist = new Waitlist({
+                                        business_id: businessId,
+                                        user_id: customerId,
+                                        customer_name,
+                                        preferred_dates,
+                                        preferred_time_of_day,
+                                        note,
+                                        status: "waiting",
+                                    });
+
+                                    await newWaitlist.save();
+
+                                    return { success: true, message: "הלקוח נוסף לרשימת ההמתנה בהצלחה." };
+                                } catch (e: any) {
+                                    console.error("[add_to_waitlist tool] Error:", e);
+                                    return { success: false, message: "שגיאה בהוספה לרשימת המתנה." };
                                 }
                             }) as any,
                         }) as any,

@@ -5,7 +5,7 @@ import Appointment from "@/models/Appointment";
 import { connectToDatabase } from "@/lib/db";
 import { redirect } from "next/navigation";
 import WeeklyCalendar from "@/components/dashboard/WeeklyCalendar";
-import CalendarControlBar from "@/components/dashboard/calendar/CalendarControlBar";
+import CalendarContainer from "@/components/dashboard/calendar/CalendarContainer";
 import { format, addDays, startOfWeek } from "date-fns";
 import FeatureGate from "@/components/dashboard/FeatureGate";
 
@@ -84,11 +84,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                     <p className="text-gray-500 mt-1">ניהול תורים מקומי</p>
                 </div>
 
-                {/* Control Bar */}
-                <CalendarControlBar workingHours={workingHours} />
-
-                {/* Calendar Grid */}
-                <WeeklyCalendar events={liveEvents} workingHours={workingHours} />
+                <CalendarContainer events={liveEvents} workingHours={workingHours} />
             </div>
         </FeatureGate>
     );

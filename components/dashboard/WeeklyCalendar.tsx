@@ -32,6 +32,8 @@ interface CalendarEvent {
 interface WeeklyCalendarProps {
     events: CalendarEvent[] | null;
     workingHours?: WorkingHourEntry[];
+    onSlotClick?: (date: string, time: string) => void;
+    onEditEvent?: (event: CalendarEvent) => void;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -83,7 +85,7 @@ function isHourClosed(hour: number, dayOfWeek: number, workingHours?: WorkingHou
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function WeeklyCalendar({ events, workingHours }: WeeklyCalendarProps) {
+export default function WeeklyCalendar({ events, workingHours, onSlotClick, onEditEvent }: WeeklyCalendarProps) {
     const router       = useRouter();
     const searchParams = useSearchParams();
 
@@ -91,7 +93,7 @@ export default function WeeklyCalendar({ events, workingHours }: WeeklyCalendarP
     const currentDate = dateParam ? new Date(dateParam) : new Date();
     const startDate   = startOfWeek(currentDate, { weekStartsOn: 0 });
 
-    const [selectedNote, setSelectedNote] = useState<string | null>(null);
+    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
     const navigateDate = (newDate: Date) => {
         router.push(`?date=${format(newDate, "yyyy-MM-dd")}`);
@@ -99,6 +101,12 @@ export default function WeeklyCalendar({ events, workingHours }: WeeklyCalendarP
 
     const days  = Array.from({ length: 7 }).map((_, i) => addDays(startDate, i));
     const hours = Array.from({ length: HOURS_END - HOURS_START }).map((_, i) => i + HOURS_START);
+
+    const isPastSlot = (day: Date, h: number) => {
+        const slotDate = new Date(day);
+        slotDate.setHours(h, 0, 0, 0);
+        return slotDate < new Date();
+    };
 
     return (
         <div
@@ -187,13 +195,17 @@ export default function WeeklyCalendar({ events, workingHours }: WeeklyCalendarP
                                         {/* Hour background rows (closed = gray) */}
                                         {hours.map(h => {
                                             const closed = isDayClosed || isHourClosed(h, dowIndex, workingHours);
+                                            const past = isPastSlot(day, h);
                                             return (
                                                 <div
                                                     key={h}
-                                                    className={`absolute w-full border-b border-slate-100
+                                                    onClick={() => !closed && !past && onSlotClick?.(format(day, "yyyy-MM-dd"), `${h.toString().padStart(2, "0")}:00`)}
+                                                    className={`absolute w-full border-b border-slate-100 transition-colors
                                                         ${closed
                                                             ? "bg-slate-100/70"
-                                                            : "bg-transparent"
+                                                            : past 
+                                                            ? "bg-transparent cursor-not-allowed" 
+                                                            : "bg-transparent hover:bg-blue-50/50 cursor-pointer"
                                                         }`}
                                                     style={{
                                                         top:    `${(h - HOURS_START) * HOUR_HEIGHT}px`,
@@ -243,7 +255,7 @@ export default function WeeklyCalendar({ events, workingHours }: WeeklyCalendarP
                                                                 ? { backgroundImage: "repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(0,0,0,0.04) 5px,rgba(0,0,0,0.04) 10px)" }
                                                                 : {}),
                                                         }}
-                                                        onClick={() => event.note ? setSelectedNote(event.note) : null}
+                                                        onClick={() => setSelectedEvent(event)}
                                                     >
                                                         <div className="flex items-start justify-between gap-1">
                                                             {isBlock
@@ -279,19 +291,50 @@ export default function WeeklyCalendar({ events, workingHours }: WeeklyCalendarP
                 </div>
             </div>
 
-            {/* ── Note Modal ────────────────────────────────────────────── */}
-            {selectedNote && (
+            {/* ── Event Details Modal ────────────────────────────────────── */}
+            {selectedEvent && (
                 <div
                     className="absolute inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"
-                    onClick={() => setSelectedNote(null)}
+                    onClick={() => setSelectedEvent(null)}
                 >
                     <div
-                        className="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full mx-4 border border-gray-100"
+                        className="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full mx-4 border border-gray-100 flex flex-col"
                         onClick={e => e.stopPropagation()}
                     >
-                        <h3 className="font-bold text-lg mb-2 text-gray-900">הערות להזמנה</h3>
-                        <p className="text-gray-600 text-sm whitespace-pre-wrap leading-relaxed">{selectedNote}</p>
-                        <Button className="w-full mt-6" onClick={() => setSelectedNote(null)}>סגור</Button>
+                        <h3 className="font-bold text-lg mb-4 text-gray-900 border-b pb-2">
+                            {selectedEvent.type === "block" ? "פרטי חסימה" : "פרטי תור"}
+                        </h3>
+                        
+                        <div className="space-y-3 mb-6 text-sm text-gray-700">
+                            <div><span className="font-semibold">כותרת:</span> {selectedEvent.title}</div>
+                            {selectedEvent.service && <div><span className="font-semibold">שירות:</span> {selectedEvent.service}</div>}
+                            <div><span className="font-semibold">תאריך:</span> {selectedEvent.date}</div>
+                            <div>
+                                <span className="font-semibold">שעות:</span> {selectedEvent.startTime.substring(0, 5)} - {selectedEvent.endTime.substring(0, 5)}
+                            </div>
+                            {selectedEvent.phone && <div><span className="font-semibold">טלפון:</span> <span dir="ltr">{selectedEvent.phone}</span></div>}
+                            {selectedEvent.note && (
+                                <div>
+                                    <span className="font-semibold">הערות:</span>
+                                    <p className="whitespace-pre-wrap mt-1 text-gray-600 bg-gray-50 p-2 rounded-lg border">{selectedEvent.note}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex justify-end gap-2 mt-auto pt-4 border-t">
+                            <Button variant="outline" onClick={() => setSelectedEvent(null)}>סגור</Button>
+                            {selectedEvent.type !== "block" && onEditEvent && (
+                                <Button 
+                                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                                    onClick={() => {
+                                        onEditEvent(selectedEvent);
+                                        setSelectedEvent(null);
+                                    }}
+                                >
+                                    ערוך תור
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

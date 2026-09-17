@@ -51,6 +51,8 @@ export interface IBusiness extends Document {
         startTime: string; // e.g. "09:00"
         endTime: string;   // e.g. "18:00"
     }[];
+    /** If true, the booking AI flow will show a service selector. If false, books a generic appointment. */
+    hasServices?: boolean;
     publicInstructions?: string;
     internalNotes?: string;
     createdAt: Date;
@@ -158,6 +160,7 @@ const BusinessSchema = new Schema<IBusiness>(
                 { day: 6, isOpen: false, startTime: "09:00", endTime: "18:00" }, // Sat
             ]
         },
+        hasServices: { type: Boolean, default: false },
     },
     { timestamps: true }
 );
