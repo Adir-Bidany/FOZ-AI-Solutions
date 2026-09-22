@@ -7,6 +7,8 @@ import { User, LogOut, CheckCircle, Clock, UserPlus, Building, LogIn, ShieldChec
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface BrandingAnchorProps {
     context: "platform" | "consumer" | "dashboard";
@@ -15,6 +17,7 @@ interface BrandingAnchorProps {
 }
 
 export default function BrandingAnchor({ context, businessData, children }: BrandingAnchorProps) {
+    const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
@@ -127,11 +130,16 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
                 localStorage.setItem("foz_consumer_data", JSON.stringify(data.customer));
                 setCustomer(data.customer);
                 setIsOpen(false);
+                router.refresh();
             } else {
-                setError(data.error || "Login failed");
+                const errorMessage = data.error || "Login failed";
+                setError(errorMessage);
+                toast.error(errorMessage);
             }
         } catch (e: any) {
-            setError(e.message || "An error occurred");
+            const errorMessage = e.message || "An error occurred";
+            setError(errorMessage);
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -148,13 +156,34 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
             });
             const data = await res.json();
             if (data.success) {
-                setError("הרשמה בוצעה בהצלחה! ממתין לאישור מנהל.");
-                setMode("login");
+                setError("הרשמה בוצעה בהצלחה! מתחבר...");
+                
+                // Automatically log them in instead of just going to login screen
+                const loginRes = await fetch("/api/consumer/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ businessId: businessData?._id?.toString(), email, password })
+                });
+                const loginData = await loginRes.json();
+                
+                if (loginData.success) {
+                    localStorage.setItem("foz_consumer_token", loginData.token);
+                    localStorage.setItem("foz_consumer_data", JSON.stringify(loginData.customer));
+                    setCustomer(loginData.customer);
+                    setIsOpen(false);
+                    router.refresh();
+                } else {
+                    setMode("login");
+                }
             } else {
-                setError(data.error || "Registration failed");
+                const errorMessage = data.error || "Registration failed";
+                setError(errorMessage);
+                toast.error(errorMessage);
             }
         } catch (e: any) {
-            setError(e.message || "An error occurred");
+            const errorMessage = e.message || "An error occurred";
+            setError(errorMessage);
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -165,6 +194,13 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
         localStorage.removeItem("foz_consumer_data");
         setCustomer(null);
         setIsOpen(false);
+        
+        // Also fire an endpoint to clear the cookie, then refresh
+        fetch("/api/consumer/auth/logout", { method: "POST" })
+            .catch(() => {})
+            .finally(() => {
+                router.refresh();
+            });
     };
 
     // --- Render Logic ---
