@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { User, LogOut, CheckCircle, Clock, UserPlus, Building, LogIn, ShieldCheck, X } from "lucide-react";
+import { User, LogOut, CheckCircle, Clock, Building, LogIn, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -25,18 +25,14 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
         setMounted(true);
     }, []);
 
-    // Platform Context State
-    const [showRegisterModal, setShowRegisterModal] = useState(false);
-    const [businesses, setBusinesses] = useState<any[]>([]);
+    // Form & Auth State
     const [name, setName] = useState("");
     const [lastName, setLastName] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
-    const [businessId, setBusinessId] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [success, setSuccess] = useState(false);
 
     // Consumer Context State
     const [customer, setCustomer] = useState<any>(null);
@@ -45,16 +41,6 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
     // Dynamic Logo Fallback
     const logoSrc = businessData?.logoUrl || businessData?.logo || "/logo.png";
     const isFozLogo = logoSrc === "/logo.png";
-
-    useEffect(() => {
-        if (context === "platform" && showRegisterModal && businesses.length === 0) {
-            fetch("/api/public/businesses")
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) setBusinesses(data.businesses);
-                });
-        }
-    }, [context, showRegisterModal, businesses.length]);
 
     useEffect(() => {
         if (context === "consumer") {
@@ -77,8 +63,7 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
         }
     }, [context]);
 
-    // Dedicated listener for chat-triggered auth drawer open — registered immediately,
-    // independently of consumer data loading to avoid any mount race condition.
+    // Dedicated listener for chat-triggered auth drawer open
     useEffect(() => {
         if (context !== "consumer") return;
 
@@ -92,28 +77,6 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
             window.removeEventListener("open-auth-drawer", handleOpenAuthDrawer);
         };
     }, [context]);
-
-    const handleRegisterPlatform = async () => {
-        setError("");
-        setLoading(true);
-        try {
-            const res = await fetch("/api/consumer/auth/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ businessId, name, lastName, email, phone, password })
-            });
-            const data = await res.json();
-            if (data.success) {
-                setSuccess(true);
-            } else {
-                setError(data.error || "Registration failed");
-            }
-        } catch (e: any) {
-            setError(e.message || "An error occurred");
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleLoginConsumer = async () => {
         setError("");
@@ -233,9 +196,6 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
                     </button>
                     <h3 className="font-bold text-xl mb-4 text-foreground pt-2">ניווט מהיר</h3>
                     <div className="space-y-3">
-                        <Button variant="outline" className="w-full justify-start gap-2 h-12" onClick={() => setShowRegisterModal(true)}>
-                            <UserPlus className="w-4 h-4 text-blue-500" /> הרשמה כלקוח
-                        </Button>
                         <Link href="/onboarding" className="block w-full">
                             <Button variant="outline" className="w-full justify-start gap-2 h-12">
                                 <Building className="w-4 h-4 text-purple-500" /> הרשמה כבעל עסק
@@ -250,68 +210,6 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
                 </div>
             )}
 
-            {/* Platform Registration Modal */}
-            {context === "platform" && showRegisterModal && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
-                    <div className="bg-card rounded-3xl p-8 max-w-md w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
-                        <button onClick={() => setShowRegisterModal(false)} className="absolute top-4 left-4 text-muted-foreground hover:text-foreground">
-                            <X size={24} />
-                        </button>
-                        
-                        <h2 className="text-2xl font-bold text-foreground mb-2">הרשמה לאזור אישי</h2>
-                        <p className="text-sm text-muted-foreground mb-6 flex items-center gap-2">
-                            <ShieldCheck size={16} className="text-green-500" />
-                            הפרטים שלך נשמרים בצורה מאובטחת.
-                        </p>
-
-                        {success ? (
-                            <div className="text-center py-8">
-                                <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <ShieldCheck size={32} />
-                                </div>
-                                <h3 className="font-bold text-lg text-foreground mb-2">הרשמה בוצעה בהצלחה!</h3>
-                                <p className="text-muted-foreground">בקשתך נשלחה למנהל העסק. תוכל להתחבר לאזור האישי מיד לאחר האישור.</p>
-                                <Button className="mt-6 w-full" onClick={() => setShowRegisterModal(false)}>סגור</Button>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {error && <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
-
-                                <div>
-                                    <label className="text-xs font-semibold text-muted-foreground mb-1 block">בחר עסק</label>
-                                    <select 
-                                        className="w-full h-10 px-3 rounded-md border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                                        value={businessId}
-                                        onChange={(e) => setBusinessId(e.target.value)}
-                                    >
-                                        <option value="">-- בחר מרשימה --</option>
-                                        {businesses.map(b => (
-                                            <option key={b._id} value={b._id}>{b.businessName}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-3">
-                                    <Input placeholder="שם פרטי" value={name} onChange={e => setName(e.target.value)} />
-                                    <Input placeholder="שם משפחה" value={lastName} onChange={e => setLastName(e.target.value)} />
-                                </div>
-                                <Input placeholder="טלפון נייד" value={phone} onChange={e => setPhone(e.target.value)} />
-                                <Input placeholder="דוא״ל" type="email" value={email} onChange={e => setEmail(e.target.value)} />
-                                <PasswordInput placeholder="סיסמה" value={password} onChange={e => setPassword(e.target.value)} />
-
-                                <Button 
-                                    className="w-full bg-primary hover:bg-primary/90 h-12 text-lg rounded-xl mt-2 text-primary-foreground" 
-                                    onClick={handleRegisterPlatform}
-                                    disabled={loading || !businessId || !name || !email || !phone || !password}
-                                >
-                                    {loading ? "שולח..." : "סיים הרשמה"}
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
             {/* Consumer Context: Login/CRM Drawer */}
             {context === "consumer" && isOpen && (
                 <div className="absolute bottom-20 right-0 w-80 bg-card/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-border p-6 animate-in slide-in-from-bottom-10 fade-in duration-300">
@@ -320,12 +218,29 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
                     </button>
                     {!customer ? (
                         <div className="space-y-4 pt-2">
-                            <h3 className="font-bold text-lg text-foreground">
-                                {mode === "login" ? "התחברות אזור אישי" : "הרשמה לאזור אישי"}
-                            </h3>
-                            <p className="text-xs text-muted-foreground">
-                                הנתונים שלך נשמרים בצורה מאובטחת.
-                            </p>
+                            <div className="flex gap-2 bg-muted p-1 rounded-xl">
+                                <button 
+                                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${mode === "login" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                                    onClick={() => { setMode("login"); setError(""); }}
+                                >
+                                    התחברות
+                                </button>
+                                <button 
+                                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${mode === "register" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                                    onClick={() => { setMode("register"); setError(""); }}
+                                >
+                                    הרשמה חדשה
+                                </button>
+                            </div>
+
+                            <div className="space-y-1">
+                                <h3 className="font-bold text-lg text-foreground">
+                                    {mode === "login" ? "התחברות אזור אישי" : "הרשמה לאזור אישי"}
+                                </h3>
+                                <p className="text-xs text-muted-foreground">
+                                    הנתונים שלך נשמרים בצורה מאובטחת במערכת של {businessData?.businessName || "העסק"}.
+                                </p>
+                            </div>
 
                             {error && <div className="text-sm text-red-500 bg-red-50 p-2 rounded">{error}</div>}
 
@@ -343,24 +258,12 @@ export default function BrandingAnchor({ context, businessData, children }: Bran
                                 <PasswordInput placeholder="סיסמה" value={password} onChange={(e) => setPassword(e.target.value)} />
                                 
                                 <Button 
-                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" 
+                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold mt-2 h-10 rounded-xl" 
                                     onClick={mode === "login" ? handleLoginConsumer : handleRegisterConsumer}
-                                    disabled={loading}
+                                    disabled={loading || !email || !password || (mode === "register" && (!name || !phone))}
                                 >
-                                    {loading ? "טוען..." : (mode === "login" ? "התחבר" : "הרשם")}
+                                    {loading ? "טוען..." : (mode === "login" ? "היכנס עכשיו" : "סיים הרשמה")}
                                 </Button>
-                            </div>
-
-                            <div className="text-center text-sm pt-2">
-                                <button 
-                                    className="text-primary hover:underline"
-                                    onClick={() => {
-                                        setMode(mode === "login" ? "register" : "login");
-                                        setError("");
-                                    }}
-                                >
-                                    {mode === "login" ? "אין לך משתמש? לחץ להרשמה" : "כבר רשום? לחץ להתחברות"}
-                                </button>
                             </div>
                         </div>
                     ) : (

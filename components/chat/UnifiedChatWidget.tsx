@@ -154,56 +154,115 @@ export default function UnifiedChatWidget({
             const consumerData = consumerDataStr ? JSON.parse(consumerDataStr) : null;
             const customerId = consumerData?.id || consumerData?._id || null;
 
-            const response = await fetch("/api/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    message: content,
-                    businessId: businessConfig?._id,
-                    sessionId: sessionId,
-                    agentPersona: agentPersona,
-                    customerId: customerId,
-                }),
-            });
+            let response: Response | null = null;
+            let attempt = 0;
+            const maxRetries = 2;
+            
+            while (attempt <= maxRetries) {
+                try {
+                    response = await fetch("/api/chat", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            message: content,
+                            businessId: businessConfig?._id,
+                            sessionId: sessionId,
+                            agentPersona: agentPersona,
+                            customerId: customerId,
+                        }),
+                    });
 
-            const data = await response.json();
-
-            if (data.response) {
-                const aiMsg: Message = {
-                    role: "assistant",
-                    content: data.response,
-                };
-                setMessages((prev) => [...prev, aiMsg]);
-                if (data.sessionId) {
-                    setSessionId(data.sessionId);
+                    if (response.ok) break;
+                    
+                    const errText = await response.text();
+                    console.warn(`Attempt ${attempt + 1} failed:`, response.status, errText);
+                } catch (fetchErr) {
+                    console.warn(`Attempt ${attempt + 1} network error:`, fetchErr);
                 }
                 
-                if (data._system_action === "force_logout") {
-                    window.dispatchEvent(new Event("consumer-force-logout"));
-                } else if (data._system_action === "trigger_auth_drawer") {
-                    // Defer by one tick to ensure BrandingAnchor's useEffect listener is always mounted
-                    setTimeout(() => {
-                        window.dispatchEvent(new CustomEvent("open-auth-drawer", { bubbles: true }));
-                    }, 50);
-                    setWidgetType(null);
-                } else if (data._system_action === "show_date_picker") {
-                    setWidgetType("date_picker");
-                } else if (data._system_action === "show_services") {
-                    setWidgetType("service_selector");
-                } else if (data._system_action === "show_confirmation") {
-                    setWidgetType("confirmation");
-                } else {
-                    setWidgetType(null);
+                attempt++;
+                if (attempt <= maxRetries) {
+                    await new Promise(res => setTimeout(res, 1000));
                 }
+            }
+
+            if (!response || !response.ok) {
+                throw new Error("API completely failed after retries.");
+            }
+
+            // Parse headers for system actions and session ID
+            const newSessionId = response.headers.get("X-Session-Id");
+            if (newSessionId) setSessionId(newSessionId);
+            
+            const systemAction = response.headers.get("X-System-Action");
+            if (systemAction === "force_logout") {
+                window.dispatchEvent(new Event("consumer-force-logout"));
+            } else if (systemAction === "trigger_auth_drawer") {
+                setTimeout(() => window.dispatchEvent(new CustomEvent("open-auth-drawer", { bubbles: true })), 50);
+                setWidgetType(null);
+            } else if (systemAction === "show_date_picker") {
+                setWidgetType("date_picker");
+            } else if (systemAction === "show_services") {
+                setWidgetType("service_selector");
+            } else if (systemAction === "show_confirmation") {
+                setWidgetType("confirmation");
             } else {
-                console.error("API Error:", data?.error || "Unknown response format");
-                setMessages((prev) => [
-                    ...prev,
-                    {
-                        role: "assistant",
-                        content: "מצטערים, חלה שגיאה זמנית בתקשורת. אנא נסה שוב בעוד רגע.",
-                    },
-                ]);
+                setWidgetType(null);
+            }
+
+            const contentType = response.headers.get("content-type") || "";
+
+            if (contentType.includes("application/json")) {
+                const data = await response.json();
+                if (data.response) {
+                    setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
+                }
+                if (data.sessionId) setSessionId(data.sessionId);
+            } else {
+                // Streaming Response
+                const reader = response.body?.getReader();
+                if (!reader) throw new Error("No readable stream");
+                const decoder = new TextDecoder("utf-8");
+                const isDataStream = response.headers.get("X-Vercel-AI-Data-Stream") !== null;
+                
+                // Add an empty assistant message to stream into
+                setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+
+                let done = false;
+                while (!done) {
+                    const { value, done: readerDone } = await reader.read();
+                    done = readerDone;
+                    if (value) {
+                        const chunk = decoder.decode(value, { stream: true });
+                        let appendedText = "";
+                        
+                        if (isDataStream) {
+                            const lines = chunk.split('\n');
+                            for (const line of lines) {
+                                if (line.startsWith('0:')) {
+                                    try {
+                                        appendedText += JSON.parse(line.substring(2));
+                                    } catch (e) {
+                                        appendedText += line.substring(2);
+                                    }
+                                }
+                            }
+                        } else {
+                            appendedText += chunk;
+                        }
+
+                        if (appendedText) {
+                            setMessages((prev) => {
+                                const newArr = [...prev];
+                                const lastMsg = newArr[newArr.length - 1];
+                                if (lastMsg.role === "assistant") {
+                                    lastMsg.content += appendedText;
+                                }
+                                return newArr;
+                            });
+                        }
+                    }
+                }
             }
         } catch (error) {
             console.error("Failed to send message", error);

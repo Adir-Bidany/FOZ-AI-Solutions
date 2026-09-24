@@ -135,19 +135,26 @@ export default function GlobalHeader({ clientData, sessionBusinessId }: GlobalHe
                     {/* --- LEFT SIDE (RTL End): Actions / Live Clock / Landing Page / Theme Toggle --- */}
                     <div className="flex items-center gap-3 md:gap-4 shrink-0">
                         {!isDashboard && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                    setAdminPassword("");
-                                    setAdminError(null);
-                                    setIsAdminModalOpen(true);
-                                }}
-                                className="h-10 w-10 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                                title="גישת מנהל (Admin)"
-                            >
-                                <ShieldCheck className="h-5 w-5" />
-                            </Button>
+                            <>
+                                <Link href="/pricing">
+                                    <Button variant="ghost" className="font-bold text-muted-foreground hover:text-foreground">
+                                        תמחור
+                                    </Button>
+                                </Link>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                        setAdminPassword("");
+                                        setAdminError(null);
+                                        setIsAdminModalOpen(true);
+                                    }}
+                                    className="h-10 w-10 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                                    title="גישת מנהל (Admin)"
+                                >
+                                    <ShieldCheck className="h-5 w-5" />
+                                </Button>
+                            </>
                         )}
 
                         {isDashboard && (
