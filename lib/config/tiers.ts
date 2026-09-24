@@ -1,4 +1,4 @@
-﻿/**
+/**
  * lib/config/tiers.ts
  * Single source of truth for subscription tiers and feature flags.
  * To add a new feature: (1) add the string to FeatureFlag, (2) assign it to the correct tier(s) below.
@@ -30,6 +30,7 @@ export type FeatureFlag =
     | "LIVE_CHAT_INTERVENTION" // /dashboard/customers — CustomerChatModal for direct messaging
     | "ACTION_CENTER"          // /dashboard — ActionCenter agent recommendations + edit/approve/dismiss
     | "MISSING_INFO_RESOLVER"  // /dashboard/growth — answer AI knowledge-gap questions
+    | "WAITLIST_AUTOMATION"    // Backend Waitlist & Dashboard UI features
 
     // Enterprise
     | "MARKETING_HUB"          // /dashboard/marketing — MarketingContentHub
@@ -39,7 +40,8 @@ export type FeatureFlag =
     | "PROMPT_EDITOR"          // /dashboard/growth — publicInstructions textarea
     | "CSV_EXPORT"             // /dashboard — AnalyticsSection CSV download
     | "AGENT_INSIGHTS_FEED"    // /dashboard — AgentInsightsFeed real-time log
-    | "SYSTEM_AUDIT_LOG";      // /dashboard — SystemAuditLog
+    | "SYSTEM_AUDIT_LOG"       // /dashboard — SystemAuditLog
+    | "PUSH_MARKETING_BROADCAST"; // /dashboard/marketing — PushBroadcastCard
 
 // ─── Tier Feature Map ─────────────────────────────────────────────────────────
 // Each tier lists only the features that are NEWLY unlocked at that tier.
@@ -61,6 +63,7 @@ export const TIER_FEATURES: Record<SubscriptionTier, ReadonlySet<FeatureFlag>> =
         "LIVE_CHAT_INTERVENTION",
         "ACTION_CENTER",
         "MISSING_INFO_RESOLVER",
+        "WAITLIST_AUTOMATION",
     ]),
 
     enterprise: new Set<FeatureFlag>([
@@ -73,6 +76,7 @@ export const TIER_FEATURES: Record<SubscriptionTier, ReadonlySet<FeatureFlag>> =
         "CSV_EXPORT",
         "AGENT_INSIGHTS_FEED",
         "SYSTEM_AUDIT_LOG",
+        "PUSH_MARKETING_BROADCAST",
     ]),
 };
 

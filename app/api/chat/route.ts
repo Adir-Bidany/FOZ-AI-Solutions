@@ -545,6 +545,16 @@ MARKETING POST CREATION BEHAVIORAL RULES:
                                     appt.status = "cancelled";
                                     await appt.save();
 
+                                    // Fire & Forget waitlist resolver
+                                    try {
+                                        const { resolveWaitlist } = await import("@/lib/waitlistResolver");
+                                        const dateStr = appt.details.date.toISOString().split("T")[0];
+                                        const startTime = appt.details.date.toISOString().split("T")[1].substring(0, 5); // "HH:MM"
+                                        resolveWaitlist(businessId, dateStr, startTime);
+                                    } catch (err) {
+                                        console.error("Failed to trigger waitlist resolver from chat:", err);
+                                    }
+
                                     return { success: true, message: `התור בתאריך ${date} בוטל בהצלחה.` };
                                 } catch (e: any) {
                                     console.error("[cancel_appointment tool] Error:", e);

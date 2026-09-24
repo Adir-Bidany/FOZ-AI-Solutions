@@ -53,8 +53,18 @@ export interface IBusiness extends Document {
     }[];
     /** If true, the booking AI flow will show a service selector. If false, books a generic appointment. */
     hasServices?: boolean;
+    policies?: string[];
     publicInstructions?: string;
     internalNotes?: string;
+
+    pushSubscriptions?: {
+        endpoint: string;
+        keys: {
+            p256dh: string;
+            auth: string;
+        };
+    }[];
+
     createdAt: Date;
     updatedAt: Date;
 }
@@ -161,6 +171,19 @@ const BusinessSchema = new Schema<IBusiness>(
             ]
         },
         hasServices: { type: Boolean, default: false },
+        policies: { type: [String], default: ["ניתן לבטל תור בהתראה של עד 12 שעות מראש"] },
+        pushSubscriptions: {
+            type: [
+                {
+                    endpoint: { type: String, required: true },
+                    keys: {
+                        p256dh: { type: String, required: true },
+                        auth: { type: String, required: true },
+                    }
+                }
+            ],
+            default: []
+        },
     },
     { timestamps: true }
 );

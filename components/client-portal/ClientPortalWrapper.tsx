@@ -5,6 +5,9 @@ import UpcomingAppointmentCard from "./UpcomingAppointmentCard";
 import PastTreatmentsList from "./PastTreatmentsList";
 import PublicAvailabilityCalendar from "./PublicAvailabilityCalendar";
 import DanielaFAB from "./DanielaFAB";
+import WaitlistAlert from "./WaitlistAlert";
+import PushPromptBanner from "./PushPromptBanner";
+import BusinessPolicies from "@/components/landing/BusinessPolicies";
 
 interface ClientPortalWrapperProps {
     customerName: string;
@@ -14,6 +17,12 @@ interface ClientPortalWrapperProps {
 export default function ClientPortalWrapper({ customerName, businessConfig }: ClientPortalWrapperProps) {
     return (
         <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 pb-20" dir="rtl">
+            {/* Waitlist Notification Banner */}
+            <WaitlistAlert />
+
+            {/* Push Notifications Opt-In Banner */}
+            <PushPromptBanner />
+
             {/* Top Row: 2 Columns on Desktop */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
                 
@@ -47,6 +56,11 @@ export default function ClientPortalWrapper({ customerName, businessConfig }: Cl
                     <PublicAvailabilityCalendar businessId={businessConfig._id.toString()} />
                 </section>
             </div>
+
+            {/* Business Policies */}
+            {businessConfig.policies && businessConfig.policies.length > 0 && (
+                <BusinessPolicies policies={businessConfig.policies} />
+            )}
         </div>
     );
 }
