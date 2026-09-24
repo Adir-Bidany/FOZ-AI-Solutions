@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -39,7 +39,12 @@ export default function LoginPage() {
                 toast.error("פרטי התחברות שגויים. אנא נסה שוב.");
             } else {
                 toast.success("התחברת בהצלחה! מעביר לדשבורד...");
-                router.push("/dashboard");
+                const session = await getSession();
+                if (session?.user?.role === "admin") {
+                    router.push("/admin");
+                } else {
+                    router.push("/dashboard");
+                }
             }
         } catch (err) {
             console.error("Login Error:", err);
