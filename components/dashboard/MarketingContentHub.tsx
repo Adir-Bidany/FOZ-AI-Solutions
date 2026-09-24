@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import InsightCard from "@/components/dashboard/InsightCard";
+import PushBroadcastCard from "./marketing/PushBroadcastCard";
 import {
     Sparkles,
     ImageIcon,
@@ -229,6 +230,11 @@ export default function MarketingContentHub({
                     </div>
                 )}
             </div>
+
+            {/* --- PUSH NOTIFICATIONS BAR --- */}
+            <FeatureGate currentTier={effectiveTier} requiredFeature="PUSH_MARKETING_BROADCAST">
+                <PushBroadcastCard />
+            </FeatureGate>
 
             {/* --- AI POST GENERATOR BAR --- */}
             <div className="bg-card/90 backdrop-blur-xl border border-border/80 rounded-3xl p-6 shadow-sm space-y-6">

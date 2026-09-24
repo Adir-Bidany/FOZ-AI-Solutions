@@ -14,8 +14,12 @@ export interface IWaitlist extends Document {
     preferred_time_of_day?: "morning" | "afternoon" | "evening" | "any";
     note?: string;                  // Free-text note from the customer
 
-    status: "waiting" | "notified" | "booked" | "removed";
-    notified_at?: Date;             // When the business notified the customer
+    status: "waiting" | "notified" | "fulfilled" | "declined";
+    notified_at?: Date;             // When the system notified the customer
+    offeredSlot?: {                 // The specific slot offered when moved to "notified"
+        date: string;
+        startTime: string;
+    };
 
     createdAt: Date;
     updatedAt: Date;
@@ -62,11 +66,15 @@ const WaitlistSchema = new Schema<IWaitlist>(
 
         status: {
             type: String,
-            enum: ["waiting", "notified", "booked", "removed"],
+            enum: ["waiting", "notified", "fulfilled", "declined"],
             default: "waiting",
         },
         notified_at: {
             type: Date,
+        },
+        offeredSlot: {
+            date: { type: String },
+            startTime: { type: String }
         },
     },
     { timestamps: true }

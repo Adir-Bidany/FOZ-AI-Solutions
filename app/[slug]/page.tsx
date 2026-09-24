@@ -10,6 +10,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import ClientPortalWrapper from "@/components/client-portal/ClientPortalWrapper";
+import BusinessPolicies from "@/components/landing/BusinessPolicies";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -30,6 +31,7 @@ async function getClientData(slug: string) {
         heroImage:
             "https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=2068&auto=format&fit=crop",
         landing_page_data: client.landing_page_data || {},
+        policies: client.policies || [],
     };
 }
 
@@ -149,6 +151,11 @@ export default async function ClientPage({
                             </div>
                         </div>
                     </div>
+                )}
+                
+                {/* Render Business Policies for Guests */}
+                {!isConsumerMode && clientData.policies && clientData.policies.length > 0 && (
+                    <BusinessPolicies policies={clientData.policies} />
                 )}
             </main>
 

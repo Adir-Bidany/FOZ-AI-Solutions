@@ -26,6 +26,14 @@ export interface ICustomer extends Document {
     // Legacy / Other
     notes?: string;
     tags?: string[];
+    
+    pushSubscriptions?: {
+        endpoint: string;
+        keys: {
+            p256dh: string;
+            auth: string;
+        };
+    }[];
 
     createdAt: Date;
     updatedAt: Date;
@@ -58,6 +66,19 @@ const CustomerSchema = new Schema<ICustomer>(
 
         notes: { type: String },
         tags: [{ type: String }],
+        
+        pushSubscriptions: {
+            type: [
+                {
+                    endpoint: { type: String, required: true },
+                    keys: {
+                        p256dh: { type: String, required: true },
+                        auth: { type: String, required: true },
+                    }
+                }
+            ],
+            default: []
+        },
     },
     { timestamps: true }
 );

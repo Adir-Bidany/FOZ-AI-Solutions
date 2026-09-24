@@ -37,6 +37,7 @@ import AdminMetricsBoard from "@/components/admin/AdminMetricsBoard";
 import AdminBillingTab from "@/components/admin/AdminBillingTab";
 import AdminAIUsageTab from "@/components/admin/AdminAIUsageTab";
 import TierSelectDropdown from "@/components/admin/TierSelectDropdown";
+import PushBroadcastAdmin from "@/components/admin/PushBroadcastAdmin";
 
 // --- Tab Definitions ---
 
@@ -285,7 +286,10 @@ export default function AdminDashboard() {
 
                 {/* Tab: Overview */}
                 {activeTab === "overview" && (
-                    <AdminMetricsBoard clients={clients} totalPazLeads={totalPazLeads} pricing={pricingSettings} />
+                    <div className="space-y-6">
+                        <AdminMetricsBoard clients={clients} totalPazLeads={totalPazLeads} pricing={pricingSettings} />
+                        <PushBroadcastAdmin />
+                    </div>
                 )}
 
                 {/* Tab: Tenants */}

@@ -5,7 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface BusinessSettingsModalProps {
@@ -16,6 +17,8 @@ interface BusinessSettingsModalProps {
 
 export default function BusinessSettingsModal({ isOpen, onClose }: BusinessSettingsModalProps) {
     const [hasServices, setHasServices] = useState(false);
+    const [policies, setPolicies] = useState<string[]>([]);
+    const [newPolicy, setNewPolicy] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -28,11 +31,23 @@ export default function BusinessSettingsModal({ isOpen, onClose }: BusinessSetti
             .then(data => {
                 if (data.success && data.settings) {
                     setHasServices(!!data.settings.hasServices);
+                    setPolicies(data.settings.policies || []);
                 }
             })
             .catch(() => toast.error("שגיאה בטעינת ההגדרות"))
             .finally(() => setIsLoading(false));
     }, [isOpen]);
+
+    const handleAddPolicy = () => {
+        if (newPolicy.trim().length > 0) {
+            setPolicies([...policies, newPolicy.trim()]);
+            setNewPolicy("");
+        }
+    };
+
+    const handleRemovePolicy = (index: number) => {
+        setPolicies(policies.filter((_, i) => i !== index));
+    };
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -40,7 +55,7 @@ export default function BusinessSettingsModal({ isOpen, onClose }: BusinessSetti
             const res = await fetch("/api/business/settings", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ hasServices }),
+                body: JSON.stringify({ hasServices, policies }),
             });
             const data = await res.json();
             if (data.success) {
@@ -58,7 +73,7 @@ export default function BusinessSettingsModal({ isOpen, onClose }: BusinessSetti
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[425px]" dir="rtl">
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto" dir="rtl">
                 <DialogHeader>
                     <DialogTitle>הגדרות עסק</DialogTitle>
                 </DialogHeader>
@@ -69,18 +84,59 @@ export default function BusinessSettingsModal({ isOpen, onClose }: BusinessSetti
                             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                         </div>
                     ) : (
-                        <div className="flex items-center justify-between space-x-4 space-x-reverse rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                                <Label className="text-base font-bold text-foreground">סוגי טיפולים מרובים</Label>
-                                <p className="text-sm text-muted-foreground">
-                                    האם העסק מציע מספר סוגי טיפולים או שירותים לבחירת הלקוח? (ישפיע על השאלות של דניאלה)
-                                </p>
+                        <>
+                            <div className="flex items-center justify-between space-x-4 space-x-reverse rounded-lg border p-4">
+                                <div className="space-y-0.5">
+                                    <Label className="text-base font-bold text-foreground">סוגי טיפולים מרובים</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        האם העסק מציע מספר סוגי טיפולים או שירותים לבחירת הלקוח? (ישפיע על השאלות של דניאלה)
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={hasServices}
+                                    onCheckedChange={setHasServices}
+                                />
                             </div>
-                            <Switch
-                                checked={hasServices}
-                                onCheckedChange={setHasServices}
-                            />
-                        </div>
+
+                            <div className="rounded-lg border p-4 space-y-4">
+                                <div className="space-y-1">
+                                    <Label className="text-base font-bold text-foreground">תנאי שירות ומדיניות</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        יופיעו בתחתית עמוד הנחיתה ואזור הלקוחות (לדוגמה: מדיניות ביטולים).
+                                    </p>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                    {policies.map((policy, index) => (
+                                        <div key={index} className="flex items-center gap-2 bg-muted/50 p-2 rounded-md">
+                                            <span className="flex-1 text-sm text-foreground">{policy}</span>
+                                            <button 
+                                                onClick={() => handleRemovePolicy(index)}
+                                                className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {policies.length === 0 && (
+                                        <p className="text-sm text-muted-foreground italic">אין תנאי שירות מוגדרים.</p>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center gap-2 pt-2">
+                                    <Input
+                                        placeholder="תנאי שירות ומדיניות (עד 15 מילים)..."
+                                        value={newPolicy}
+                                        onChange={(e) => setNewPolicy(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleAddPolicy()}
+                                        className="flex-1"
+                                    />
+                                    <Button type="button" variant="secondary" size="icon" onClick={handleAddPolicy} className="shrink-0">
+                                        <Plus size={16} />
+                                    </Button>
+                                </div>
+                            </div>
+                        </>
                     )}
                 </div>
 

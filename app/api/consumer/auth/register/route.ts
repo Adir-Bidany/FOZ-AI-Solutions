@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
         const existingCustomerEmail = await Customer.findOne({ business_id: businessId, email });
         if (existingCustomerEmail) {
-            return NextResponse.json({ error: "Customer already registered with this email" }, { status: 409 });
+            return NextResponse.json({ error: "כתובת המייל כבר רשומה במערכת. אנא התחבר או הירשם עם מייל אחר, או צור קשר." }, { status: 400 });
         }
 
         const passwordHash = await bcrypt.hash(password, 10);

@@ -4,6 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectToDatabase } from "@/lib/db";
 import Business from "@/models/Business";
 import Appointment from "@/models/Appointment";
+import { resolveWaitlist } from "@/lib/waitlistResolver";
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -29,6 +30,15 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
         if (!deletedAppt) {
             return NextResponse.json({ success: false, error: "Appointment not found or unauthorized" }, { status: 404 });
+        }
+
+        // Fire & Forget waitlist resolver
+        try {
+            const dateStr = deletedAppt.details.date.toISOString().split("T")[0];
+            const startTime = deletedAppt.details.date.toISOString().split("T")[1].substring(0, 5); // "HH:MM"
+            resolveWaitlist((business as any)._id.toString(), dateStr, startTime);
+        } catch (e) {
+            console.error("Failed to trigger resolveWaitlist", e);
         }
 
         return NextResponse.json({ success: true });

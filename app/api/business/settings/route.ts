@@ -56,7 +56,8 @@ export async function GET(req: Request) {
                     apiKey: apiKeys.simplybook?.apiKey || ""
                 },
                 
-                hasServices: !!business.hasServices
+                hasServices: !!business.hasServices,
+                policies: business.policies || []
             }
         });
     } catch (error) {
@@ -110,6 +111,10 @@ export async function POST(req: Request) {
 
         if (body.hasServices !== undefined) {
             business.hasServices = body.hasServices;
+        }
+
+        if (body.policies !== undefined) {
+            business.policies = body.policies;
         }
 
         await business.save();

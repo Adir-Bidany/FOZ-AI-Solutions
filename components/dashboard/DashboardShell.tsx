@@ -11,6 +11,7 @@ import LeadManager from "./LeadManager";
 import AnalyticsSection from "./AnalyticsSection";
 import FeatureGate from "@/components/dashboard/FeatureGate";
 import { type SubscriptionTier } from "@/lib/config/tiers";
+import PushPromptBusinessBanner from "./PushPromptBusinessBanner";
 
 interface ActionCard {
     _id: string;
@@ -57,6 +58,7 @@ export default function DashboardShell({
 
             {/* ─── Main Page Content ─── */}
             <div className="px-4 lg:px-8 pt-8 md:pt-10 space-y-10">
+                <PushPromptBusinessBanner />
 
                 {/* ══════════════════════════════════════════════
                     SECTION 1 — Agent Action Center (מרכז הפעולות)
