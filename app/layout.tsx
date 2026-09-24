@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Heebo } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -13,7 +13,20 @@ const heebo = Heebo({
 export const metadata: Metadata = {
     title: "FOZ AI Solutions",
     description: "Automated AI Chat for Clinics",
-    icons: { icon: "/favicon.png" },
+    icons: { 
+        icon: "/favicon.png",
+        apple: "/favicon.png" 
+    },
+};
+
+export const viewport: Viewport = {
+    themeColor: [
+        { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+        { media: "(prefers-color-scheme: dark)", color: "#09090b" }
+    ],
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
 };
 
 export default function RootLayout({
