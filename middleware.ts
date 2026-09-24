@@ -17,8 +17,7 @@ export async function middleware(req: NextRequest) {
 
     // 2. Server-Side RBAC Admin Gate
     if (pathname.startsWith("/admin")) {
-        const adminAccessCookie = req.cookies.get("admin_access")?.value;
-        if (!adminAccessCookie && (!token || token.role !== "admin")) {
+        if (!token || token.role !== "admin") {
             const url = new URL("/", req.url);
             return NextResponse.redirect(url);
         }

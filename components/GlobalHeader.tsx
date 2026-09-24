@@ -3,19 +3,9 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Link as LinkIcon, ShieldCheck } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { PasswordInput } from "@/components/ui/password-input";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-} from "@/components/ui/dialog";
 import ThemeToggle from "@/components/ThemeToggle";
 import ClientLogo from "@/components/ClientLogo";
 import { RESERVED_SLUGS } from "@/lib/constants/reserved-slugs";
@@ -40,11 +30,6 @@ interface GlobalHeaderProps {
 
 export default function GlobalHeader({ clientData, sessionBusinessId }: GlobalHeaderProps) {
     const pathname = usePathname();
-    const router = useRouter();
-
-    const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
-    const [adminPassword, setAdminPassword] = useState("");
-    const [adminError, setAdminError] = useState<string | null>(null);
 
     // Live Clock & Date State
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -68,19 +53,6 @@ export default function GlobalHeader({ clientData, sessionBusinessId }: GlobalHe
     const clientSlug = clientData?.slug || sessionBusinessId || "demo";
     const businessName = clientData?.businessName || "העסק שלי";
     const businessLogo = clientData?.logo || (clientData as any)?.landing_page_data?.hero_image_url || null;
-
-    const handleAdminLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (adminPassword.trim() === "123456") {
-            document.cookie = "admin_access=true; path=/; max-age=86400";
-            setIsAdminModalOpen(false);
-            setAdminPassword("");
-            setAdminError(null);
-            router.push("/admin");
-        } else {
-            setAdminError("סיסמה שגויה");
-        }
-    };
 
     const timeString = mounted
         ? currentTime.toLocaleTimeString("he-IL", {
@@ -141,19 +113,6 @@ export default function GlobalHeader({ clientData, sessionBusinessId }: GlobalHe
                                         תמחור
                                     </Button>
                                 </Link>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => {
-                                        setAdminPassword("");
-                                        setAdminError(null);
-                                        setIsAdminModalOpen(true);
-                                    }}
-                                    className="h-10 w-10 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                                    title="גישת מנהל (Admin)"
-                                >
-                                    <ShieldCheck className="h-5 w-5" />
-                                </Button>
                             </>
                         )}
 
@@ -184,45 +143,6 @@ export default function GlobalHeader({ clientData, sessionBusinessId }: GlobalHe
                     </div>
                 </div>
             </header>
-
-            {/* Admin Quick-Access Password Modal */}
-            <Dialog open={isAdminModalOpen} onOpenChange={setIsAdminModalOpen}>
-                <DialogContent className="sm:max-w-md bg-card text-card-foreground border-border rounded-2xl p-6" dir="rtl">
-                    <DialogHeader>
-                        <DialogTitle className="text-xl font-bold flex items-center gap-2 text-foreground">
-                            <ShieldCheck className="w-5 h-5 text-purple-500" />
-                            כניסת מנהל מערכת
-                        </DialogTitle>
-                        <DialogDescription className="text-sm text-muted-foreground mt-1">
-                            הזינו סיסמת מנהל כדי לעבור בדחיפות לדשבורד הניהול המרכזי.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <form onSubmit={handleAdminLogin} className="space-y-4 mt-2">
-                        <div>
-                            <PasswordInput
-                                placeholder="הזן סיסמת מנהל..."
-                                value={adminPassword}
-                                onChange={(e) => {
-                                    setAdminPassword(e.target.value);
-                                    setAdminError(null);
-                                }}
-                                autoFocus
-                                className="rounded-xl border-border bg-background text-foreground"
-                            />
-                            {adminError && (
-                                <p className="text-xs text-red-500 font-medium mt-1.5">{adminError}</p>
-                            )}
-                        </div>
-
-                        <DialogFooter className="flex gap-2 sm:justify-start">
-                            <Button type="submit" className="w-full sm:w-auto rounded-xl font-bold bg-primary text-primary-foreground">
-                                כניסה למערכת
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
         </>
     );
 }
