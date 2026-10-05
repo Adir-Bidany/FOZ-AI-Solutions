@@ -2,6 +2,7 @@ import mongoose, { Schema, model, models, Document } from "mongoose";
 
 export interface IBusiness extends Document {
     slug: string;
+    subdomain?: string;
     businessName: string;
     ownerName: string;
     ownerEmail: string;
@@ -73,6 +74,7 @@ const BusinessSchema = new Schema<IBusiness>(
     {
         // --- Identity ---
         slug: { type: String, required: true, unique: true },
+        subdomain: { type: String, unique: true, sparse: true, lowercase: true, trim: true, match: /^[a-z0-9-]+$/ },
         businessName: { type: String, required: true },
         ownerName: { type: String, required: true },
         ownerEmail: { type: String, required: true, unique: true },

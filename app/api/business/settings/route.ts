@@ -57,7 +57,8 @@ export async function GET(req: Request) {
                 },
                 
                 hasServices: !!business.hasServices,
-                policies: business.policies || []
+                policies: business.policies || [],
+                tone: business.ai_settings?.tone || "Professional"
             }
         });
     } catch (error) {
@@ -96,10 +97,10 @@ export async function POST(req: Request) {
         }
 
         // Update fields
-        if (body.businessName) business.businessName = body.businessName;
-        if (body.ownerName) business.ownerName = body.ownerName;
-        if (body.phone) business.phone = body.phone;
-        if (body.address) business.address = body.address;
+        if (body.businessName !== undefined) business.businessName = body.businessName;
+        if (body.ownerName !== undefined) business.ownerName = body.ownerName;
+        if (body.phone !== undefined) business.phone = body.phone;
+        if (body.address !== undefined) business.address = body.address;
         if (body.publicInstructions !== undefined) business.publicInstructions = body.publicInstructions;
         if (body.internalNotes !== undefined) business.internalNotes = body.internalNotes;
 
@@ -115,6 +116,11 @@ export async function POST(req: Request) {
 
         if (body.policies !== undefined) {
             business.policies = body.policies;
+        }
+
+        if (body.tone !== undefined) {
+            if (!business.ai_settings) business.ai_settings = {};
+            business.ai_settings.tone = body.tone;
         }
 
         await business.save();

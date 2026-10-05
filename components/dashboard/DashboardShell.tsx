@@ -2,12 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import ActionCenter from "./ActionCenter";
-import HeroMetrics from "./HeroMetrics";
-import IntegrationsHealth from "./IntegrationsHealth";
 import AgentInsightsFeed from "./AgentInsightsFeed";
 import SystemAuditLog from "./SystemAuditLog";
 import GoldaModal from "./GoldaModal";
-import LeadManager from "./LeadManager";
+import KanbanBoard from "./KanbanBoard";
 import AnalyticsSection from "./AnalyticsSection";
 import FeatureGate from "@/components/dashboard/FeatureGate";
 import { type SubscriptionTier } from "@/lib/config/tiers";
@@ -56,14 +54,11 @@ export default function DashboardShell({
     return (
         <div className="relative min-h-full pb-32" dir="rtl">
 
-            {/* ─── Main Page Content ─── */}
+            {/* Main Page Content */}
             <div className="px-4 lg:px-8 pt-8 md:pt-10 space-y-10">
                 <PushPromptBusinessBanner />
 
-                {/* ══════════════════════════════════════════════
-                    SECTION 1 — Agent Action Center (מרכז הפעולות)
-                    First component on page right below Global Header
-                ══════════════════════════════════════════════ */}
+                {/* SECTION 1 - Agent Action Center */}
                 <FeatureGate currentTier={effectiveTier} requiredFeature="ACTION_CENTER">
                     <ActionCenter
                         businessId={businessId}
@@ -72,42 +67,24 @@ export default function DashboardShell({
                     />
                 </FeatureGate>
 
-                {/* ══════════════════════════════════════════════
-                    SECTION 1.5 — Lead Manager (ניהול פניות ולידים)
-                ══════════════════════════════════════════════ */}
-                <LeadManager businessId={businessId} />
+                {/* SECTION 1.5 - Kanban Lead Manager */}
+                <KanbanBoard />
 
-                {/* ══════════════════════════════════════════════
-                    SECTION 2 — Hero Metrics (4 KPI cards)
-                ══════════════════════════════════════════════ */}
-                <HeroMetrics />
-
-                {/* ══════════════════════════════════════════════
-                    SECTION 3 — Integrations Health
-                ══════════════════════════════════════════════ */}
-                <IntegrationsHealth />
-
-                {/* ══════════════════════════════════════════════
-                    SECTION 4 — Agent Insights Feed
-                ══════════════════════════════════════════════ */}
+                {/* SECTION 4 - Agent Insights Feed */}
                 <FeatureGate currentTier={effectiveTier} requiredFeature="AGENT_INSIGHTS_FEED">
                     <AgentInsightsFeed />
                 </FeatureGate>
 
-                {/* ══════════════════════════════════════════════
-                    SECTION 5 — System Audit Log
-                ══════════════════════════════════════════════ */}
+                {/* SECTION 5 - System Audit Log */}
                 <FeatureGate currentTier={effectiveTier} requiredFeature="SYSTEM_AUDIT_LOG">
                     <SystemAuditLog />
                 </FeatureGate>
 
-                {/* ══════════════════════════════════════════════
-                    SECTION 6 — Analytics & CSV Export
-                ══════════════════════════════════════════════ */}
+                {/* SECTION 6 - Analytics & CSV Export */}
                 <AnalyticsSection />
             </div>
 
-            {/* ─── Golda Popup Modal ─── */}
+            {/* Golda Popup Modal */}
             <GoldaModal
                 isOpen={isGoldaOpen}
                 onClose={() => setIsGoldaOpen(false)}

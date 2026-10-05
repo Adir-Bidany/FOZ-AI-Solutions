@@ -1,19 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Download, TrendingUp } from "lucide-react";
-import { format } from "date-fns";
-import { he } from "date-fns/locale/he";
+import { Download, Users, Lock } from "lucide-react";
 import useSWR from "swr";
-import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import FeatureGate from "@/components/dashboard/FeatureGate";
 import { type SubscriptionTier } from "@/lib/config/tiers";
-import { Lock } from "lucide-react";
+import { toast } from "sonner";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -21,143 +15,59 @@ export default function AnalyticsSection() {
     const { data: session } = useSession();
     const effectiveTier = (session?.user?.effectiveTier as SubscriptionTier) ?? "basic";
 
-    const [isMounted, setIsMounted] = useState(false);
-    const [date, setDate] = useState<Date | undefined>(undefined);
-
-    useEffect(() => {
-        setIsMounted(true);
-        setDate(new Date());
-    }, []);
-
-    // Fetch stats for selected date (or today if undefined)
-    const dateQuery = date ? `?date=${date.toISOString()}` : "";
-    const { data, error } = useSWR(`/api/dashboard/stats${dateQuery}`, fetcher);
+    // Fetch total leads
+    const { data, error } = useSWR(`/api/business/customers`, fetcher);
 
     const handleExport = () => {
-        // Simple CSV generation logic
-        // In a real app, this would likely hit an API endpoint that streams a CSV
-        if (!data) return;
+        if (!data || !data.customers) {
+            toast.error("אין נתונים לייצוא");
+            return;
+        }
 
         const csvContent = "data:text/csv;charset=utf-8,"
-            + "Date,Daily Count,Lifetime Count\n"
-            + `${date ? format(date, "yyyy-MM-dd") : "Today"},${data.dailyCount},${data.lifetimeCount}`;
+            + "Name,Phone,Status,Created At\n"
+            + data.customers.map((c: any) => `${c.name} ${c.lastName},${c.phone},${c.pipeline_status || 'New'},${c.createdAt}`).join("\n");
 
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "report.csv");
+        link.setAttribute("download", "leads_report.csv");
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     };
 
     return (
-        <div className="mt-12 space-y-6">
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Card 1: Lifetime Stats */}
-                <Card className="border-none shadow-sm bg-card rounded-2xl">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                            סה״כ שיחות (מאז ומעולם)
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-bold text-foreground">
-                            {data ? data.lifetimeCount : "..."}
+        <div className="mt-12 flex justify-end">
+            <Card className="border-border/50 shadow-sm bg-card rounded-2xl w-full max-w-lg">
+                <CardContent className="p-4 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-primary/10 text-primary rounded-xl">
+                            <Users className="w-5 h-5" />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            כל השיחות שהוגדרו כלידים
-                        </p>
-                    </CardContent>
-                </Card>
-
-                {/* Card 2: Date Picker Filter */}
-                <Card className="border-none shadow-sm bg-card rounded-2xl">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                            סינון לפי תאריך
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {isMounted ? (
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                            "w-full justify-start text-left font-normal h-10 rounded-xl",
-                                            !date && "text-muted-foreground"
-                                        )}
-                                    >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {date ? (
-                                            format(date, "PPP", { locale: he })
-                                        ) : (
-                                            <span>בחר תאריך</span>
-                                        )}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        mode="single"
-                                        selected={date}
-                                        onSelect={setDate}
-                                        initialFocus
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                        ) : (
-                            <Button
-                                variant={"outline"}
-                                className="w-full justify-start text-left font-normal h-10 rounded-xl text-muted-foreground"
-                            >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                <span>בחר תאריך</span>
-                            </Button>
-                        )}
-                        <div className="mt-4 flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">שיחות ביום זה:</span>
-                            <span className="font-bold text-lg text-foreground">
-                                {data ? data.dailyCount : "..."}
-                            </span>
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">סה״כ לידים במערכת</p>
+                            <p className="text-2xl font-bold text-foreground">
+                                {data?.customers ? data.customers.length : "..."}
+                            </p>
                         </div>
-                    </CardContent>
-                </Card>
-
-                {/* Card 3: Export */}
-                <Card className="border-none shadow-sm bg-card rounded-2xl">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                            ייצוא נתונים
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col justify-between h-[calc(100%-3rem)]">
-                        <p className="text-sm text-muted-foreground mb-4">
-                            הורדת דוח מרוכז של נתוני השיחות לקובץ CSV.
-                        </p>
-                        <FeatureGate
-                            currentTier={effectiveTier}
-                            requiredFeature="CSV_EXPORT"
-                            fallback={
-                                <Button
-                                    disabled
-                                    className="w-full h-10 rounded-xl bg-muted text-muted-foreground gap-2 cursor-not-allowed"
-                                >
-                                    <Lock size={16} /> ייצוא (Enterprise)
-                                </Button>
-                            }
-                        >
-                            <Button
-                                onClick={handleExport}
-                                className="w-full h-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
-                            >
-                                <Download size={16} /> הורד דוח
+                    </div>
+                    
+                    <FeatureGate
+                        currentTier={effectiveTier}
+                        requiredFeature="CSV_EXPORT"
+                        fallback={
+                            <Button disabled className="h-10 rounded-xl bg-muted text-muted-foreground gap-2 cursor-not-allowed">
+                                <Lock size={16} /> ייצוא ל-CSV (Enterprise)
                             </Button>
-                        </FeatureGate>
-                    </CardContent>
-                </Card>
-            </div>
+                        }
+                    >
+                        <Button onClick={handleExport} variant="outline" className="h-10 rounded-xl gap-2 hover:bg-primary/5 border-primary/20">
+                            <Download size={16} /> ייצוא נתונים (CSV)
+                        </Button>
+                    </FeatureGate>
+                </CardContent>
+            </Card>
         </div>
     );
 }
