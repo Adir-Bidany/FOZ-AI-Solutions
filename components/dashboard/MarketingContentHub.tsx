@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import InsightCard from "@/components/dashboard/InsightCard";
+import IntegrationsHealth from "@/components/dashboard/IntegrationsHealth";
 import PushBroadcastCard from "./marketing/PushBroadcastCard";
 import {
     Sparkles,
@@ -230,6 +231,9 @@ export default function MarketingContentHub({
                     </div>
                 )}
             </div>
+
+            {/* INTEGRATIONS HEALTH */}
+            <IntegrationsHealth />
 
             {/* --- PUSH NOTIFICATIONS BAR --- */}
             <FeatureGate currentTier={effectiveTier} requiredFeature="PUSH_MARKETING_BROADCAST">

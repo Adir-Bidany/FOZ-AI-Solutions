@@ -26,6 +26,7 @@ export interface ICustomer extends Document {
     // Legacy / Other
     notes?: string;
     tags?: string[];
+    pipeline_status?: "New" | "Contacted" | "Meeting Set" | "Closed";
     
     pushSubscriptions?: {
         endpoint: string;
@@ -66,6 +67,7 @@ const CustomerSchema = new Schema<ICustomer>(
 
         notes: { type: String },
         tags: [{ type: String }],
+        pipeline_status: { type: String, enum: ["New", "Contacted", "Meeting Set", "Closed"], default: "New" },
         
         pushSubscriptions: {
             type: [

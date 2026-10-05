@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Users, CheckCircle, Eye, UserX, AlertTriangle, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CustomerChatModal from "@/components/dashboard/CustomerChatModal";
+import Customer360Modal from '@/components/dashboard/Customer360Modal';
 import GuestChatsSection from "@/components/dashboard/GuestChatsSection";
 
 interface Customer {
@@ -195,74 +196,8 @@ export default function CustomersPage() {
                 </>
             )}
 
-            {/* ─── Profile Modal ─── */}
-            {selectedCustomer && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-card rounded-2xl shadow-2xl w-full max-w-md p-6 relative border border-border">
-                        <button
-                            id="close-profile-modal"
-                            onClick={() => setSelectedCustomer(null)}
-                            className="absolute top-4 left-4 text-muted-foreground hover:text-foreground"
-                        >
-                            ✕
-                        </button>
-
-                        <div className="text-center mb-6">
-                            <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <Users className="w-8 h-8" />
-                            </div>
-                            <h2 className="text-xl font-bold text-foreground">{selectedCustomer.name} {selectedCustomer.lastName}</h2>
-                            <p className="text-sm text-muted-foreground">{selectedCustomer.email} | {selectedCustomer.phone}</p>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                            <div className="bg-muted/40 p-3 rounded-lg text-center border border-border">
-                                <p className="text-xs text-muted-foreground">הכנסות מלקוח</p>
-                                <p className="font-bold text-lg text-green-600">₪{selectedCustomer.metrics?.totalRevenue || 0}</p>
-                            </div>
-                            <div className="bg-muted/40 p-3 rounded-lg text-center border border-border">
-                                <p className="text-xs text-muted-foreground">מספר טיפולים</p>
-                                <p className="font-bold text-lg text-indigo-600">{selectedCustomer.metrics?.totalAppointments || 0}</p>
-                            </div>
-                        </div>
-
-                        {!isDeleting ? (
-                            <Button
-                                id="initiate-delete-customer"
-                                variant="destructive"
-                                className="w-full flex gap-2"
-                                onClick={() => setIsDeleting(true)}
-                            >
-                                <UserX className="w-4 h-4" /> מחק לקוח
-                            </Button>
-                        ) : (
-                            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-4 text-center">
-                                <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-                                <h3 className="font-bold text-red-700 dark:text-red-400 mb-1">האם אתה בטוח?</h3>
-                                <p className="text-sm text-red-600 dark:text-red-400 mb-4">מחיקת הלקוח תסיר אותו ואת כל נתוניו מהמערכת לצמיתות.</p>
-                                <div className="flex gap-3">
-                                    <Button
-                                        id="cancel-delete-customer"
-                                        variant="outline"
-                                        className="flex-1 border-gray-300"
-                                        onClick={() => setIsDeleting(false)}
-                                    >
-                                        לא למחוק
-                                    </Button>
-                                    <Button
-                                        id="confirm-delete-customer"
-                                        variant="destructive"
-                                        className="flex-1"
-                                        onClick={() => handleDelete(selectedCustomer._id)}
-                                    >
-                                        אישור מחיקה
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
+            {/* Customer 360 Modal */}
+            <Customer360Modal isOpen={selectedCustomer !== null} onClose={() => setSelectedCustomer(null)} customerId={selectedCustomer?._id ?? ''} onDelete={handleDelete} />
 
             {/* ─── Customer Chat History Modal ─── */}
             <CustomerChatModal

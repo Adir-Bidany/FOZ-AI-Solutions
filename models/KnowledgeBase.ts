@@ -13,6 +13,12 @@ export interface IKnowledgeItem {
     visibility: "public_daniela" | "internal_golda";
 }
 
+export interface IKnowledgeFile {
+    name: string;
+    url: string;
+    uploadedAt: Date;
+}
+
 export interface IKnowledgeBase extends Document {
     business_id: Types.ObjectId; // Renamed to business_id to match SaaS architecture
     services: IService[];
@@ -21,6 +27,7 @@ export interface IKnowledgeBase extends Document {
     internalNotes?: string;      // Private internal strategy for Golda
     faqs: Array<{ question: string; answer: string; visibility?: "public_daniela" | "internal_golda" }>;
     knowledgeItems?: IKnowledgeItem[];
+    files?: IKnowledgeFile[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -30,6 +37,12 @@ const ServiceSchema = new Schema<IService>({
     price: { type: Number, required: true },
     duration: { type: Number },
     description: { type: String },
+});
+
+const KnowledgeFileSchema = new Schema<IKnowledgeFile>({
+    name: { type: String, required: true },
+    url: { type: String, required: true },
+    uploadedAt: { type: Date, default: Date.now }
 });
 
 const KnowledgeBaseSchema = new Schema<IKnowledgeBase>(
@@ -53,6 +66,7 @@ const KnowledgeBaseSchema = new Schema<IKnowledgeBase>(
                 visibility: { type: String, enum: ["public_daniela", "internal_golda"], default: "public_daniela" },
             },
         ],
+        files: [KnowledgeFileSchema]
     },
     { timestamps: true }
 );
