@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { prompt = "", includeImage = false } = body;
+        const { prompt = "", includeImage = false, maxWords = 100, includeEmojis = true } = body;
 
         await connectToDatabase();
         const business = await Business.findOne({ ownerEmail: session.user.email });
@@ -103,7 +103,10 @@ You MUST return ONLY a valid JSON object in this exact structure — no prose, n
   "imageVisualPrompt": "A concise image description IN ENGLISH ONLY for an AI image generator. Must be English. Example: 'Elegant spa treatment room with soft lighting, white towels, and rose petals on a wooden table, professional photography, warm tones'"
 }
 
-CRITICAL RULE: The value of "imageVisualPrompt" field must ALWAYS be written in English, regardless of what language the user wrote in.`;
+CRITICAL RULE: The value of "imageVisualPrompt" field must ALWAYS be written in English, regardless of what language the user wrote in.
+
+Strictly limit the post content to a maximum of ${maxWords} words. Do not exceed this limit under any circumstances.
+${includeEmojis ? "You may use emojis naturally to make the post engaging." : "CRITICAL RULE: Do NOT use any emojis anywhere in the title or content. The text must be 100% emoji-free."}`;
 
         const model = createGeminiInstance({
             systemInstruction,
@@ -151,7 +154,7 @@ CRITICAL RULE: The value of "imageVisualPrompt" field must ALWAYS be written in 
 
         // ── 3. Save Post to DB ─────────────────────────────────────────────
         const newInsight = await AgentInsight.create({
-            businessId: business._id,
+            business_id: business._id,
             agentName: "Golda",
             type: "social_post",
             title: postData.title,
