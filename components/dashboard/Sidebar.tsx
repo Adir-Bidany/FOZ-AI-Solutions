@@ -2,18 +2,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import {
-    Calendar,
-    Users,
-    Megaphone,
-    Settings,
-    LogOut,
-    Sparkles,
-    Crown,
-    Globe,
-    TrendingUp,
-    Bot,
-} from "lucide-react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ClientLogo from "@/components/ClientLogo";
@@ -75,8 +64,8 @@ export function SidebarContent({
         const active = isActive(href);
 
         return active
-            ? "w-full justify-start gap-3 font-extrabold text-primary bg-primary/15 border border-primary/20 shadow-sm h-12 rounded-xl"
-            : "w-full justify-start gap-3 font-semibold text-muted-foreground hover:bg-accent hover:text-foreground h-12 rounded-xl";
+            ? "w-full justify-start px-6 font-extrabold text-primary bg-primary/15 border border-primary/20 shadow-sm h-12 rounded-xl"
+            : "w-full justify-start px-6 font-semibold text-muted-foreground hover:bg-accent hover:text-foreground h-12 rounded-xl";
     };
 
     return (
@@ -97,8 +86,7 @@ export function SidebarContent({
                     <Button
                         variant="ghost"
                         className={getNavItemClass("/dashboard")}
-                    >
-                        <Sparkles size={20} className={isActive("/dashboard") ? "text-primary" : ""} /> המשרד שלי
+                    > המשרד שלי
                     </Button>
                 </Link>
 
@@ -106,9 +94,8 @@ export function SidebarContent({
                     <Button
                         variant="ghost"
                         onClick={handleOpenGolda}
-                        className="w-full justify-start gap-3 font-semibold text-foreground hover:bg-purple-500/10 hover:text-purple-600 h-12 rounded-xl"
-                    >
-                        <Bot size={20} className="text-purple-500" /> שיחה עם גולדה
+                        className="w-full justify-start px-6 font-semibold text-foreground hover:bg-purple-500/10 hover:text-purple-600 h-12 rounded-xl"
+                    > צ'אט עם גולדה
                     </Button>
                 </FeatureGate>
 
@@ -117,8 +104,7 @@ export function SidebarContent({
                         <Button
                             variant="ghost"
                             className={getNavItemClass("/dashboard/calendar")}
-                        >
-                            <Calendar size={20} className={isActive("/dashboard/calendar") ? "text-primary" : ""} /> יומן תורים
+                        > יומן תורים
                         </Button>
                     </Link>
                 </FeatureGate>
@@ -127,8 +113,7 @@ export function SidebarContent({
                     <Button
                         variant="ghost"
                         className={getNavItemClass("/dashboard/customers")}
-                    >
-                        <Users size={20} className={isActive("/dashboard/customers") ? "text-primary" : ""} /> לקוחות
+                    > לקוחות
                     </Button>
                 </Link>
 
@@ -137,8 +122,7 @@ export function SidebarContent({
                         <Button
                             variant="ghost"
                             className={getNavItemClass("/dashboard/marketing")}
-                        >
-                            <Megaphone size={20} className={isActive("/dashboard/marketing") ? "text-primary" : ""} /> שיווק ותוכן
+                        > שיווק ותוכן
                         </Button>
                     </Link>
                 </FeatureGate>
@@ -147,8 +131,7 @@ export function SidebarContent({
                     <Button
                         variant="ghost"
                         className={getNavItemClass("/dashboard/website")}
-                    >
-                        <Globe size={20} className={isActive("/dashboard/website") ? "text-primary" : ""} /> עמוד נחיתה
+                    > עמוד נחיתה
                     </Button>
                 </Link>
 
@@ -156,8 +139,7 @@ export function SidebarContent({
                     <Button
                         variant="ghost"
                         className={getNavItemClass("/dashboard/growth")}
-                    >
-                        <TrendingUp size={20} className={isActive("/dashboard/growth") ? "text-primary" : ""} />מידע ללקוח
+                    > מסע ללקוח
                     </Button>
                 </Link>
 
@@ -166,8 +148,7 @@ export function SidebarContent({
                         <Button
                             variant="ghost"
                             className={getNavItemClass("/dashboard/settings")}
-                        >
-                            <Settings size={20} className={isActive("/dashboard/settings") ? "text-primary" : ""} /> הגדרות העסק
+                        > הגדרות העסק
                         </Button>
                     </Link>
 
@@ -175,8 +156,7 @@ export function SidebarContent({
                         <Button
                             variant="ghost"
                             className={getNavItemClass("/pricing")}
-                        >
-                            <Crown size={20} className={isActive("/pricing") ? "text-primary" : ""} /> שדרוג חבילה
+                        > שדרוג חבילה
                         </Button>
                     </Link>
                 </div>
@@ -187,9 +167,8 @@ export function SidebarContent({
                 <Button
                     onClick={handleLogout}
                     variant="outline"
-                    className="w-full gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 border-red-100 dark:border-red-900 bg-card h-10 rounded-xl"
-                >
-                    <LogOut size={16} /> התנתקות
+                    className="w-full text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 border-red-100 dark:border-red-900 bg-card h-10 rounded-xl"
+                > התנתקות
                 </Button>
             </div>
         </div>

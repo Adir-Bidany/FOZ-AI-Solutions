@@ -59,56 +59,10 @@ export default function MarketingContentHub({
     // Generator State
     const [promptText, setPromptText] = useState("");
     const [includeImage, setIncludeImage] = useState(true);
+    const [maxWords, setMaxWords] = useState(100);
+    const [includeEmojis, setIncludeEmojis] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
-
-    // Guide Modal State
-    const [isGuideOpen, setIsGuideOpen] = useState(false);
-    const [isDisconnecting, setIsDisconnecting] = useState(false);
-
-    // Check URL parameters for OAuth status
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get("meta_connected") === "true") {
-            toast.success("חשבון Meta (פייסבוק ואינסטגרם) חוברו בהצלחה!");
-            window.history.replaceState({}, document.title, window.location.pathname);
-        } else if (params.get("error")) {
-            const errCode = params.get("error");
-            const errMap: Record<string, string> = {
-                MISSING_META_KEYS: "מפתח Facebook App ID לא מוגדר בשרת (.env.local)",
-                META_AUTH_CANCELED: "התחברות Meta בוטלה.",
-                NO_FACEBOOK_PAGE_FOUND: "לא נמצא עמוד פייסבוק מחובר לחשבון Meta שלך.",
-                TOKEN_EXCHANGE_FAILED: "שגיאה באימות מול Meta.",
-            };
-            toast.error((errCode && errMap[errCode]) || "תקלה בחיבור לחשבון Meta.");
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-    }, []);
-
-    const handleConnectMeta = () => {
-        window.location.href = "/api/integrations/meta/connect";
-    };
-
-    const handleDisconnectMeta = async () => {
-        if (!confirm("האם ברצונך לנתק את החיבור לעמוד הפייסבוק והאינסטגרם?")) return;
-
-        setIsDisconnecting(true);
-        try {
-            const res = await fetch("/api/integrations/meta/disconnect", { method: "DELETE" });
-            if (res.ok) {
-                setMetaConfig(null);
-                toast.success("חשבון Meta נותק בהצלחה.");
-            } else {
-                toast.error("תקלה בניתוק החשבון.");
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error("תקלה בחיבור לשרת.");
-        } finally {
-            setIsDisconnecting(false);
-        }
-    };
-
-    const handleGeneratePost = async (e: React.FormEvent) => {
+const handleGeneratePost = async (e: React.FormEvent) => {
         e.preventDefault();
         if (isGenerating) return;
 
@@ -120,6 +74,8 @@ export default function MarketingContentHub({
                 body: JSON.stringify({
                     prompt: promptText,
                     includeImage,
+                    maxWords,
+                    includeEmojis,
                 }),
             });
 
@@ -149,91 +105,10 @@ export default function MarketingContentHub({
 
     return (
         <div className="space-y-10">
-            {/* --- META INTEGRATIONS BANNER --- */}
-            <div className="bg-card/90 backdrop-blur-xl border border-border/80 rounded-3xl p-6 shadow-sm space-y-4">
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
-                            <Facebook className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-lg text-foreground">חיבור רשתות חברתיות (Meta)</h3>
-                                {metaConfig?.isConnected ? (
-                                    <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
-                                        <CheckCircle2 size={12} /> מחובר ל-Meta
-                                    </span>
-                                ) : (
-                                    <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-amber-500/20 flex items-center gap-1">
-                                        <AlertCircle size={12} /> לא מחובר
-                                    </span>
-                                )}
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                                פרסם פוסטים ותמונות AI בלחיצת כפתור ישירות לעמוד הפייסבוק והאינסטגרם של העסק
-                            </p>
-                        </div>
-                    </div>
 
-                    <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-                        <Button
-                            onClick={() => setIsGuideOpen(true)}
-                            variant="outline"
-                            size="sm"
-                            className="rounded-2xl border-border text-foreground hover:bg-accent gap-1.5 text-xs font-semibold"
-                        >
-                            <HelpCircle size={14} className="text-primary" />
-                            איך מתחברים? (מדריך קצר)
-                        </Button>
-
-                        {metaConfig?.isConnected ? (
-                            <Button
-                                onClick={handleDisconnectMeta}
-                                disabled={isDisconnecting}
-                                variant="outline"
-                                size="sm"
-                                className="rounded-2xl border-red-200 text-red-600 dark:border-red-900/50 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 gap-1.5 text-xs font-semibold"
-                            >
-                                <Unlink size={14} />
-                                {isDisconnecting ? "מנתק..." : "נתק חשבון Meta"}
-                            </Button>
-                        ) : (
-                            <Button
-                                onClick={handleConnectMeta}
-                                size="sm"
-                                className="rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold gap-2 text-xs shadow-sm"
-                            >
-                                <Facebook size={14} />
-                                התחבר לחשבון Meta
-                            </Button>
-                        )}
-                    </div>
-                </div>
-
-                {/* Account Details if connected */}
-                {metaConfig?.isConnected && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-border/50 text-xs">
-                        <div className="flex items-center gap-2 bg-muted/40 px-3.5 py-2 rounded-2xl border border-border">
-                            <Facebook className="w-4 h-4 text-blue-600 shrink-0" />
-                            <span className="text-muted-foreground">עמוד פייסבוק:</span>
-                            <span className="font-bold text-foreground truncate">
-                                {metaConfig.facebookPageName || metaConfig.facebookPageId || "מחובר"}
-                            </span>
-                        </div>
-
-                        <div className="flex items-center gap-2 bg-muted/40 px-3.5 py-2 rounded-2xl border border-border">
-                            <Instagram className="w-4 h-4 text-pink-600 shrink-0" />
-                            <span className="text-muted-foreground">אינסטגרם עסקי:</span>
-                            <span className="font-bold text-foreground truncate">
-                                {metaConfig.instagramUsername ? `@${metaConfig.instagramUsername}` : metaConfig.instagramAccountId ? "מחובר" : "לא מקושר לעמוד"}
-                            </span>
-                        </div>
-                    </div>
-                )}
-            </div>
 
             {/* INTEGRATIONS HEALTH */}
-            <IntegrationsHealth />
+            <IntegrationsHealth metaConfig={metaConfig} setMetaConfig={setMetaConfig} />
 
             {/* --- PUSH NOTIFICATIONS BAR --- */}
             <FeatureGate currentTier={effectiveTier} requiredFeature="PUSH_MARKETING_BROADCAST">
@@ -281,39 +156,71 @@ export default function MarketingContentHub({
                         </Button>
                     </div>
 
-                    {/* Include AI Image Toggle */}
-                    <div className="flex items-center justify-between pt-2">
-                        <FeatureGate
-                            currentTier={effectiveTier}
-                            requiredFeature="AI_IMAGE_GENERATOR"
-                            fallback={
-                                <div className="flex items-center gap-3 opacity-70">
+                    {/* Generator Controls */}
+                    <div className="flex flex-col gap-4 pt-4 border-t border-border">
+                        <div className="flex flex-wrap items-center justify-between gap-6">
+                            <div className="flex flex-wrap items-center gap-6">
+                                <FeatureGate
+                                    currentTier={effectiveTier}
+                                    requiredFeature="AI_IMAGE_GENERATOR"
+                                    fallback={
+                                        <div className="flex items-center gap-3 opacity-70">
+                                            <Switch
+                                                id="include-image-locked"
+                                                checked={false}
+                                                disabled={true}
+                                            />
+                                            <Label htmlFor="include-image-locked" className="text-sm font-medium flex items-center gap-2 cursor-not-allowed">
+                                                <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                                                כלול תמונת AI מותאמת אישית
+                                                <Lock className="ml-2 text-muted-foreground" size={14} />
+                                            </Label>
+                                        </div>
+                                    }
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Switch
+                                            id="include-image"
+                                            checked={includeImage}
+                                            onCheckedChange={(checked: boolean) => setIncludeImage(checked)}
+                                            disabled={isGenerating}
+                                        />
+                                        <Label htmlFor="include-image" className="text-sm font-medium flex items-center gap-2 cursor-pointer">
+                                            <ImageIcon className="w-4 h-4 text-primary" />
+                                            כלול תמונת AI מותאמת אישית
+                                        </Label>
+                                    </div>
+                                </FeatureGate>
+
+                                <div className="flex items-center gap-3">
                                     <Switch
-                                        id="include-image-locked"
-                                        checked={false}
-                                        disabled={true}
+                                        id="include-emojis"
+                                        checked={includeEmojis}
+                                        onCheckedChange={(checked: boolean) => setIncludeEmojis(checked)}
+                                        disabled={isGenerating}
                                     />
-                                    <Label htmlFor="include-image-locked" className="text-sm font-medium flex items-center gap-2 cursor-not-allowed">
-                                        <ImageIcon className="w-4 h-4 text-muted-foreground" />
-                                        כלול תמונת AI מותאמת אישית
-                                        <Lock className="ml-2 text-muted-foreground" size={14} />
+                                    <Label htmlFor="include-emojis" className="text-sm font-medium cursor-pointer">
+                                        כלול אימוג'ים
                                     </Label>
                                 </div>
-                            }
-                        >
+                            </div>
+
                             <div className="flex items-center gap-3">
-                                <Switch
-                                    id="include-image"
-                                    checked={includeImage}
-                                    onCheckedChange={(checked: boolean) => setIncludeImage(checked)}
+                                <Label htmlFor="max-words" className="text-sm font-medium">
+                                    מקסימום מילים:
+                                </Label>
+                                <Input
+                                    id="max-words"
+                                    type="number"
+                                    min={10}
+                                    max={500}
+                                    className="w-24 text-center bg-background"
+                                    value={maxWords}
+                                    onChange={(e) => setMaxWords(parseInt(e.target.value) || 100)}
                                     disabled={isGenerating}
                                 />
-                                <Label htmlFor="include-image" className="text-sm font-medium flex items-center gap-2 cursor-pointer">
-                                    <ImageIcon className="w-4 h-4 text-primary" />
-                                    כלול תמונת AI מותאמת אישית
-                                </Label>
                             </div>
-                        </FeatureGate>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -351,88 +258,6 @@ export default function MarketingContentHub({
                     </div>
                 </div>
             )}
-
-            {/* --- HOW TO CONNECT GUIDE MODAL --- */}
-            <Dialog open={isGuideOpen} onOpenChange={setIsGuideOpen}>
-                <DialogContent className="sm:max-w-xl dir-rtl text-right rounded-3xl p-6 bg-card text-foreground border border-border" dir="rtl">
-                    <DialogHeader className="text-right pb-3 border-b border-border">
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
-                                <Facebook size={16} />
-                            </div>
-                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-muted border border-border text-muted-foreground">
-                                מדריך חיבור Meta & Instagram
-                            </span>
-                        </div>
-                        <DialogTitle className="text-xl font-bold text-foreground mt-1">
-                            איך לחבר את עמוד הפייסבוק והאינסטגרם של העסק?
-                        </DialogTitle>
-                        <DialogDescription className="text-xs text-muted-foreground">
-                            עקוב אחר 3 הצעדים הפשוטים כדי לאפשר לגולדה לפרסם תוכן שיווקי באופן ישיר
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="py-4 space-y-4 text-sm max-h-[60vh] overflow-y-auto custom-scrollbar">
-                        {/* Step 1 */}
-                        <div className="p-4 rounded-2xl bg-muted/40 border border-border space-y-2">
-                            <div className="flex items-center gap-2 font-bold text-foreground">
-                                <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center border border-primary/20 shrink-0">1</span>
-                                <span>וידוא קישור חשבון אינסטגרם עסקי לעמוד הפייסבוק</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground leading-relaxed pr-8">
-                                ודא שחשבון האינסטגרם של העסק מוגדר כ-<strong>Professional/Business Account</strong> ומקושר לעמוד הפייסבוק העסקי שלך דרך <strong>Meta Business Suite</strong> או בהגדרות האינסטגרם בנייד.
-                            </p>
-                        </div>
-
-                        {/* Step 2 */}
-                        <div className="p-4 rounded-2xl bg-muted/40 border border-border space-y-2">
-                            <div className="flex items-center gap-2 font-bold text-foreground">
-                                <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center border border-primary/20 shrink-0">2</span>
-                                <span>התחברות ומתן הרשאות פרסום מול Meta</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground leading-relaxed pr-8">
-                                לחץ על הכפתור <strong>"התחבר לחשבון Meta"</strong> למעלה. בחלון של פייסבוק שיפתח, בחר את עמוד הפייסבוק וחשבון האינסטגרם שברצונך לחבר ואשר את הרשאות הפרסום.
-                            </p>
-                        </div>
-
-                        {/* Step 3 */}
-                        <div className="p-4 rounded-2xl bg-muted/40 border border-border space-y-2">
-                            <div className="flex items-center gap-2 font-bold text-foreground">
-                                <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center border border-primary/20 shrink-0">3</span>
-                                <span>פרסום פוסטים ותמונות AI בלחיצת כפתור</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground leading-relaxed pr-8">
-                                לאחר החיבור, בכל כרטיס פוסט מאושר יופיעו כפתורי <strong>"פרסם בפייסבוק"</strong> ו-<strong>"פרסם באינסטגרם"</strong> לפרסום מיידי!
-                            </p>
-                        </div>
-
-                        {/* Security notice */}
-                        <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-xs text-emerald-700 dark:text-emerald-300">
-                            <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" />
-                            <span>
-                                <strong>אבטחה ופרטיות:</strong> המערכת תפרסם פוסטים אך ורק בעקבות לחיצה מפורשת שלך על כפתור הפרסום. שום פוסט לא יפורסם ללא אישורך.
-                            </span>
-                        </div>
-                    </div>
-
-                    <DialogFooter className="gap-2 sm:justify-between flex-row-reverse border-t border-border pt-4">
-                        <Button
-                            onClick={handleConnectMeta}
-                            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-sm font-semibold"
-                        >
-                            <Facebook size={16} />
-                            התחבר כעת לחשבון Meta
-                        </Button>
-                        <Button
-                            onClick={() => setIsGuideOpen(false)}
-                            variant="outline"
-                            className="rounded-2xl border-border text-foreground hover:bg-accent"
-                        >
-                            סגור
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </div>
+</div>
     );
 }
