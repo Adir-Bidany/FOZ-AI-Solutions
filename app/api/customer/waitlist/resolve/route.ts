@@ -1,3 +1,4 @@
+import { getAuthSecret } from "@/lib/auth-secret";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
@@ -5,7 +6,6 @@ import { connectToDatabase } from "@/lib/db";
 import Waitlist from "@/models/Waitlist";
 import Appointment from "@/models/Appointment";
 
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || "fallback_secret_foz_ai";
 
 export async function POST(req: Request) {
     try {
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
         let decoded: any;
         try {
-            decoded = jwt.verify(token, JWT_SECRET);
+            decoded = jwt.verify(token, getAuthSecret());
         } catch (err) {
             return NextResponse.json({ success: false, error: "Invalid token" }, { status: 401 });
         }

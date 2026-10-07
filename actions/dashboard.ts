@@ -683,11 +683,9 @@ export async function fetchGuestChats(): Promise<ChatSession[]> {
  */
 export async function fetchPazLeads(): Promise<ChatSession[]> {
     const session = await getServerSession(authOptions);
-    const cookieStore = await cookies();
-    const adminCookie = cookieStore.get("admin_access")?.value;
-    const isAdminUser = !!adminCookie || (session?.user as any)?.role === "admin";
+    const isAdminUser = (session?.user as any)?.role === "admin";
 
-    // Allow authenticated admins or users with admin_access cookie
+    // Admin role (from the signed NextAuth session) is the only accepted proof of access
     if (!isAdminUser) {
         return [];
     }
@@ -817,15 +815,13 @@ export async function markLeadAsHandled(cardId: string) {
 
 /**
  * Permanently deletes a ChatExternal session by sessionId.
- * RBAC: Super Admin (role or admin_access cookie) can delete any chat; Business Owners can only delete chats belonging to their business_id.
+ * RBAC: Super Admin (role=admin in the signed session) can delete any chat; Business Owners can only delete chats belonging to their business_id.
  */
 export async function deleteChatSession(sessionId: string): Promise<{ success: boolean; error?: string }> {
     const session = await getServerSession(authOptions);
-    const cookieStore = await cookies();
-    const adminCookie = cookieStore.get("admin_access")?.value === "true";
-    const isAdmin = (session?.user as any)?.role === "admin" || adminCookie;
+    const isAdmin = (session?.user as any)?.role === "admin";
 
-    if (!session?.user && !isAdmin) {
+    if (!session?.user) {
         return { success: false, error: "Unauthorized" };
     }
 
@@ -861,15 +857,13 @@ export async function deleteChatSession(sessionId: string): Promise<{ success: b
 
 /**
  * Permanently deletes multiple ChatExternal sessions in bulk by sessionIds array.
- * RBAC: Super Admin (role or admin_access cookie) can delete any chats; Business Owners can only delete chats belonging to their business_id.
+ * RBAC: Super Admin (role=admin in the signed session) can delete any chats; Business Owners can only delete chats belonging to their business_id.
  */
 export async function bulkDeleteChatSessions(sessionIds: string[]): Promise<{ success: boolean; deletedCount?: number; error?: string }> {
     const session = await getServerSession(authOptions);
-    const cookieStore = await cookies();
-    const adminCookie = cookieStore.get("admin_access")?.value === "true";
-    const isAdmin = (session?.user as any)?.role === "admin" || adminCookie;
+    const isAdmin = (session?.user as any)?.role === "admin";
 
-    if (!session?.user && !isAdmin) {
+    if (!session?.user) {
         return { success: false, error: "Unauthorized" };
     }
 

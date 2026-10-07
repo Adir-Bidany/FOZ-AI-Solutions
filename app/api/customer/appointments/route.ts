@@ -1,3 +1,4 @@
+import { getAuthSecret } from "@/lib/auth-secret";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
@@ -5,7 +6,6 @@ import { connectToDatabase } from "@/lib/db";
 import Appointment from "@/models/Appointment";
 import { Types } from "mongoose";
 
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || "fallback_secret_foz_ai";
 
 // ─── Helper: Verify consumer token and extract customerId ─────────────────────
 
@@ -14,7 +14,7 @@ async function getConsumerIdFromCookie(): Promise<string | null> {
         const cookieStore = await cookies();
         const token = cookieStore.get("consumer_token")?.value;
         if (!token) return null;
-        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const decoded = jwt.verify(token, getAuthSecret()) as any;
         return decoded?.customerId ?? null;
     } catch {
         return null;

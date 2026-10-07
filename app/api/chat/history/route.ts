@@ -1,4 +1,5 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
+import { getAuthSecret } from "@/lib/auth-secret";
 import { connectToDatabase } from "@/lib/db";
 import ChatExternal from "@/models/ChatExternal";
 import Customer from "@/models/Customer";
@@ -10,7 +11,6 @@ const HISTORY_MESSAGE_LIMIT = 40; // Return last 20 message pairs (40 entries)
 export async function GET(req: NextRequest) {
     try {
         // 1. Verify consumer token from cookie
-        const JWT_SECRET = process.env.NEXTAUTH_SECRET || "fallback_secret_foz_ai";
         const consumerToken = req.cookies.get("consumer_token")?.value;
 
         if (!consumerToken) {
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
         let tokenBusinessId: string;
 
         try {
-            const decoded = jwt.verify(consumerToken, JWT_SECRET) as any;
+            const decoded = jwt.verify(consumerToken, getAuthSecret()) as any;
             customerId = decoded.customerId;
             tokenBusinessId = decoded.businessId;
         } catch {

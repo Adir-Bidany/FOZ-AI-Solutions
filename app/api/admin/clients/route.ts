@@ -2,13 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase as connectDB } from "@/lib/db";
 import Business from "@/models/Business";
 import ChatExternal from "@/models/ChatExternal";
-import { getToken } from "next-auth/jwt";
+import { isAdminRequest } from "@/lib/admin-auth";
 
 export async function GET(req: NextRequest) {
-    // Admin RBAC: Only authenticated admins or valid quick-access cookie may access this endpoint
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    const adminCookie = req.cookies.get("admin_access")?.value;
-    if (!adminCookie && (!token || token.role !== "admin")) {
+    // Admin RBAC: signed NextAuth JWT with role=admin only
+    if (!(await isAdminRequest(req))) {
         return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 

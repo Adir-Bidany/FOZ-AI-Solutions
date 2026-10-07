@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const insight = await AgentInsight.findById(insightId);
+        const insight = await AgentInsight.findOne({ _id: insightId, business_id: business._id });
         if (!insight) {
-            return NextResponse.json({ error: "Insight post not found" }, { status: 404 });
+            return NextResponse.json({ error: "Insight post not found or unauthorized" }, { status: 404 });
         }
 
         const postMessage = `${insight.title}\n\n${insight.content}`;

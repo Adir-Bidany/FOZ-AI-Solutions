@@ -5,6 +5,7 @@ import { connectToDatabase } from "@/lib/db";
 import Business from "@/models/Business";
 import AgentInsight from "@/models/AgentInsight";
 import { createGeminiInstance, extractJsonFromText } from "@/lib/utils/ai-helpers";
+import { GOLDA_MARKETING_PROMPT } from "@/lib/agents/registry";
 import { v2 as cloudinary } from "cloudinary";
 
 // ─── Cloudinary Configuration ──────────────────────────────────────────────

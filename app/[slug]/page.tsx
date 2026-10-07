@@ -1,3 +1,4 @@
+import { getAuthSecret } from "@/lib/auth-secret";
 import { notFound } from "next/navigation";
 import UnifiedChatWidget from "@/components/chat/UnifiedChatWidget";
 import BrandingAnchor from "@/components/BrandingAnchor";
@@ -64,8 +65,7 @@ export default async function ClientPage({
 
     if (token) {
         try {
-            const JWT_SECRET = process.env.NEXTAUTH_SECRET || "fallback_secret_foz_ai";
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            const decoded = jwt.verify(token, getAuthSecret()) as any;
             // Strict Tenancy: Only allow if token belongs to THIS business
             if (decoded.businessId === clientData._id.toString()) {
                 loggedInCustomerId = decoded.customerId;

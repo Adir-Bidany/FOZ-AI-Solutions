@@ -1,10 +1,10 @@
+import { getAuthSecret } from "@/lib/auth-secret";
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import Customer from "@/models/Customer";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || "fallback_secret_foz_ai";
 
 export async function POST(req: NextRequest) {
     try {
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
             role: "consumer"
         };
 
-        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign(payload, getAuthSecret(), { expiresIn: "7d" });
 
         const response = NextResponse.json({
             success: true,

@@ -4,30 +4,37 @@ import Business from "@/models/Business";
 import ActionCard from "@/models/ActionCard";
 import MasterChatLog from "@/models/MasterChatLog";
 import { AGENT_REGISTRY } from "@/lib/agents/registry";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createGeminiInstance } from "@/lib/utils/ai-helpers";
 
-async function generateAgentResponse(agentName: string, systemPrompt: string, context: string, tools?: any[]): Promise<any> {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error("GEMINI_API_KEY is not defined");
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const modelOptions: any = { model: "gemini-2.5-flash" };
-    if (tools) modelOptions.tools = tools;
+const wait = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-    const model = genAI.getGenerativeModel(modelOptions);
+async function generateAgentResponse(agentName: string, systemPrompt: string, context: string, tools?: any[], retries = 3): Promise<any> {
+    const model = createGeminiInstance({
+        modelName: "gemini-2.5-flash",
+        systemInstruction: systemPrompt,
+        tools: tools,
+    });
     
-    const chatHistory = [
-        { role: "user", parts: [{ text: systemPrompt }] },
-        { role: "model", parts: [{ text: "Understood." }] }
-    ];
-
-    const chatSession = model.startChat({ history: chatHistory });
-    const result = await chatSession.sendMessage(context);
-    
-    if (tools && result.response.functionCalls()?.length) {
-        return result.response.functionCalls()![0];
+    for (let i = 0; i < retries; i++) {
+        try {
+            const result = await model.generateContent(context);
+            
+            if (tools && result.response.functionCalls()?.length) {
+                const call = result.response.functionCalls()![0];
+                if (!call || !call.args) throw new Error("Invalid tool call output from model");
+                return call;
+            }
+            
+            const text = result.response.text();
+            if (!text) throw new Error("Empty text response from model");
+            return text;
+        } catch (error: any) {
+            const isLast = i === retries - 1;
+            if (isLast) throw error;
+            console.warn(`[Orchestrator] generateAgentResponse attempt ${i + 1} failed, retrying in ${Math.pow(2, i)}s...`, error?.message || error);
+            await wait(1000 * Math.pow(2, i));
+        }
     }
-    
-    return result.response.text();
 }
 
 export async function processSessionSummary(sessionId: string) {
