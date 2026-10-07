@@ -1,18 +1,15 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase as connectDB } from "@/lib/db";
 import Business from "@/models/Business";
-import { getToken } from "next-auth/jwt";
+import { isAdminRequest } from "@/lib/admin-auth";
 
 export async function DELETE(
     request: Request,
     // בגרסאות חדשות של Next.js 15, ה-params מגיע כ-Promise שצריך להמתין לו
     { params }: { params: Promise<{ id: string }> }
 ) {
-    // Admin RBAC: Only authenticated admins or valid quick-access cookie may delete clients
-    const token = await getToken({ req: request as any, secret: process.env.NEXTAUTH_SECRET });
-    const cookiesHeader = request.headers.get("cookie") || "";
-    const hasAdminCookie = cookiesHeader.includes("admin_access=true");
-    if (!hasAdminCookie && (!token || token.role !== "admin")) {
+    // Admin RBAC: signed NextAuth JWT with role=admin only
+    if (!(await isAdminRequest(request))) {
         return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
@@ -52,11 +49,8 @@ export async function PATCH(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    // Admin RBAC verification
-    const token = await getToken({ req: request as any, secret: process.env.NEXTAUTH_SECRET });
-    const cookiesHeader = request.headers.get("cookie") || "";
-    const hasAdminCookie = cookiesHeader.includes("admin_access=true");
-    if (!hasAdminCookie && (!token || token.role !== "admin")) {
+    // Admin RBAC: signed NextAuth JWT with role=admin only
+    if (!(await isAdminRequest(request))) {
         return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 

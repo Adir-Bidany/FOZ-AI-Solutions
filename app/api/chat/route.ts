@@ -1,3 +1,4 @@
+import { getAuthSecret } from "@/lib/auth-secret";
 import { NextRequest, NextResponse } from "next/server";
 import { streamText, tool } from "ai";
 import { google } from "@ai-sdk/google";
@@ -12,7 +13,7 @@ import ActionCard from "@/models/ActionCard";
 import Appointment from "@/models/Appointment";
 import AgentInsight from "@/models/AgentInsight";
 
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { SchemaType } from "@google/generative-ai";
 import { AGENT_REGISTRY, securityClassifierSchema } from "@/lib/agents/registry";
 import { Types } from "mongoose";
 import { cleanAIResponse, extractJsonFromText, mapChatHistory, createGeminiInstance } from "@/lib/utils/ai-helpers";
@@ -51,13 +52,12 @@ export async function POST(req: NextRequest) {
         }
 
         // Server-Side JWT Verification
-        const JWT_SECRET = process.env.NEXTAUTH_SECRET || "fallback_secret_foz_ai";
         let customerId: string | null = null;
         const consumerToken = req.cookies.get("consumer_token")?.value;
         
         if (agentPersona !== "paz" && consumerToken) {
             try {
-                const decoded = jwt.verify(consumerToken, JWT_SECRET) as any;
+                const decoded = jwt.verify(consumerToken, getAuthSecret()) as any;
                 // Strict Tenancy Match
                 if (decoded.businessId === businessId) {
                     customerId = decoded.customerId;
@@ -260,10 +260,13 @@ export async function POST(req: NextRequest) {
         let clientHistorySummary = "׳׳™׳ ׳’׳™׳©׳” ׳׳”׳™׳¡׳˜׳•׳¨׳™׳™׳× ׳׳§׳•׳— ׳׳₪׳ ׳™ ׳׳™׳׳•׳× ׳•׳׳™׳©׳•׳¨ ׳׳ ׳”׳.";
         if (agentPersona === "daniela" && isVerifiedCustomer) {
             const crmSummary = `Customer Name: ${customer.name} ${customer.lastName || ""}. Total Appointments: ${customer.metrics?.totalAppointments || 0}. Recent Treatments: ${(customer.history?.lastTreatments || []).join(", ")}`;
-            // Inject long-term AI memory summary if it exists
-            const aiMemorySummary = customer.ai_profile?.summary;
+            // Inject long-term AI memory summary if it exists, capped at 2000 characters
+            let aiMemorySummary = customer.ai_profile?.summary || "";
+            if (aiMemorySummary.length > 2000) {
+                aiMemorySummary = aiMemorySummary.substring(0, 2000) + "... [TRUNCATED]";
+            }
             clientHistorySummary = aiMemorySummary
-                ? `${crmSummary}\n\n[LONG-TERM AI MEMORY ג€” Summary from previous conversations]:\n${aiMemorySummary}`
+                ? `${crmSummary}\n\n[LONG-TERM AI MEMORY — Summary from previous conversations]:\n${aiMemorySummary}`
                 : crmSummary;
         }
 

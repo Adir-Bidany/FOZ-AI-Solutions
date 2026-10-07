@@ -1,15 +1,11 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { connectToDatabase as connectDB } from "@/lib/db";
 import Business from "@/models/Business";
-import { getToken } from "next-auth/jwt";
+import { isAdminRequest } from "@/lib/admin-auth";
 
 export async function POST(request: Request) {
-    // Admin RBAC verification
-    const token = await getToken({ req: request as any, secret: process.env.NEXTAUTH_SECRET });
-    const cookiesHeader = request.headers.get("cookie") || "";
-    const hasAdminCookie = cookiesHeader.includes("admin_access=true");
-    
-    if (!hasAdminCookie && (!token || token.role !== "admin")) {
+    // Admin RBAC: signed NextAuth JWT with role=admin only
+    if (!(await isAdminRequest(request))) {
         return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 

@@ -1,3 +1,4 @@
+import { getAuthSecret } from "@/lib/auth-secret";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -7,7 +8,6 @@ import { connectToDatabase } from "@/lib/db";
 import Business from "@/models/Business";
 import Customer from "@/models/Customer";
 
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || "fallback_secret_foz_ai";
 
 export async function POST(req: Request) {
     try {
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
         
         if (token) {
             try {
-                const decoded: any = jwt.verify(token, JWT_SECRET);
+                const decoded: any = jwt.verify(token, getAuthSecret());
                 const customer = await Customer.findById(decoded.customerId);
                 
                 if (customer) {

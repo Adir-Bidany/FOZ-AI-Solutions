@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase as connectDB } from "@/lib/db";
 import Business from "@/models/Business";
 import ChatExternal from "@/models/ChatExternal";
-import { getToken } from "next-auth/jwt";
+import { isAdminRequest } from "@/lib/admin-auth";
 import mongoose from "mongoose";
 
 // Gemini 2.5 Flash Pricing Constants
@@ -11,10 +11,8 @@ const COST_PER_1M_OUTPUT_USD = 0.30;
 const USD_TO_ILS = 3.65;
 
 export async function GET(req: NextRequest) {
-    // Admin RBAC verification
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    const adminCookie = req.cookies.get("admin_access")?.value;
-    if (!adminCookie && (!token || token.role !== "admin")) {
+    // Admin RBAC: signed NextAuth JWT with role=admin only
+    if (!(await isAdminRequest(req))) {
         return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 

@@ -1,16 +1,11 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase as connectDB } from "@/lib/db";
 import SystemSettings from "@/models/SystemSettings";
-import { getToken } from "next-auth/jwt";
+import { isAdminRequest } from "@/lib/admin-auth";
 
-// Helper to check admin access
+// Admin RBAC: signed NextAuth JWT with role=admin only
 async function checkAdminAuth(req: NextRequest) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    const adminCookie = req.cookies.get("admin_access")?.value;
-    if (!adminCookie && (!token || token.role !== "admin")) {
-        return false;
-    }
-    return true;
+    return isAdminRequest(req);
 }
 
 export async function GET(req: NextRequest) {
